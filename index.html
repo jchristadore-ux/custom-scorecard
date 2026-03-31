@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EGT Scorecard Generator</title>
+<style>
+/* ========== CSS VARIABLES ========== */
+:root {
+  --navy: #1B365D;
+  --gold: #FFD700;
+  --gray-light: #F0F0F0;
+  --gray-alt: #F9F9F9;
+  --gray-summary: #E8E8E8;
+  --grid-border: #CCCCCC;
+  --white: #FFFFFF;
+  --black: #1a1a1a;
+  --accent-red: #C0392B;
+  --accent-green: #27AE60;
+  --ui-bg: #0D1B2A;
+  --ui-surface: #1B2838;
+  --ui-surface2: #243447;
+  --ui-border: #2C3E50;
+  --ui-text: #E0E0E0;
+  --ui-text-muted: #8899AA;
+  --ui-accent: #4FC3F7;
+  --ui-gold: #FFD54F;
+  --ui-radius: 6px;
+}
+
+/* ========== RESET & BASE ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--ui-bg);
+  color: var(--ui-text);
+  line-height: 1.5;
+}
+
+/* ========== DASHBOARD (SCREEN ONLY) ========== */
+.dashboard {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+}
+.dash-header {
+  text-align: center;
+  padding: 28px 0 20px;
+  border-bottom: 1px solid var(--ui-border);
+  margin-bottom: 24px;
+}
+.dash-header h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--ui-gold);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.dash-header p {
+  color: var(--ui-text-muted);
+  font-size: 0.82rem;
+  margin-top: 4px;
+}
+
+/* --- Sections --- */
+.section {
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--ui-accent);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  background: var(--ui-accent);
+  border-radius: 2px;
+}
+
+/* --- Form Elements --- */
+.form-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 140px;
+}
+.form-group label {
+  font-size: 0.7rem;
+  color: var(--ui-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+}
+.form-group input, .form-group select {
+  background: var(--ui-surface2);
+  border: 1px solid var(--ui-border);
+  border-radius: 4px;
+  padding: 7px 10px;
+  color: var(--ui-text);
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+.form-group input:focus, .form-group select:focus {
+  outline: none;
+  border-color: var(--ui-accent);
+}
+.form-group input::placeholder { color: var(--ui-text-muted); opacity: 0.6; }
+
+/* --- Hole Data Grid --- */
+.hole-grid {
+  overflow-x: auto;
+  margin-top: 8px;
+}
+.hole-grid table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+.hole-grid th, .hole-grid td {
+  padding: 4px 2px;
+  text-align: center;
+  border: 1px solid var(--ui-border);
+  min-width: 38px;
+}
+.hole-grid th {
+  background: var(--ui-surface2);
+  color: var(--ui-accent);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.hole-grid td.label-cell {
+  text-align: left;
+  font-weight: 700;
+  color: var(--ui-gold);
+  padding-left: 6px;
+  min-width: 55px;
+  background: var(--ui-surface2);
+}
+.hole-grid td.summary-cell {
+  background: var(--ui-surface2);
+  color: var(--ui-gold);
+  font-weight: 700;
+}
+.hole-grid input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--ui-text);
+  text-align: center;
+  font-size: 0.78rem;
+  font-family: inherit;
+  padding: 2px 0;
+}
+.hole-grid input:focus { outline: none; background: rgba(79,195,247,0.08); }
+
+/* --- Players --- */
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(44,62,80,0.5);
+}
+.player-row:last-child { border-bottom: none; }
+.player-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ui-accent);
+  color: var(--ui-bg);
+  font-size: 0.68rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.player-row input {
+  background: var(--ui-surface2);
+  border: 1px solid var(--ui-border);
+  border-radius: 4px;
+  padding: 6px 10px;
+  color: var(--ui-text);
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.player-row input:focus { outline: none; border-color: var(--ui-accent); }
+.player-row .name-input { flex: 2; min-width: 120px; }
+.player-row .abbr-input { width: 60px; text-align: center; text-transform: uppercase; }
+.player-row .move-btns { display: flex; gap: 2px; }
+.player-row .move-btns button {
+  width: 24px; height: 24px;
+  background: var(--ui-surface2);
+  border: 1px solid var(--ui-border);
+  border-radius: 3px;
+  color: var(--ui-text-muted);
+  cursor: pointer;
+  font-size: 0.7rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.player-row .move-btns button:hover { background: var(--ui-border); color: var(--ui-text); }
+
+/* --- Buttons --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 4px;
+  border: 1px solid var(--ui-border);
+  background: var(--ui-surface2);
+  color: var(--ui-text);
+  font-size: 0.78rem;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn:hover { background: var(--ui-border); }
+.btn-accent {
+  background: var(--ui-accent);
+  color: var(--ui-bg);
+  border-color: var(--ui-accent);
+}
+.btn-accent:hover { background: #81D4FA; }
+.btn-gold {
+  background: var(--ui-gold);
+  color: var(--ui-bg);
+  border-color: var(--ui-gold);
+  font-weight: 700;
+}
+.btn-gold:hover { background: #FFE082; }
+.btn-sm { padding: 4px 10px; font-size: 0.72rem; }
+.btn-danger { color: var(--accent-red); }
+.btn-danger:hover { background: rgba(192,57,43,0.15); }
+.btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+/* --- Format Toggles --- */
+.format-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--ui-surface2);
+  border: 1px solid var(--ui-border);
+  border-radius: 4px;
+  margin-bottom: 6px;
+  transition: border-color 0.2s;
+}
+.format-toggle.active { border-color: var(--ui-accent); }
+.format-toggle .ft-check {
+  width: 18px; height: 18px;
+  accent-color: var(--ui-accent);
+  cursor: pointer;
+}
+.format-toggle .ft-label {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.format-toggle .ft-desc {
+  color: var(--ui-text-muted);
+  font-size: 0.72rem;
+}
+.format-toggle .ft-arrows { display: flex; gap: 2px; }
+.format-toggle .ft-arrows button {
+  width: 26px; height: 26px;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: 3px;
+  color: var(--ui-text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.format-toggle .ft-arrows button:hover { background: var(--ui-border); color: var(--ui-text); }
+
+/* --- Preset --- */
+.preset-area {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  margin-top: 8px;
+}
+.preset-area textarea {
+  flex: 1;
+  background: var(--ui-surface2);
+  border: 1px solid var(--ui-border);
+  border-radius: 4px;
+  padding: 8px;
+  color: var(--ui-text);
+  font-family: 'Courier New', monospace;
+  font-size: 0.72rem;
+  resize: vertical;
+  min-height: 60px;
+}
+.preset-area textarea:focus { outline: none; border-color: var(--ui-accent); }
+
+/* --- Print Button --- */
+.print-bar {
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* ========== SCORECARD (PRINT TARGET) ========== */
+#scorecard-preview {
+  background: white;
+  color: var(--black);
+  width: 11in;
+  height: 8.5in;
+  margin: 0 auto;
+  padding: 0.25in 0.3in;
+  font-family: Arial, Helvetica, sans-serif;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* --- Header --- */
+.sc-header {
+  background: var(--navy);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.sc-header-left { font-size: 7pt; opacity: 0.9; }
+.sc-header-center { font-size: 13pt; font-weight: 700; letter-spacing: 1px; text-align: center; }
+.sc-header-right { font-size: 6.5pt; opacity: 0.85; text-align: right; }
+
+/* --- Format Section --- */
+.sc-format {
+  flex-shrink: 0;
+}
+.sc-format-header {
+  background: var(--navy);
+  color: var(--gold);
+  font-size: 8pt;
+  font-weight: 700;
+  padding: 2px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 3px;
+}
+.sc-format-header .sc-rule {
+  color: var(--white);
+  font-size: 5.5pt;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+/* --- Tables --- */
+.sc-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 7pt;
+}
+.sc-table th, .sc-table td {
+  border: 0.5px solid var(--grid-border);
+  padding: 1.5px 2px;
+  text-align: center;
+  vertical-align: middle;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.sc-table .col-label {
+  text-align: left;
+  font-weight: 700;
+  padding-left: 4px;
+  width: 62px;
+  min-width: 62px;
+  max-width: 62px;
+}
+.sc-table .col-summary {
+  background: var(--gray-summary) !important;
+  font-weight: 700;
+}
+.sc-table tr.row-header th {
+  background: var(--gray-light);
+  font-weight: 700;
+  font-size: 6.5pt;
+  color: #333;
+}
+.sc-table tr.row-par td, .sc-table tr.row-yards td, .sc-table tr.row-hdcp td {
+  font-size: 6.5pt;
+  color: #444;
+}
+.sc-table tr.row-par td.col-label, .sc-table tr.row-yards td.col-label, .sc-table tr.row-hdcp td.col-label {
+  font-size: 6.5pt;
+  font-weight: 700;
+  color: #333;
+}
+.sc-table tr.row-player td {
+  height: 14px;
+}
+.sc-table tr.row-player td.col-label {
+  font-weight: 700;
+  font-size: 7pt;
+}
+.sc-table tr.row-player:nth-child(even) td { background: var(--gray-alt); }
+.sc-table tr.row-player:nth-child(even) td.col-summary { background: #E2E2E2; }
+.sc-table tr.row-ptm td { font-size: 6.5pt; color: #555; }
+.sc-table tr.row-ptm td.col-label { font-weight: 700; color: var(--black); font-size: 7pt; }
+.sc-table tr.row-ptm:nth-child(even) td { background: var(--gray-alt); }
+
+/* Wolf specific */
+.sc-table tr.row-wolf-is td { font-weight: 700; font-size: 7pt; }
+.sc-table tr.row-wolf-partners td { font-size: 5.5pt; color: #555; }
+.sc-table tr.row-wolf-partners td.col-label { font-size: 6pt; font-weight: 700; color: #333; }
+.sc-table tr.row-wolf-blank td { height: 13px; }
+.sc-table tr.row-wolf-blank td.col-label { font-weight: 600; font-size: 6.5pt; }
+.sc-table tr.row-wolf-blank:nth-child(even) td { background: var(--gray-alt); }
+
+/* Par3 specific */
+.sc-table.par3-table { table-layout: auto; }
+.sc-table.par3-table th, .sc-table.par3-table td { font-size: 6.5pt; padding: 1.5px 4px; }
+.sc-table.par3-table tr.row-player td { height: 13px; }
+
+/* --- PTM extras --- */
+.sc-ptm-footer {
+  font-size: 6pt;
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 4px;
+  border: 0.5px solid var(--grid-border);
+  border-top: none;
+  background: var(--white);
+}
+.sc-ptm-footer span { color: #333; }
+
+/* --- Wolf scoring legend --- */
+.sc-wolf-legend {
+  font-size: 5.5pt;
+  text-align: center;
+  padding: 2px 0;
+  color: #444;
+}
+
+/* --- Footer --- */
+.sc-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 3px 4px;
+  border-top: 1px solid var(--grid-border);
+  font-size: 6pt;
+  color: #333;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+.sc-footer-left { display: flex; gap: 16px; }
+.sc-footer-left span { border-bottom: 1px solid #999; padding-bottom: 1px; min-width: 90px; display: inline-block; }
+.sc-footer-right { font-size: 5.5pt; color: #555; text-align: right; max-width: 55%; }
+
+/* Spacer to push formats apart */
+.sc-spacer { flex: 1; }
+
+/* ========== PRINT STYLES ========== */
+@media print {
+  @page {
+    size: 11in 8.5in;
+    margin: 0.2in;
+  }
+  body { background: white; }
+  .dashboard { display: none !important; }
+  #scorecard-preview {
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0.05in 0.1in;
+    margin: 0;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  .sc-header, .sc-format-header {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .sc-table tr.row-header th,
+  .sc-table td.col-summary,
+  .sc-table tr.row-player:nth-child(even) td,
+  .sc-table tr.row-ptm:nth-child(even) td,
+  .sc-table tr.row-wolf-blank:nth-child(even) td {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* ========== SCREEN PREVIEW WRAPPER ========== */
+.preview-wrapper {
+  background: #374151;
+  border-radius: var(--ui-radius);
+  padding: 16px;
+  overflow-x: auto;
+}
+.preview-label {
+  color: var(--ui-text-muted);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== DASHBOARD ===================== -->
+<div class="dashboard">
+  <div class="dash-header">
+    <h1>EGT Scorecard Generator</h1>
+    <p>Dynamic scorecard builder &middot; Exact print replica &middot; Any course, any crew</p>
+  </div>
+
+  <!-- COURSE SETUP -->
+  <div class="section">
+    <div class="section-title">Course Setup</div>
+    <div class="form-row">
+      <div class="form-group" style="flex:3">
+        <label>Course Name</label>
+        <input type="text" id="inp-course" placeholder="BEAVER BROOK COUNTRY CLUB" oninput="rebuild()">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label>Tee Color</label>
+        <input type="text" id="inp-tee" placeholder="Black Tees" oninput="rebuild()">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label>Group Name</label>
+        <input type="text" id="inp-group" placeholder="EGT" oninput="rebuild()">
+      </div>
+    </div>
+  </div>
+
+  <!-- HOLE DATA -->
+  <div class="section">
+    <div class="section-title">Hole Data</div>
+    <div class="hole-grid">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th>
+            <th style="color:var(--ui-gold)">OUT</th>
+            <th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th>
+            <th style="color:var(--ui-gold)">IN</th>
+            <th style="color:var(--ui-gold)">TOT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="label-cell">PAR</td>
+            <td><input id="par-1" oninput="rebuild()"></td><td><input id="par-2" oninput="rebuild()"></td><td><input id="par-3" oninput="rebuild()"></td>
+            <td><input id="par-4" oninput="rebuild()"></td><td><input id="par-5" oninput="rebuild()"></td><td><input id="par-6" oninput="rebuild()"></td>
+            <td><input id="par-7" oninput="rebuild()"></td><td><input id="par-8" oninput="rebuild()"></td><td><input id="par-9" oninput="rebuild()"></td>
+            <td class="summary-cell" id="par-out"></td>
+            <td><input id="par-10" oninput="rebuild()"></td><td><input id="par-11" oninput="rebuild()"></td><td><input id="par-12" oninput="rebuild()"></td>
+            <td><input id="par-13" oninput="rebuild()"></td><td><input id="par-14" oninput="rebuild()"></td><td><input id="par-15" oninput="rebuild()"></td>
+            <td><input id="par-16" oninput="rebuild()"></td><td><input id="par-17" oninput="rebuild()"></td><td><input id="par-18" oninput="rebuild()"></td>
+            <td class="summary-cell" id="par-in"></td>
+            <td class="summary-cell" id="par-tot"></td>
+          </tr>
+          <tr>
+            <td class="label-cell">YARDS</td>
+            <td><input id="yds-1" oninput="rebuild()"></td><td><input id="yds-2" oninput="rebuild()"></td><td><input id="yds-3" oninput="rebuild()"></td>
+            <td><input id="yds-4" oninput="rebuild()"></td><td><input id="yds-5" oninput="rebuild()"></td><td><input id="yds-6" oninput="rebuild()"></td>
+            <td><input id="yds-7" oninput="rebuild()"></td><td><input id="yds-8" oninput="rebuild()"></td><td><input id="yds-9" oninput="rebuild()"></td>
+            <td class="summary-cell" id="yds-out"></td>
+            <td><input id="yds-10" oninput="rebuild()"></td><td><input id="yds-11" oninput="rebuild()"></td><td><input id="yds-12" oninput="rebuild()"></td>
+            <td><input id="yds-13" oninput="rebuild()"></td><td><input id="yds-14" oninput="rebuild()"></td><td><input id="yds-15" oninput="rebuild()"></td>
+            <td><input id="yds-16" oninput="rebuild()"></td><td><input id="yds-17" oninput="rebuild()"></td><td><input id="yds-18" oninput="rebuild()"></td>
+            <td class="summary-cell" id="yds-in"></td>
+            <td class="summary-cell" id="yds-tot"></td>
+          </tr>
+          <tr>
+            <td class="label-cell">HDCP</td>
+            <td><input id="hcp-1" oninput="rebuild()"></td><td><input id="hcp-2" oninput="rebuild()"></td><td><input id="hcp-3" oninput="rebuild()"></td>
+            <td><input id="hcp-4" oninput="rebuild()"></td><td><input id="hcp-5" oninput="rebuild()"></td><td><input id="hcp-6" oninput="rebuild()"></td>
+            <td><input id="hcp-7" oninput="rebuild()"></td><td><input id="hcp-8" oninput="rebuild()"></td><td><input id="hcp-9" oninput="rebuild()"></td>
+            <td class="summary-cell"></td>
+            <td><input id="hcp-10" oninput="rebuild()"></td><td><input id="hcp-11" oninput="rebuild()"></td><td><input id="hcp-12" oninput="rebuild()"></td>
+            <td><input id="hcp-13" oninput="rebuild()"></td><td><input id="hcp-14" oninput="rebuild()"></td><td><input id="hcp-15" oninput="rebuild()"></td>
+            <td><input id="hcp-16" oninput="rebuild()"></td><td><input id="hcp-17" oninput="rebuild()"></td><td><input id="hcp-18" oninput="rebuild()"></td>
+            <td class="summary-cell"></td>
+            <td class="summary-cell"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PLAYERS -->
+  <div class="section">
+    <div class="section-title">Players</div>
+    <div id="players-list"></div>
+    <div class="btn-row">
+      <button class="btn btn-accent btn-sm" onclick="addPlayer()">+ Add Player</button>
+      <button class="btn btn-danger btn-sm" onclick="removePlayer()">− Remove Last</button>
+    </div>
+  </div>
+
+  <!-- FORMAT TOGGLES -->
+  <div class="section">
+    <div class="section-title">Scoring Formats</div>
+    <div id="formats-list"></div>
+  </div>
+
+  <!-- PRESETS -->
+  <div class="section">
+    <div class="section-title">Presets</div>
+    <div class="btn-row" style="margin-top:0; margin-bottom:8px;">
+      <button class="btn btn-sm" onclick="loadBeaverBrook()">Load Beaver Brook Default</button>
+      <button class="btn btn-sm" onclick="exportPreset()">Export Current → Clipboard</button>
+    </div>
+    <div class="preset-area">
+      <textarea id="preset-json" placeholder="Paste a JSON preset here, then click Import..."></textarea>
+      <button class="btn btn-sm" style="align-self:flex-start;" onclick="importPreset()">Import</button>
+    </div>
+  </div>
+
+  <!-- PRINT BUTTON -->
+  <div class="print-bar">
+    <button class="btn btn-gold" style="font-size:1rem; padding: 12px 36px;" onclick="window.print()">
+      🖨️&ensp;Print Scorecard
+    </button>
+  </div>
+
+  <!-- LIVE PREVIEW -->
+  <div class="preview-wrapper">
+    <div class="preview-label">Live Preview (exact print output)</div>
+    <div id="scorecard-preview"></div>
+  </div>
+</div>
+
+<!-- ===================== JAVASCRIPT ===================== -->
+<script>
+/* ====== STATE ====== */
+const BEAVER_BROOK = {
+  course_name: "BEAVER BROOK COUNTRY CLUB",
+  tee_color: "Black Tees",
+  group_name: "EGT",
+  players: [
+    { full_name: "Gadget", abbreviation: "G" },
+    { full_name: "Straight T", abbreviation: "ST" },
+    { full_name: "Bird", abbreviation: "B" },
+    { full_name: "Iron Mike", abbreviation: "IM" }
+  ],
+  holes: [
+    { par:5, yards:495, hdcp:13 }, { par:5, yards:474, hdcp:11 }, { par:4, yards:371, hdcp:5 },
+    { par:3, yards:159, hdcp:17 }, { par:4, yards:392, hdcp:7 },  { par:4, yards:396, hdcp:3 },
+    { par:3, yards:172, hdcp:15 }, { par:4, yards:396, hdcp:1 },  { par:4, yards:302, hdcp:9 },
+    { par:4, yards:358, hdcp:10 }, { par:4, yards:374, hdcp:6 },  { par:3, yards:128, hdcp:18 },
+    { par:4, yards:365, hdcp:4 },  { par:3, yards:146, hdcp:16 }, { par:4, yards:433, hdcp:2 },
+    { par:4, yards:414, hdcp:8 },  { par:5, yards:504, hdcp:12 }, { par:5, yards:476, hdcp:14 }
+  ],
+  formats: [
+    { id:"stroke", label:"Stroke Play", enabled:true },
+    { id:"ptm", label:"PTM (Pass The Money)", enabled:true },
+    { id:"wolf", label:"Wolf", enabled:true },
+    { id:"par3", label:"Par 3 Challenge", enabled:true }
+  ]
+};
+
+let state = JSON.parse(JSON.stringify(BEAVER_BROOK));
+
+/* ====== DASHBOARD RENDERING ====== */
+function loadStateToUI() {
+  document.getElementById('inp-course').value = state.course_name;
+  document.getElementById('inp-tee').value = state.tee_color;
+  document.getElementById('inp-group').value = state.group_name;
+  for (let i = 0; i < 18; i++) {
+    const h = state.holes[i];
+    document.getElementById('par-'+(i+1)).value = h.par;
+    document.getElementById('yds-'+(i+1)).value = h.yards;
+    document.getElementById('hcp-'+(i+1)).value = h.hdcp;
+  }
+  renderPlayers();
+  renderFormats();
+  rebuild();
+}
+
+function readUIToState() {
+  state.course_name = document.getElementById('inp-course').value || 'COURSE NAME';
+  state.tee_color = document.getElementById('inp-tee').value || 'Tees';
+  state.group_name = document.getElementById('inp-group').value || '';
+  for (let i = 0; i < 18; i++) {
+    state.holes[i].par = parseInt(document.getElementById('par-'+(i+1)).value) || 4;
+    state.holes[i].yards = parseInt(document.getElementById('yds-'+(i+1)).value) || 0;
+    state.holes[i].hdcp = parseInt(document.getElementById('hcp-'+(i+1)).value) || 0;
+  }
+  // players + formats already in state via their own handlers
+}
+
+function renderPlayers() {
+  const c = document.getElementById('players-list');
+  c.innerHTML = '';
+  state.players.forEach((p, i) => {
+    const d = document.createElement('div');
+    d.className = 'player-row';
+    d.innerHTML = `
+      <span class="player-num">${i+1}</span>
+      <input class="name-input" value="${esc(p.full_name)}" placeholder="Display Name" oninput="state.players[${i}].full_name=this.value;rebuild()">
+      <input class="abbr-input" value="${esc(p.abbreviation)}" placeholder="ABR" maxlength="3" oninput="state.players[${i}].abbreviation=this.value.toUpperCase();rebuild()">
+      <div class="move-btns">
+        <button title="Move up" onclick="movePlayer(${i},-1)">▲</button>
+        <button title="Move down" onclick="movePlayer(${i},1)">▼</button>
+      </div>
+    `;
+    c.appendChild(d);
+  });
+}
+
+function addPlayer() {
+  if (state.players.length >= 6) return;
+  state.players.push({ full_name: '', abbreviation: '' });
+  renderPlayers();
+  rebuild();
+}
+function removePlayer() {
+  if (state.players.length <= 2) return;
+  state.players.pop();
+  renderPlayers();
+  rebuild();
+}
+function movePlayer(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= state.players.length) return;
+  [state.players[i], state.players[j]] = [state.players[j], state.players[i]];
+  renderPlayers();
+  rebuild();
+}
+
+function renderFormats() {
+  const c = document.getElementById('formats-list');
+  c.innerHTML = '';
+  state.formats.forEach((f, i) => {
+    const d = document.createElement('div');
+    d.className = 'format-toggle' + (f.enabled ? ' active' : '');
+    d.innerHTML = `
+      <input type="checkbox" class="ft-check" ${f.enabled?'checked':''} onchange="state.formats[${i}].enabled=this.checked;renderFormats();rebuild()">
+      <span class="ft-label">${esc(f.label)}</span>
+      <div class="ft-arrows">
+        <button title="Move up" onclick="moveFmt(${i},-1)">▲</button>
+        <button title="Move down" onclick="moveFmt(${i},1)">▼</button>
+      </div>
+    `;
+    c.appendChild(d);
+  });
+}
+function moveFmt(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= state.formats.length) return;
+  [state.formats[i], state.formats[j]] = [state.formats[j], state.formats[i]];
+  renderFormats();
+  rebuild();
+}
+
+function esc(s) { return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+/* ====== SUMMARIES ====== */
+function calcSummaries() {
+  let po=0,pi=0,yo=0,yi=0;
+  for(let i=0;i<9;i++){po+=state.holes[i].par;yo+=state.holes[i].yards;}
+  for(let i=9;i<18;i++){pi+=state.holes[i].par;yi+=state.holes[i].yards;}
+  document.getElementById('par-out').textContent=po;
+  document.getElementById('par-in').textContent=pi;
+  document.getElementById('par-tot').textContent=po+pi;
+  document.getElementById('yds-out').textContent=yo;
+  document.getElementById('yds-in').textContent=yi;
+  document.getElementById('yds-tot').textContent=yo+yi;
+  return {po,pi,yo,yi};
+}
+
+/* ====== SCORECARD BUILDER ====== */
+function rebuild() {
+  readUIToState();
+  const s = calcSummaries();
+  const el = document.getElementById('scorecard-preview');
+  const enabledFmts = state.formats.filter(f => f.enabled);
+  const fmtList = enabledFmts.map(f => f.label).join(' | ');
+  const totalPar = s.po + s.pi;
+  const totalYds = s.yo + s.yi;
+
+  let html = '';
+
+  // HEADER
+  html += `<div class="sc-header">
+    <span class="sc-header-left">${esc(state.tee_color)} &middot; Par ${totalPar} &middot; ${totalYds.toLocaleString()} yds</span>
+    <span class="sc-header-center">${esc(state.course_name)} &middot; OFFICIAL SCORECARD</span>
+    <span class="sc-header-right">Formats: ${esc(fmtList)}</span>
+  </div>`;
+
+  // FORMATS
+  let fmtNum = 0;
+  enabledFmts.forEach(f => {
+    fmtNum++;
+    if (f.id === 'stroke') html += buildStroke(fmtNum);
+    else if (f.id === 'ptm') html += buildPTM(fmtNum);
+    else if (f.id === 'wolf') html += buildWolf(fmtNum);
+    else if (f.id === 'par3') html += buildPar3(fmtNum);
+  });
+
+  // Spacer pushes footer to bottom
+  html += '<div class="sc-spacer"></div>';
+
+  // FOOTER
+  html += `<div class="sc-footer">
+    <div class="sc-footer-left">
+      <span>Date: ______________</span>
+      <span>Weather: ______________</span>
+      <span>Attested by: ______________</span>
+    </div>
+    <div class="sc-footer-right">PTM: OB=Out of Bounds &ensp;HAZ=Hazard &ensp;3P=3-Putt &ensp;DBL+=Double Bogey or Worse &ensp;BIRD=Birdie by non-holder</div>
+  </div>`;
+
+  el.innerHTML = html;
+
+  // Dynamic row height adjustment for print fill
+  adjustRowHeights(enabledFmts);
+}
+
+/* --- Format 1: Stroke Play --- */
+function buildStroke(num) {
+  const h = state.holes;
+  let t = `<div class="sc-format" data-fmt="stroke">`;
+  t += `<div class="sc-format-header"><span>FORMAT ${num} — STROKE PLAY</span></div>`;
+  t += `<table class="sc-table"><colgroup><col style="width:62px">`;
+  for(let i=0;i<9;i++) t+=`<col>`;
+  t+=`<col style="width:30px">`; // OUT
+  for(let i=0;i<9;i++) t+=`<col>`;
+  t+=`<col style="width:30px"><col style="width:30px">`; // IN, TOT
+  t+=`</colgroup>`;
+
+  // Header row
+  t+=`<tr class="row-header"><th class="col-label">HOLE</th>`;
+  for(let i=1;i<=9;i++) t+=`<th>${i}</th>`;
+  t+=`<th class="col-summary">OUT</th>`;
+  for(let i=10;i<=18;i++) t+=`<th>${i}</th>`;
+  t+=`<th class="col-summary">IN</th><th class="col-summary">TOT</th></tr>`;
+
+  // PAR row
+  let po=0,pi=0;
+  for(let i=0;i<9;i++) po+=h[i].par;
+  for(let i=9;i<18;i++) pi+=h[i].par;
+  t+=`<tr class="row-par"><td class="col-label">PAR</td>`;
+  for(let i=0;i<9;i++) t+=`<td>${h[i].par}</td>`;
+  t+=`<td class="col-summary">${po}</td>`;
+  for(let i=9;i<18;i++) t+=`<td>${h[i].par}</td>`;
+  t+=`<td class="col-summary">${pi}</td><td class="col-summary">${po+pi}</td></tr>`;
+
+  // YARDS row
+  let yo=0,yi=0;
+  for(let i=0;i<9;i++) yo+=h[i].yards;
+  for(let i=9;i<18;i++) yi+=h[i].yards;
+  t+=`<tr class="row-yards"><td class="col-label">YARDS</td>`;
+  for(let i=0;i<9;i++) t+=`<td>${h[i].yards}</td>`;
+  t+=`<td class="col-summary">${yo}</td>`;
+  for(let i=9;i<18;i++) t+=`<td>${h[i].yards}</td>`;
+  t+=`<td class="col-summary">${yi}</td><td class="col-summary">${yo+yi}</td></tr>`;
+
+  // HDCP row
+  t+=`<tr class="row-hdcp"><td class="col-label">HDCP</td>`;
+  for(let i=0;i<9;i++) t+=`<td>${h[i].hdcp}</td>`;
+  t+=`<td class="col-summary"></td>`;
+  for(let i=9;i<18;i++) t+=`<td>${h[i].hdcp}</td>`;
+  t+=`<td class="col-summary"></td><td class="col-summary"></td></tr>`;
+
+  // Player rows
+  state.players.forEach(p => {
+    t+=`<tr class="row-player"><td class="col-label">${esc(p.full_name)}</td>`;
+    for(let i=0;i<9;i++) t+=`<td></td>`;
+    t+=`<td class="col-summary"></td>`;
+    for(let i=0;i<9;i++) t+=`<td></td>`;
+    t+=`<td class="col-summary"></td><td class="col-summary"></td></tr>`;
+  });
+
+  t+=`</table></div>`;
+  return t;
+}
+
+/* --- Format 2: PTM --- */
+function buildPTM(num) {
+  const h = state.holes;
+  let t = `<div class="sc-format" data-fmt="ptm">`;
+  t += `<div class="sc-format-header">
+    <span>FORMAT ${num} — PTM (PASS THE MONEY)</span>
+    <span class="sc-rule">Circle the money holder each hole &middot; Holder at 9 keeps half &middot; Holder at 18 keeps half</span>
+  </div>`;
+
+  // Columns: PLAYER | 1-9 | 9★ | 10-18 | 18★ | WIN$
+  t += `<table class="sc-table"><colgroup><col style="width:62px">`;
+  for(let i=0;i<9;i++) t+=`<col>`;
+  t+=`<col style="width:26px">`; // 9★
+  for(let i=0;i<9;i++) t+=`<col>`;
+  t+=`<col style="width:26px"><col style="width:34px">`; // 18★, WIN$
+  t+=`</colgroup>`;
+
+  // Header
+  t+=`<tr class="row-header"><th class="col-label">PLAYER</th>`;
+  for(let i=1;i<=9;i++) t+=`<th>${i}</th>`;
+  t+=`<th class="col-summary">9★</th>`;
+  for(let i=10;i<=18;i++) t+=`<th>${i}</th>`;
+  t+=`<th class="col-summary">18★</th><th class="col-summary">WIN$</th></tr>`;
+
+  // Player rows with abbreviations
+  state.players.forEach(p => {
+    const ab = esc(p.abbreviation || '?');
+    t+=`<tr class="row-ptm"><td class="col-label">${esc(p.full_name)}</td>`;
+    for(let i=0;i<9;i++) t+=`<td>${ab}</td>`;
+    t+=`<td class="col-summary">${ab}</td>`;
+    for(let i=0;i<9;i++) t+=`<td>${ab}</td>`;
+    t+=`<td class="col-summary">${ab}</td><td class="col-summary"></td></tr>`;
+  });
+
+  t+=`</table>`;
+
+  // PTM footer row
+  t+=`<div class="sc-ptm-footer">
+    <span>BUNDLE HOLDER AT HOLE 9: ________________</span>
+    <span>BUNDLE HOLDER AT HOLE 18: ________________</span>
+    <span>TRANSFERS THIS ROUND: _____</span>
+  </div>`;
+
+  t+=`</div>`;
+  return t;
+}
+
+/* --- Format 3: Wolf --- */
+function buildWolf(num) {
+  const players = state.players;
+  const n = players.length;
+  if (n < 2) return '';
+
+  // Wolf rotation: cycle through players for 18 holes
+  const wolfOrder = [];
+  for (let i=0;i<18;i++) wolfOrder.push(i % n);
+
+  const rotation = players.map(p => esc(p.full_name)).join(' &middot; ');
+
+  let t = `<div class="sc-format" data-fmt="wolf">`;
+  t += `<div class="sc-format-header">
+    <span>FORMAT ${num} — WOLF</span>
+    <span class="sc-rule">Rotation: ${rotation} (repeat) | Circle partner | Underline Lone Wolf</span>
+  </div>`;
+
+  // Columns: WOLF | 1-9 | OUT | 10-18 | IN | PTS
+  t += `<table class="sc-table"><colgroup><col style="width:62px">`;
+  for(let i=0;i<9;i++) t+=`<col>`;
+  t+=`<col style="width:28px">`; // OUT
+  for(let i=0;i<9;i++) t+=`<col>`;
+  t+=`<col style="width:28px"><col style="width:28px">`; // IN, PTS
+  t+=`</colgroup>`;
+
+  // Header
+  t+=`<tr class="row-header"><th class="col-label">WOLF</th>`;
+  for(let i=1;i<=9;i++) t+=`<th>${i}</th>`;
+  t+=`<th class="col-summary">OUT</th>`;
+  for(let i=10;i<=18;i++) t+=`<th>${i}</th>`;
+  t+=`<th class="col-summary">IN</th><th class="col-summary">PTS</th></tr>`;
+
+  // IS WOLF row
+  t+=`<tr class="row-wolf-is"><td class="col-label" style="font-size:6pt">IS WOLF</td>`;
+  for(let i=0;i<9;i++) t+=`<td style="color:#C0392B;font-weight:700">${esc(players[wolfOrder[i]].abbreviation)}</td>`;
+  t+=`<td class="col-summary"></td>`;
+  for(let i=9;i<18;i++) t+=`<td style="color:#C0392B;font-weight:700">${esc(players[wolfOrder[i]].abbreviation)}</td>`;
+  t+=`<td class="col-summary"></td><td class="col-summary"></td></tr>`;
+
+  // PARTNERS row
+  t+=`<tr class="row-wolf-partners"><td class="col-label">PARTNERS (circle)</td>`;
+  for(let i=0;i<9;i++) {
+    const others = players.filter((_,idx)=>idx!==wolfOrder[i]).map(p=>esc(p.abbreviation)).join(' ');
+    t+=`<td>${others}</td>`;
+  }
+  t+=`<td class="col-summary"></td>`;
+  for(let i=9;i<18;i++) {
+    const others = players.filter((_,idx)=>idx!==wolfOrder[i]).map(p=>esc(p.abbreviation)).join(' ');
+    t+=`<td>${others}</td>`;
+  }
+  t+=`<td class="col-summary"></td><td class="col-summary"></td></tr>`;
+
+  // Blank rows: HOLE WIN + per-player PTS
+  t+=`<tr class="row-wolf-blank"><td class="col-label">HOLE WIN</td>`;
+  for(let c=0;c<21;c++) t+=`<td${c===9||c>=19?' class="col-summary"':''}></td>`;
+  t+=`</tr>`;
+
+  players.forEach(p => {
+    t+=`<tr class="row-wolf-blank"><td class="col-label" style="font-size:6pt">${esc(p.full_name)} PTS</td>`;
+    for(let c=0;c<21;c++) t+=`<td${c===9||c>=19?' class="col-summary"':''}></td>`;
+    t+=`</tr>`;
+  });
+
+  t+=`</table>`;
+  t+=`<div class="sc-wolf-legend">Wolf+Partner Win: 2 pts each &ensp;|&ensp; Opponents Beat Wolf Team: 3 pts each &ensp;|&ensp; Lone Wolf Wins: 4 pts &ensp;|&ensp; Opponents Beat Lone Wolf: 1 pt each &ensp;|&ensp; Blind Wolf Wins: 8 pts</div>`;
+  t+=`</div>`;
+  return t;
+}
+
+/* --- Format 4: Par 3 Challenge --- */
+function buildPar3(num) {
+  const h = state.holes;
+  // Auto-detect par 3 holes
+  const par3s = [];
+  h.forEach((hole,i) => { if(hole.par === 3) par3s.push(i); });
+  if (par3s.length === 0) {
+    return `<div class="sc-format" data-fmt="par3">
+      <div class="sc-format-header"><span>FORMAT ${num} — PAR 3 CHALLENGE</span>
+      <span class="sc-rule">No par-3 holes detected</span></div></div>`;
+  }
+
+  const holeNums = par3s.map(i => i+1).join(', ');
+
+  let t = `<div class="sc-format" data-fmt="par3">`;
+  t += `<div class="sc-format-header">
+    <span>FORMAT ${num} — PAR 3 CHALLENGE &middot; Holes: ${holeNums}</span>
+    <span class="sc-rule">Score vs. Par | Tiebreaker: Distance to Pin (ft)</span>
+  </div>`;
+
+  // Columns: PLAYER | (Hx (yydy) + PIN DIST) per par3 | vs PAR | TOT DIST
+  const colCount = 1 + par3s.length*2 + 2;
+  t += `<table class="sc-table par3-table">`;
+
+  // Header
+  t += `<tr class="row-header"><th class="col-label">PLAYER</th>`;
+  par3s.forEach(i => {
+    t += `<th>H${i+1} (${h[i].yards}y)</th><th>PIN DIST</th>`;
+  });
+  t += `<th class="col-summary">vs PAR</th><th class="col-summary">TOT DIST</th></tr>`;
+
+  // PAR row
+  t += `<tr class="row-par"><td class="col-label">PAR</td>`;
+  par3s.forEach(() => {
+    t += `<td>3</td><td>—</td>`;
+  });
+  t += `<td class="col-summary">E</td><td class="col-summary">—</td></tr>`;
+
+  // Player rows
+  state.players.forEach(p => {
+    t += `<tr class="row-player"><td class="col-label">${esc(p.full_name)}</td>`;
+    par3s.forEach(() => { t += `<td></td><td></td>`; });
+    t += `<td class="col-summary"></td><td class="col-summary"></td></tr>`;
+  });
+
+  // GROUP TOTAL row
+  t += `<tr class="row-player"><td class="col-label" style="font-weight:800">GROUP TOTAL</td>`;
+  par3s.forEach(() => { t += `<td></td><td></td>`; });
+  t += `<td class="col-summary"></td><td class="col-summary"></td></tr>`;
+
+  t += `</table></div>`;
+  return t;
+}
+
+/* ====== DYNAMIC ROW HEIGHT ADJUSTMENT ====== */
+function adjustRowHeights(enabledFmts) {
+  const preview = document.getElementById('scorecard-preview');
+  // Total printable height in px at screen scale (8.5in - header - footer - margins)
+  // We let flexbox + sc-spacer handle vertical fill naturally.
+  // But we also scale row heights when fewer formats are active.
+
+  const fmtCount = enabledFmts.length;
+  if (fmtCount === 0) return;
+
+  // Calculate bonus padding per player row based on how many formats are off
+  // 4 formats = tight (base). Fewer = more room.
+  const missingFormats = 4 - fmtCount;
+  const bonusPad = missingFormats * 1.5; // extra px per row per missing format
+
+  const playerRows = preview.querySelectorAll('.row-player td, .row-wolf-blank td, .row-ptm td');
+  playerRows.forEach(td => {
+    const basePad = 1.5;
+    td.style.paddingTop = (basePad + bonusPad) + 'px';
+    td.style.paddingBottom = (basePad + bonusPad) + 'px';
+  });
+
+  // Also increase format header spacing
+  const fmtHeaders = preview.querySelectorAll('.sc-format-header');
+  fmtHeaders.forEach(fh => {
+    fh.style.marginTop = (3 + missingFormats * 2) + 'px';
+    fh.style.paddingTop = (2 + missingFormats * 1) + 'px';
+    fh.style.paddingBottom = (2 + missingFormats * 1) + 'px';
+  });
+
+  // Scale player row heights more aggressively
+  const pRows = preview.querySelectorAll('tr.row-player, tr.row-wolf-blank, tr.row-ptm');
+  pRows.forEach(tr => {
+    const baseH = 14;
+    tr.style.height = (baseH + missingFormats * 3) + 'px';
+    const tds = tr.querySelectorAll('td');
+    tds.forEach(td => { td.style.height = (baseH + missingFormats * 3) + 'px'; });
+  });
+}
+
+/* ====== PRESET MANAGEMENT ====== */
+function loadBeaverBrook() {
+  state = JSON.parse(JSON.stringify(BEAVER_BROOK));
+  loadStateToUI();
+}
+
+function exportPreset() {
+  readUIToState();
+  const json = JSON.stringify(state, null, 2);
+  navigator.clipboard.writeText(json).then(() => {
+    alert('Preset copied to clipboard!');
+  }).catch(() => {
+    document.getElementById('preset-json').value = json;
+  });
+}
+
+function importPreset() {
+  const raw = document.getElementById('preset-json').value.trim();
+  if (!raw) return alert('Paste a JSON preset first.');
+  try {
+    const p = JSON.parse(raw);
+    if (!p.holes || !p.players || !p.formats) throw new Error('Missing required fields');
+    state = p;
+    loadStateToUI();
+    document.getElementById('preset-json').value = '';
+  } catch(e) {
+    alert('Invalid preset JSON: ' + e.message);
+  }
+}
+
+/* ====== INIT ====== */
+window.addEventListener('DOMContentLoaded', () => {
+  loadBeaverBrook();
+});
+</script>
+</body>
+</html>
