@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EGT Scorecard Generator</title>
+
+<!-- Tesseract.js for client-side OCR -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
+
 <style>
 /* ========== CSS VARIABLES ========== */
 :root {
@@ -126,6 +130,67 @@ body {
   border-color: var(--ui-accent);
 }
 .form-group input::placeholder { color: var(--ui-text-muted); opacity: 0.6; }
+
+/* --- Quick Fill --- */
+.qf-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 720px) {
+  .qf-grid { grid-template-columns: 1fr; }
+}
+.qf-card {
+  background: var(--ui-surface2);
+  border: 1px dashed var(--ui-border);
+  border-radius: var(--ui-radius);
+  padding: 14px;
+}
+.qf-card h4 {
+  font-size: 0.78rem;
+  color: var(--ui-gold);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.qf-card p {
+  font-size: 0.72rem;
+  color: var(--ui-text-muted);
+  margin-bottom: 10px;
+}
+.qf-card input[type=text], .qf-card input[list] {
+  width: 100%;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: 4px;
+  padding: 7px 10px;
+  color: var(--ui-text);
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.qf-card input:focus { outline: none; border-color: var(--ui-accent); }
+.qf-status {
+  font-size: 0.72rem;
+  color: var(--ui-accent);
+  margin-top: 8px;
+  min-height: 16px;
+}
+.qf-status.err { color: var(--accent-red); }
+.qf-progress {
+  height: 3px;
+  background: var(--ui-border);
+  border-radius: 2px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.qf-progress-fill {
+  height: 100%;
+  background: var(--ui-accent);
+  width: 0%;
+  transition: width 0.2s;
+}
+.hidden { display: none !important; }
 
 /* --- Hole Data Grid --- */
 .hole-grid {
@@ -256,6 +321,7 @@ body {
 .btn-sm { padding: 4px 10px; font-size: 0.72rem; }
 .btn-danger { color: var(--accent-red); }
 .btn-danger:hover { background: rgba(192,57,43,0.15); }
+.btn-full { width: 100%; justify-content: center; }
 .btn-row {
   display: flex;
   gap: 8px;
@@ -330,6 +396,139 @@ body {
   padding: 20px 0;
 }
 
+/* --- MODAL --- */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  backdrop-filter: blur(3px);
+}
+.modal-content {
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+  max-width: 720px;
+  width: 100%;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.modal-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--ui-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+.modal-header h2 {
+  color: var(--ui-gold);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--ui-text-muted);
+  font-size: 1.6rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+.modal-close:hover { color: var(--ui-text); }
+.modal-body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+.modal-body p.help {
+  font-size: 0.8rem;
+  color: var(--ui-text-muted);
+  margin-bottom: 12px;
+}
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--ui-border);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+/* OCR preview table (pivoted: rows=holes, cols=par/yards/hdcp) */
+.ocr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.ocr-table th {
+  background: var(--ui-surface2);
+  color: var(--ui-accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 8px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid var(--ui-border);
+}
+.ocr-table td {
+  padding: 4px;
+  border: 1px solid var(--ui-border);
+  text-align: center;
+}
+.ocr-table td.hole-num {
+  background: var(--ui-surface2);
+  color: var(--ui-gold);
+  font-weight: 700;
+  width: 48px;
+}
+.ocr-table input {
+  width: 100%;
+  background: var(--ui-surface2);
+  border: 1px solid var(--ui-border);
+  border-radius: 3px;
+  padding: 5px 6px;
+  color: var(--ui-text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  text-align: center;
+}
+.ocr-table input:focus {
+  outline: none;
+  border-color: var(--ui-accent);
+}
+.ocr-table input.missing {
+  background: rgba(192,57,43,0.12);
+  border-color: var(--accent-red);
+}
+
+.ocr-raw-toggle {
+  margin-top: 14px;
+  font-size: 0.72rem;
+  color: var(--ui-text-muted);
+  cursor: pointer;
+}
+.ocr-raw {
+  background: var(--ui-surface2);
+  border: 1px solid var(--ui-border);
+  border-radius: 4px;
+  padding: 8px;
+  margin-top: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.7rem;
+  color: var(--ui-text-muted);
+  white-space: pre-wrap;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
 /* ========== SCORECARD (PRINT TARGET) ========== */
 #scorecard-preview {
   background: white;
@@ -345,7 +544,6 @@ body {
   position: relative;
 }
 
-/* --- Header --- */
 .sc-header {
   background: var(--navy);
   color: var(--white);
@@ -360,10 +558,7 @@ body {
 .sc-header-center { font-size: 13pt; font-weight: 700; letter-spacing: 1px; text-align: center; }
 .sc-header-right { font-size: 6.5pt; opacity: 0.85; text-align: right; }
 
-/* --- Format Section --- */
-.sc-format {
-  flex-shrink: 0;
-}
+.sc-format { flex-shrink: 0; }
 .sc-format-header {
   background: var(--navy);
   color: var(--gold);
@@ -382,7 +577,6 @@ body {
   opacity: 0.85;
 }
 
-/* --- Tables --- */
 .sc-table {
   width: 100%;
   border-collapse: collapse;
@@ -424,20 +618,14 @@ body {
   font-weight: 700;
   color: #333;
 }
-.sc-table tr.row-player td {
-  height: 14px;
-}
-.sc-table tr.row-player td.col-label {
-  font-weight: 700;
-  font-size: 7pt;
-}
+.sc-table tr.row-player td { height: 14px; }
+.sc-table tr.row-player td.col-label { font-weight: 700; font-size: 7pt; }
 .sc-table tr.row-player:nth-child(even) td { background: var(--gray-alt); }
 .sc-table tr.row-player:nth-child(even) td.col-summary { background: #E2E2E2; }
 .sc-table tr.row-ptm td { font-size: 6.5pt; color: #555; }
 .sc-table tr.row-ptm td.col-label { font-weight: 700; color: var(--black); font-size: 7pt; }
 .sc-table tr.row-ptm:nth-child(even) td { background: var(--gray-alt); }
 
-/* Wolf specific */
 .sc-table tr.row-wolf-is td { font-weight: 700; font-size: 7pt; }
 .sc-table tr.row-wolf-partners td { font-size: 5.5pt; color: #555; }
 .sc-table tr.row-wolf-partners td.col-label { font-size: 6pt; font-weight: 700; color: #333; }
@@ -445,12 +633,10 @@ body {
 .sc-table tr.row-wolf-blank td.col-label { font-weight: 600; font-size: 6.5pt; }
 .sc-table tr.row-wolf-blank:nth-child(even) td { background: var(--gray-alt); }
 
-/* Par3 specific */
 .sc-table.par3-table { table-layout: auto; }
 .sc-table.par3-table th, .sc-table.par3-table td { font-size: 6.5pt; padding: 1.5px 4px; }
 .sc-table.par3-table tr.row-player td { height: 13px; }
 
-/* --- PTM extras --- */
 .sc-ptm-footer {
   font-size: 6pt;
   display: flex;
@@ -462,7 +648,6 @@ body {
 }
 .sc-ptm-footer span { color: #333; }
 
-/* --- Wolf scoring legend --- */
 .sc-wolf-legend {
   font-size: 5.5pt;
   text-align: center;
@@ -470,7 +655,6 @@ body {
   color: #444;
 }
 
-/* --- Footer --- */
 .sc-footer {
   display: flex;
   justify-content: space-between;
@@ -486,17 +670,13 @@ body {
 .sc-footer-left span { border-bottom: 1px solid #999; padding-bottom: 1px; min-width: 90px; display: inline-block; }
 .sc-footer-right { font-size: 5.5pt; color: #555; text-align: right; max-width: 55%; }
 
-/* Spacer to push formats apart */
 .sc-spacer { flex: 1; }
 
-/* ========== PRINT STYLES ========== */
 @media print {
-  @page {
-    size: 11in 8.5in;
-    margin: 0.2in;
-  }
+  @page { size: 11in 8.5in; margin: 0.2in; }
   body { background: white; }
   .dashboard { display: none !important; }
+  .modal { display: none !important; }
   #scorecard-preview {
     width: 100% !important;
     height: 100% !important;
@@ -520,7 +700,6 @@ body {
   }
 }
 
-/* ========== SCREEN PREVIEW WRAPPER ========== */
 .preview-wrapper {
   background: #374151;
   border-radius: var(--ui-radius);
@@ -544,6 +723,49 @@ body {
   <div class="dash-header">
     <h1>EGT Scorecard Generator</h1>
     <p>Dynamic scorecard builder &middot; Exact print replica &middot; Any course, any crew</p>
+  </div>
+
+  <!-- QUICK FILL (NEW) -->
+  <div class="section">
+    <div class="section-title">Quick Fill (Optional)</div>
+    <div class="qf-grid">
+
+      <!-- NJ Course Dropdown -->
+      <div class="qf-card">
+        <h4>🏌️ Select NJ Course</h4>
+        <p>Pick a course to auto-fill par, yards &amp; handicap for all 18 holes. Type to search.</p>
+        <input
+          type="text"
+          id="nj-course-input"
+          list="nj-course-list"
+          placeholder="Start typing a course name..."
+          autocomplete="off"
+          oninput="handleNjCourseInput(this.value)"
+          onchange="handleNjCourseInput(this.value, true)"
+        >
+        <datalist id="nj-course-list"></datalist>
+        <div id="nj-status" class="qf-status"></div>
+        <!-- Fallback: load JSON manually when fetch fails (e.g. file:// origin) -->
+        <div id="nj-manual-load" class="hidden" style="margin-top:8px;">
+          <label class="btn btn-sm btn-full" style="cursor:pointer;">
+            📁 Load nj_courses.json manually
+            <input type="file" accept=".json,application/json" style="display:none" onchange="handleManualCoursesUpload(event)">
+          </label>
+        </div>
+      </div>
+
+      <!-- Scorecard OCR Upload -->
+      <div class="qf-card">
+        <h4>📸 Upload Scorecard Photo</h4>
+        <p>Snap or upload a scorecard image. OCR extracts par, yards &amp; handicap — you confirm before applying.</p>
+        <label class="btn btn-accent btn-full" style="cursor:pointer;">
+          📷 Choose Image / Take Photo
+          <input type="file" id="ocr-file-input" accept="image/*" style="display:none" onchange="handleScorecardUpload(event)">
+        </label>
+        <div id="ocr-status" class="qf-status"></div>
+        <div class="qf-progress"><div id="ocr-progress-fill" class="qf-progress-fill"></div></div>
+      </div>
+    </div>
   </div>
 
   <!-- COURSE SETUP -->
@@ -665,9 +887,31 @@ body {
   </div>
 </div>
 
+<!-- ===================== OCR CONFIRMATION MODAL ===================== -->
+<div id="ocr-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Confirm Extracted Scorecard Data</h2>
+      <button class="modal-close" onclick="closeOcrModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="help">Review the extracted values. Red cells weren't detected — fill them in manually. Click <b>Apply</b> to populate the hole data.</p>
+      <div id="ocr-preview-grid"></div>
+      <div class="ocr-raw-toggle" onclick="toggleRawOcr()">▸ Show raw OCR text</div>
+      <div id="ocr-raw" class="ocr-raw hidden"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeOcrModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="applyOcrData()">Apply to Hole Data</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===================== JAVASCRIPT ===================== -->
 <script>
-/* ====== STATE ====== */
+/* ==================================================================
+   STATE
+   ================================================================== */
 const BEAVER_BROOK = {
   course_name: "BEAVER BROOK COUNTRY CLUB",
   tee_color: "Black Tees",
@@ -696,7 +940,14 @@ const BEAVER_BROOK = {
 
 let state = JSON.parse(JSON.stringify(BEAVER_BROOK));
 
-/* ====== DASHBOARD RENDERING ====== */
+// NJ courses — populated from nj_courses.json on load
+let njCourses = [];
+let lastOcrData = null; // cached for modal
+let lastOcrRawText = '';
+
+/* ==================================================================
+   DASHBOARD RENDERING  (existing)
+   ================================================================== */
 function loadStateToUI() {
   document.getElementById('inp-course').value = state.course_name;
   document.getElementById('inp-tee').value = state.tee_color;
@@ -721,7 +972,6 @@ function readUIToState() {
     state.holes[i].yards = parseInt(document.getElementById('yds-'+(i+1)).value) || 0;
     state.holes[i].hdcp = parseInt(document.getElementById('hcp-'+(i+1)).value) || 0;
   }
-  // players + formats already in state via their own handlers
 }
 
 function renderPlayers() {
@@ -790,7 +1040,9 @@ function moveFmt(i, dir) {
 
 function esc(s) { return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
-/* ====== SUMMARIES ====== */
+/* ==================================================================
+   SUMMARIES + REBUILD  (existing, unchanged)
+   ================================================================== */
 function calcSummaries() {
   let po=0,pi=0,yo=0,yi=0;
   for(let i=0;i<9;i++){po+=state.holes[i].par;yo+=state.holes[i].yards;}
@@ -804,7 +1056,6 @@ function calcSummaries() {
   return {po,pi,yo,yi};
 }
 
-/* ====== SCORECARD BUILDER ====== */
 function rebuild() {
   readUIToState();
   const s = calcSummaries();
@@ -815,15 +1066,12 @@ function rebuild() {
   const totalYds = s.yo + s.yi;
 
   let html = '';
-
-  // HEADER
   html += `<div class="sc-header">
     <span class="sc-header-left">${esc(state.tee_color)} &middot; Par ${totalPar} &middot; ${totalYds.toLocaleString()} yds</span>
     <span class="sc-header-center">${esc(state.course_name)} &middot; OFFICIAL SCORECARD</span>
     <span class="sc-header-right">Formats: ${esc(fmtList)}</span>
   </div>`;
 
-  // FORMATS
   let fmtNum = 0;
   enabledFmts.forEach(f => {
     fmtNum++;
@@ -833,10 +1081,7 @@ function rebuild() {
     else if (f.id === 'par3') html += buildPar3(fmtNum);
   });
 
-  // Spacer pushes footer to bottom
   html += '<div class="sc-spacer"></div>';
-
-  // FOOTER
   html += `<div class="sc-footer">
     <div class="sc-footer-left">
       <span>Date: ______________</span>
@@ -847,31 +1092,23 @@ function rebuild() {
   </div>`;
 
   el.innerHTML = html;
-
-  // Dynamic row height adjustment for print fill
   adjustRowHeights(enabledFmts);
 }
 
-/* --- Format 1: Stroke Play --- */
 function buildStroke(num) {
   const h = state.holes;
   let t = `<div class="sc-format" data-fmt="stroke">`;
   t += `<div class="sc-format-header"><span>FORMAT ${num} — STROKE PLAY</span></div>`;
   t += `<table class="sc-table"><colgroup><col style="width:62px">`;
   for(let i=0;i<9;i++) t+=`<col>`;
-  t+=`<col style="width:30px">`; // OUT
+  t+=`<col style="width:30px">`;
   for(let i=0;i<9;i++) t+=`<col>`;
-  t+=`<col style="width:30px"><col style="width:30px">`; // IN, TOT
-  t+=`</colgroup>`;
-
-  // Header row
+  t+=`<col style="width:30px"><col style="width:30px"></colgroup>`;
   t+=`<tr class="row-header"><th class="col-label">HOLE</th>`;
   for(let i=1;i<=9;i++) t+=`<th>${i}</th>`;
   t+=`<th class="col-summary">OUT</th>`;
   for(let i=10;i<=18;i++) t+=`<th>${i}</th>`;
   t+=`<th class="col-summary">IN</th><th class="col-summary">TOT</th></tr>`;
-
-  // PAR row
   let po=0,pi=0;
   for(let i=0;i<9;i++) po+=h[i].par;
   for(let i=9;i<18;i++) pi+=h[i].par;
@@ -880,8 +1117,6 @@ function buildStroke(num) {
   t+=`<td class="col-summary">${po}</td>`;
   for(let i=9;i<18;i++) t+=`<td>${h[i].par}</td>`;
   t+=`<td class="col-summary">${pi}</td><td class="col-summary">${po+pi}</td></tr>`;
-
-  // YARDS row
   let yo=0,yi=0;
   for(let i=0;i<9;i++) yo+=h[i].yards;
   for(let i=9;i<18;i++) yi+=h[i].yards;
@@ -890,15 +1125,11 @@ function buildStroke(num) {
   t+=`<td class="col-summary">${yo}</td>`;
   for(let i=9;i<18;i++) t+=`<td>${h[i].yards}</td>`;
   t+=`<td class="col-summary">${yi}</td><td class="col-summary">${yo+yi}</td></tr>`;
-
-  // HDCP row
   t+=`<tr class="row-hdcp"><td class="col-label">HDCP</td>`;
   for(let i=0;i<9;i++) t+=`<td>${h[i].hdcp}</td>`;
   t+=`<td class="col-summary"></td>`;
   for(let i=9;i<18;i++) t+=`<td>${h[i].hdcp}</td>`;
   t+=`<td class="col-summary"></td><td class="col-summary"></td></tr>`;
-
-  // Player rows
   state.players.forEach(p => {
     t+=`<tr class="row-player"><td class="col-label">${esc(p.full_name)}</td>`;
     for(let i=0;i<9;i++) t+=`<td></td>`;
@@ -906,12 +1137,10 @@ function buildStroke(num) {
     for(let i=0;i<9;i++) t+=`<td></td>`;
     t+=`<td class="col-summary"></td><td class="col-summary"></td></tr>`;
   });
-
   t+=`</table></div>`;
   return t;
 }
 
-/* --- Format 2: PTM --- */
 function buildPTM(num) {
   const h = state.holes;
   let t = `<div class="sc-format" data-fmt="ptm">`;
@@ -919,23 +1148,16 @@ function buildPTM(num) {
     <span>FORMAT ${num} — PTM (PASS THE MONEY)</span>
     <span class="sc-rule">Circle the money holder each hole &middot; Holder at 9 keeps half &middot; Holder at 18 keeps half</span>
   </div>`;
-
-  // Columns: PLAYER | 1-9 | 9★ | 10-18 | 18★ | WIN$
   t += `<table class="sc-table"><colgroup><col style="width:62px">`;
   for(let i=0;i<9;i++) t+=`<col>`;
-  t+=`<col style="width:26px">`; // 9★
+  t+=`<col style="width:26px">`;
   for(let i=0;i<9;i++) t+=`<col>`;
-  t+=`<col style="width:26px"><col style="width:34px">`; // 18★, WIN$
-  t+=`</colgroup>`;
-
-  // Header
+  t+=`<col style="width:26px"><col style="width:34px"></colgroup>`;
   t+=`<tr class="row-header"><th class="col-label">PLAYER</th>`;
   for(let i=1;i<=9;i++) t+=`<th>${i}</th>`;
   t+=`<th class="col-summary">9★</th>`;
   for(let i=10;i<=18;i++) t+=`<th>${i}</th>`;
   t+=`<th class="col-summary">18★</th><th class="col-summary">WIN$</th></tr>`;
-
-  // Player rows with abbreviations
   state.players.forEach(p => {
     const ab = esc(p.abbreviation || '?');
     t+=`<tr class="row-ptm"><td class="col-label">${esc(p.full_name)}</td>`;
@@ -944,61 +1166,42 @@ function buildPTM(num) {
     for(let i=0;i<9;i++) t+=`<td>${ab}</td>`;
     t+=`<td class="col-summary">${ab}</td><td class="col-summary"></td></tr>`;
   });
-
   t+=`</table>`;
-
-  // PTM footer row
   t+=`<div class="sc-ptm-footer">
     <span>BUNDLE HOLDER AT HOLE 9: ________________</span>
     <span>BUNDLE HOLDER AT HOLE 18: ________________</span>
     <span>TRANSFERS THIS ROUND: _____</span>
-  </div>`;
-
-  t+=`</div>`;
+  </div></div>`;
   return t;
 }
 
-/* --- Format 3: Wolf --- */
 function buildWolf(num) {
   const players = state.players;
   const n = players.length;
   if (n < 2) return '';
-
-  // Wolf rotation: cycle through players for 18 holes
   const wolfOrder = [];
   for (let i=0;i<18;i++) wolfOrder.push(i % n);
-
   const rotation = players.map(p => esc(p.full_name)).join(' &middot; ');
-
   let t = `<div class="sc-format" data-fmt="wolf">`;
   t += `<div class="sc-format-header">
     <span>FORMAT ${num} — WOLF</span>
     <span class="sc-rule">Rotation: ${rotation} (repeat) | Circle partner | Underline Lone Wolf</span>
   </div>`;
-
-  // Columns: WOLF | 1-9 | OUT | 10-18 | IN | PTS
   t += `<table class="sc-table"><colgroup><col style="width:62px">`;
   for(let i=0;i<9;i++) t+=`<col>`;
-  t+=`<col style="width:28px">`; // OUT
+  t+=`<col style="width:28px">`;
   for(let i=0;i<9;i++) t+=`<col>`;
-  t+=`<col style="width:28px"><col style="width:28px">`; // IN, PTS
-  t+=`</colgroup>`;
-
-  // Header
+  t+=`<col style="width:28px"><col style="width:28px"></colgroup>`;
   t+=`<tr class="row-header"><th class="col-label">WOLF</th>`;
   for(let i=1;i<=9;i++) t+=`<th>${i}</th>`;
   t+=`<th class="col-summary">OUT</th>`;
   for(let i=10;i<=18;i++) t+=`<th>${i}</th>`;
   t+=`<th class="col-summary">IN</th><th class="col-summary">PTS</th></tr>`;
-
-  // IS WOLF row
   t+=`<tr class="row-wolf-is"><td class="col-label" style="font-size:6pt">IS WOLF</td>`;
   for(let i=0;i<9;i++) t+=`<td style="color:#C0392B;font-weight:700">${esc(players[wolfOrder[i]].abbreviation)}</td>`;
   t+=`<td class="col-summary"></td>`;
   for(let i=9;i<18;i++) t+=`<td style="color:#C0392B;font-weight:700">${esc(players[wolfOrder[i]].abbreviation)}</td>`;
   t+=`<td class="col-summary"></td><td class="col-summary"></td></tr>`;
-
-  // PARTNERS row
   t+=`<tr class="row-wolf-partners"><td class="col-label">PARTNERS (circle)</td>`;
   for(let i=0;i<9;i++) {
     const others = players.filter((_,idx)=>idx!==wolfOrder[i]).map(p=>esc(p.abbreviation)).join(' ');
@@ -1010,28 +1213,22 @@ function buildWolf(num) {
     t+=`<td>${others}</td>`;
   }
   t+=`<td class="col-summary"></td><td class="col-summary"></td></tr>`;
-
-  // Blank rows: HOLE WIN + per-player PTS
   t+=`<tr class="row-wolf-blank"><td class="col-label">HOLE WIN</td>`;
   for(let c=0;c<21;c++) t+=`<td${c===9||c>=19?' class="col-summary"':''}></td>`;
   t+=`</tr>`;
-
   players.forEach(p => {
     t+=`<tr class="row-wolf-blank"><td class="col-label" style="font-size:6pt">${esc(p.full_name)} PTS</td>`;
     for(let c=0;c<21;c++) t+=`<td${c===9||c>=19?' class="col-summary"':''}></td>`;
     t+=`</tr>`;
   });
-
   t+=`</table>`;
   t+=`<div class="sc-wolf-legend">Wolf+Partner Win: 2 pts each &ensp;|&ensp; Opponents Beat Wolf Team: 3 pts each &ensp;|&ensp; Lone Wolf Wins: 4 pts &ensp;|&ensp; Opponents Beat Lone Wolf: 1 pt each &ensp;|&ensp; Blind Wolf Wins: 8 pts</div>`;
   t+=`</div>`;
   return t;
 }
 
-/* --- Format 4: Par 3 Challenge --- */
 function buildPar3(num) {
   const h = state.holes;
-  // Auto-detect par 3 holes
   const par3s = [];
   h.forEach((hole,i) => { if(hole.par === 3) par3s.push(i); });
   if (par3s.length === 0) {
@@ -1039,80 +1236,51 @@ function buildPar3(num) {
       <div class="sc-format-header"><span>FORMAT ${num} — PAR 3 CHALLENGE</span>
       <span class="sc-rule">No par-3 holes detected</span></div></div>`;
   }
-
   const holeNums = par3s.map(i => i+1).join(', ');
-
   let t = `<div class="sc-format" data-fmt="par3">`;
   t += `<div class="sc-format-header">
     <span>FORMAT ${num} — PAR 3 CHALLENGE &middot; Holes: ${holeNums}</span>
     <span class="sc-rule">Score vs. Par | Tiebreaker: Distance to Pin (ft)</span>
   </div>`;
-
-  // Columns: PLAYER | (Hx (yydy) + PIN DIST) per par3 | vs PAR | TOT DIST
-  const colCount = 1 + par3s.length*2 + 2;
   t += `<table class="sc-table par3-table">`;
-
-  // Header
   t += `<tr class="row-header"><th class="col-label">PLAYER</th>`;
   par3s.forEach(i => {
     t += `<th>H${i+1} (${h[i].yards}y)</th><th>PIN DIST</th>`;
   });
   t += `<th class="col-summary">vs PAR</th><th class="col-summary">TOT DIST</th></tr>`;
-
-  // PAR row
   t += `<tr class="row-par"><td class="col-label">PAR</td>`;
-  par3s.forEach(() => {
-    t += `<td>3</td><td>—</td>`;
-  });
+  par3s.forEach(() => { t += `<td>3</td><td>—</td>`; });
   t += `<td class="col-summary">E</td><td class="col-summary">—</td></tr>`;
-
-  // Player rows
   state.players.forEach(p => {
     t += `<tr class="row-player"><td class="col-label">${esc(p.full_name)}</td>`;
     par3s.forEach(() => { t += `<td></td><td></td>`; });
     t += `<td class="col-summary"></td><td class="col-summary"></td></tr>`;
   });
-
-  // GROUP TOTAL row
   t += `<tr class="row-player"><td class="col-label" style="font-weight:800">GROUP TOTAL</td>`;
   par3s.forEach(() => { t += `<td></td><td></td>`; });
   t += `<td class="col-summary"></td><td class="col-summary"></td></tr>`;
-
   t += `</table></div>`;
   return t;
 }
 
-/* ====== DYNAMIC ROW HEIGHT ADJUSTMENT ====== */
 function adjustRowHeights(enabledFmts) {
   const preview = document.getElementById('scorecard-preview');
-  // Total printable height in px at screen scale (8.5in - header - footer - margins)
-  // We let flexbox + sc-spacer handle vertical fill naturally.
-  // But we also scale row heights when fewer formats are active.
-
   const fmtCount = enabledFmts.length;
   if (fmtCount === 0) return;
-
-  // Calculate bonus padding per player row based on how many formats are off
-  // 4 formats = tight (base). Fewer = more room.
   const missingFormats = 4 - fmtCount;
-  const bonusPad = missingFormats * 1.5; // extra px per row per missing format
-
+  const bonusPad = missingFormats * 1.5;
   const playerRows = preview.querySelectorAll('.row-player td, .row-wolf-blank td, .row-ptm td');
   playerRows.forEach(td => {
     const basePad = 1.5;
     td.style.paddingTop = (basePad + bonusPad) + 'px';
     td.style.paddingBottom = (basePad + bonusPad) + 'px';
   });
-
-  // Also increase format header spacing
   const fmtHeaders = preview.querySelectorAll('.sc-format-header');
   fmtHeaders.forEach(fh => {
     fh.style.marginTop = (3 + missingFormats * 2) + 'px';
     fh.style.paddingTop = (2 + missingFormats * 1) + 'px';
     fh.style.paddingBottom = (2 + missingFormats * 1) + 'px';
   });
-
-  // Scale player row heights more aggressively
   const pRows = preview.querySelectorAll('tr.row-player, tr.row-wolf-blank, tr.row-ptm');
   pRows.forEach(tr => {
     const baseH = 14;
@@ -1122,7 +1290,9 @@ function adjustRowHeights(enabledFmts) {
   });
 }
 
-/* ====== PRESET MANAGEMENT ====== */
+/* ==================================================================
+   PRESETS  (existing)
+   ================================================================== */
 function loadBeaverBrook() {
   state = JSON.parse(JSON.stringify(BEAVER_BROOK));
   loadStateToUI();
@@ -1131,11 +1301,15 @@ function loadBeaverBrook() {
 function exportPreset() {
   readUIToState();
   const json = JSON.stringify(state, null, 2);
-  navigator.clipboard.writeText(json).then(() => {
-    alert('Preset copied to clipboard!');
-  }).catch(() => {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(json).then(() => {
+      alert('Preset copied to clipboard!');
+    }).catch(() => {
+      document.getElementById('preset-json').value = json;
+    });
+  } else {
     document.getElementById('preset-json').value = json;
-  });
+  }
 }
 
 function importPreset() {
@@ -1152,9 +1326,342 @@ function importPreset() {
   }
 }
 
-/* ====== INIT ====== */
+/* ==================================================================
+   NEW: NJ COURSES DROPDOWN
+   ==================================================================
+   Loads nj_courses.json on startup and exposes a searchable datalist.
+   On selecting an exact match, applies the course's hole data into
+   state.holes (preserving players, formats, tee_color).
+   ================================================================== */
+
+async function loadNjCourses() {
+  try {
+    const res = await fetch('./nj_courses.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    njCourses = Array.isArray(data) ? data : (data.courses || []);
+    populateCourseDropdown();
+    setNjStatus(`${njCourses.length} NJ courses loaded.`, false);
+  } catch (err) {
+    console.warn('nj_courses.json fetch failed:', err.message);
+    setNjStatus('Could not auto-load nj_courses.json. Use the manual loader below.', true);
+    document.getElementById('nj-manual-load').classList.remove('hidden');
+  }
+}
+
+function populateCourseDropdown() {
+  const list = document.getElementById('nj-course-list');
+  list.innerHTML = '';
+  njCourses.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.course_name;
+    list.appendChild(opt);
+  });
+}
+
+function handleNjCourseInput(value, force) {
+  if (!value) return;
+  // Only apply on exact-match (datalist selection) OR force (onchange blur)
+  const match = njCourses.find(c => c.course_name.toLowerCase() === value.trim().toLowerCase());
+  if (match) {
+    applyCourse(match);
+    setNjStatus(`✓ Loaded "${match.course_name}"`, false);
+  } else if (force && value.trim()) {
+    setNjStatus(`No exact match for "${value}". Keep typing or pick from the list.`, true);
+  }
+}
+
+function applyCourse(course) {
+  if (!course || !Array.isArray(course.holes)) return;
+  state.course_name = course.course_name || state.course_name;
+  // Map incoming holes (supports hcp OR hdcp key) to state shape
+  const mapped = course.holes.map(h => ({
+    par: parseInt(h.par) || 4,
+    yards: parseInt(h.yards) || 0,
+    hdcp: parseInt(h.hcp !== undefined ? h.hcp : h.hdcp) || 0
+  }));
+  // Ensure exactly 18 holes
+  while (mapped.length < 18) mapped.push({ par: 4, yards: 0, hdcp: 0 });
+  state.holes = mapped.slice(0, 18);
+  loadStateToUI();
+}
+
+function handleManualCoursesUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      njCourses = Array.isArray(data) ? data : (data.courses || []);
+      populateCourseDropdown();
+      setNjStatus(`${njCourses.length} NJ courses loaded from file.`, false);
+      document.getElementById('nj-manual-load').classList.add('hidden');
+    } catch (err) {
+      setNjStatus('Invalid JSON: ' + err.message, true);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function setNjStatus(msg, isErr) {
+  const el = document.getElementById('nj-status');
+  el.textContent = msg;
+  el.classList.toggle('err', !!isErr);
+}
+
+/* ==================================================================
+   NEW: OCR — UPLOAD SCORECARD PHOTO
+   ==================================================================
+   Pipeline: file → Image → canvas preprocess (grayscale + contrast,
+   max 1800px) → Tesseract.recognize → parseScorecardText → modal
+   with editable 18×3 grid → user confirms → state.holes updated.
+   ================================================================== */
+
+async function handleScorecardUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = ''; // allow re-upload of same file
+
+  try {
+    if (typeof Tesseract === 'undefined') {
+      throw new Error('Tesseract.js failed to load (check internet connection).');
+    }
+    setOcrStatus('Loading image...', 10, false);
+    const img = await loadImage(file);
+    setOcrStatus('Preprocessing image (grayscale + contrast)...', 25, false);
+    const canvas = preprocessImage(img);
+    setOcrStatus('Running OCR — this takes 10–30 seconds...', 40, false);
+    const text = await runOcr(canvas, (p) => {
+      // Tesseract progress 0..1 mapped to 40..85
+      setOcrStatus('Running OCR — ' + Math.round(p*100) + '%', 40 + p*45, false);
+    });
+    lastOcrRawText = text;
+    setOcrStatus('Parsing scorecard rows...', 90, false);
+    const data = parseScorecardText(text);
+    setOcrStatus('Extraction complete — review below.', 100, false);
+    setTimeout(() => setOcrStatus('', 0, false), 2500);
+    openOcrModal(data);
+  } catch (err) {
+    console.error('OCR error:', err);
+    setOcrStatus('Error: ' + err.message, 0, true);
+  }
+}
+
+function loadImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Could not decode image.'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('Could not read file.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+/* Preprocess: downscale (max 1800px), grayscale, high contrast threshold.
+   Improves OCR accuracy on photos with variable lighting. */
+function preprocessImage(img) {
+  const maxDim = 1800;
+  const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(img.width * scale);
+  canvas.height = Math.round(img.height * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const d = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = d.data;
+  // Grayscale + adaptive-ish contrast
+  for (let i = 0; i < data.length; i += 4) {
+    const gray = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
+    // Contrast stretch: darker < 110 → black, lighter > 170 → white, mid stays
+    let v;
+    if (gray < 110) v = Math.max(0, gray - 30);
+    else if (gray > 170) v = Math.min(255, gray + 30);
+    else v = gray;
+    data[i] = data[i+1] = data[i+2] = v;
+  }
+  ctx.putImageData(d, 0, 0);
+  return canvas;
+}
+
+async function runOcr(canvas, onProgress) {
+  const result = await Tesseract.recognize(canvas, 'eng', {
+    logger: m => {
+      if (m.status === 'recognizing text' && typeof onProgress === 'function') {
+        onProgress(m.progress || 0);
+      }
+    }
+  });
+  return result.data.text || '';
+}
+
+/* ------------------ PARSER ------------------
+   Strategy: split text into lines. For each line:
+   1. Extract all integers.
+   2. Normalize 18 numbers (strip typical OUT/IN/TOT subtotals if present).
+   3. Classify as par, yards, or hdcp by (a) label keyword match, then
+      (b) numeric fingerprint.
+   First valid row per category wins.
+*/
+function parseScorecardText(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const result = { par: [], yards: [], hdcp: [], _raw: text };
+
+  for (const line of lines) {
+    const lower = line.toLowerCase();
+    const allNums = (line.match(/\d+/g) || []).map(Number);
+    if (allNums.length < 9) continue;
+
+    const nums18 = extract18Numbers(allNums);
+    if (!nums18) continue;
+
+    const labelPar  = /\bpar\b/.test(lower);
+    const labelYds  = /\b(yard|yards|yds|yd|blue|black|gold|white|red|tees?|championship)\b/.test(lower);
+    const labelHcp  = /\b(hdcp|hcp|hdc|handicap|index|stroke)\b/.test(lower);
+
+    // PAR check (label priority, else fingerprint)
+    if (!result.par.length && (labelPar || isLikelyParRow(nums18))) {
+      if (isLikelyParRow(nums18)) { result.par = nums18; continue; }
+    }
+    // HDCP check
+    if (!result.hdcp.length && (labelHcp || isLikelyHdcpRow(nums18))) {
+      if (isLikelyHdcpRow(nums18)) { result.hdcp = nums18; continue; }
+    }
+    // YARDS check (do last — broadest range)
+    if (!result.yards.length && (labelYds || isLikelyYardsRow(nums18))) {
+      if (isLikelyYardsRow(nums18)) { result.yards = nums18; continue; }
+    }
+  }
+  return result;
+}
+
+/* Given 9–23 numbers, try to return exactly 18 hole values by stripping
+   subtotal positions (OUT at idx 9, IN at idx ~19, TOT at idx ~20). */
+function extract18Numbers(nums) {
+  if (nums.length === 18) return nums.slice();
+  if (nums.length < 18) return null;
+
+  // Try: strip one subtotal after 9th (OUT), one after 18th (IN), optional TOT
+  const attempts = [];
+  // 19 numbers: likely 18 + TOT at end → drop last
+  if (nums.length === 19) attempts.push([...nums.slice(0, 18)]);
+  // 20: 9 + OUT + 9 + IN → remove idx 9 and 19
+  if (nums.length === 20) attempts.push([...nums.slice(0,9), ...nums.slice(10,19)]);
+  // 21: 9 + OUT + 9 + IN + TOT → remove idx 9, keep 10..18, drop last two
+  if (nums.length === 21) attempts.push([...nums.slice(0,9), ...nums.slice(10,19)]);
+  // 22: sometimes leading hole labels 1..9 concatenated... fallback: drop first then 20-case
+  if (nums.length === 22) {
+    attempts.push([...nums.slice(1,10), ...nums.slice(11,20)]);
+    attempts.push([...nums.slice(0,9), ...nums.slice(10,19)]);
+  }
+  // 23: leading hole labels + 20-case
+  if (nums.length === 23) {
+    attempts.push([...nums.slice(1,10), ...nums.slice(11,20)]);
+  }
+  // Generic fallback: just take first 18
+  attempts.push(nums.slice(0, 18));
+
+  // Return the first attempt that has exactly 18
+  for (const a of attempts) if (a.length === 18) return a;
+  return null;
+}
+
+function isLikelyParRow(nums) {
+  if (nums.length !== 18) return false;
+  if (!nums.every(n => n >= 3 && n <= 6)) return false;
+  const sum = nums.reduce((a,b)=>a+b,0);
+  return sum >= 66 && sum <= 78; // realistic 18-hole par
+}
+
+function isLikelyYardsRow(nums) {
+  if (nums.length !== 18) return false;
+  if (!nums.every(n => n >= 50 && n <= 750)) return false;
+  // At least one hole should be a real par-4/5 (>= 280yds) to reject par/hdcp rows
+  if (!nums.some(n => n >= 260)) return false;
+  const sum = nums.reduce((a,b)=>a+b,0);
+  return sum >= 3500 && sum <= 9000; // realistic course total
+}
+
+function isLikelyHdcpRow(nums) {
+  if (nums.length !== 18) return false;
+  if (!nums.every(n => n >= 1 && n <= 18)) return false;
+  // Must be a permutation of 1..18 (all unique)
+  return new Set(nums).size === 18;
+}
+
+/* ------------------ OCR MODAL ------------------ */
+function openOcrModal(data) {
+  lastOcrData = data;
+  renderOcrPreviewGrid(data);
+  document.getElementById('ocr-raw').textContent = data._raw || '';
+  document.getElementById('ocr-raw').classList.add('hidden');
+  document.getElementById('ocr-modal').classList.remove('hidden');
+}
+
+function closeOcrModal() {
+  document.getElementById('ocr-modal').classList.add('hidden');
+}
+
+function toggleRawOcr() {
+  document.getElementById('ocr-raw').classList.toggle('hidden');
+}
+
+function renderOcrPreviewGrid(data) {
+  let html = '<table class="ocr-table"><thead><tr>'
+    + '<th>Hole</th><th>PAR</th><th>YARDS</th><th>HDCP</th>'
+    + '</tr></thead><tbody>';
+  for (let i = 0; i < 18; i++) {
+    const pv = data.par[i];
+    const yv = data.yards[i];
+    const hv = data.hdcp[i];
+    const pClass = pv === undefined ? 'missing' : '';
+    const yClass = yv === undefined ? 'missing' : '';
+    const hClass = hv === undefined ? 'missing' : '';
+    html += `<tr>
+      <td class="hole-num">${i+1}</td>
+      <td><input class="${pClass}" id="ocr-par-${i}" type="number" min="3" max="6" value="${pv ?? ''}"></td>
+      <td><input class="${yClass}" id="ocr-yards-${i}" type="number" min="50" max="800" value="${yv ?? ''}"></td>
+      <td><input class="${hClass}" id="ocr-hdcp-${i}" type="number" min="1" max="18" value="${hv ?? ''}"></td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  document.getElementById('ocr-preview-grid').innerHTML = html;
+}
+
+function applyOcrData() {
+  for (let i = 0; i < 18; i++) {
+    const p = parseInt(document.getElementById(`ocr-par-${i}`).value);
+    const y = parseInt(document.getElementById(`ocr-yards-${i}`).value);
+    const h = parseInt(document.getElementById(`ocr-hdcp-${i}`).value);
+    // Only overwrite if valid number provided; otherwise keep existing
+    state.holes[i] = {
+      par: Number.isFinite(p) ? p : state.holes[i].par,
+      yards: Number.isFinite(y) ? y : state.holes[i].yards,
+      hdcp: Number.isFinite(h) ? h : state.holes[i].hdcp
+    };
+  }
+  loadStateToUI();
+  closeOcrModal();
+}
+
+function setOcrStatus(msg, pct, isErr) {
+  const s = document.getElementById('ocr-status');
+  s.textContent = msg;
+  s.classList.toggle('err', !!isErr);
+  document.getElementById('ocr-progress-fill').style.width = Math.min(100, Math.max(0, pct)) + '%';
+}
+
+/* ==================================================================
+   INIT
+   ================================================================== */
 window.addEventListener('DOMContentLoaded', () => {
   loadBeaverBrook();
+  loadNjCourses();
 });
 </script>
 </body>
