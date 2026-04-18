@@ -2,25 +2,38 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EGT Scorecard Generator</title>
-
-<!-- Tesseract.js for client-side OCR -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EGT Scorecard</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ========== CSS VARIABLES ========== */
+/* ======================================================
+   CSS VARIABLES
+   ====================================================== */
 :root {
   --navy: #1B365D;
-  --gold: #FFD700;
+  --navy-light: #243B6A;
+  --gold: #D4AF37;
+  --gold-bright: #F5CC45;
+  --green: #1A5C32;
+  --green-light: #2A7A46;
+  --fairway: #2D6A3F;
+  --rough: #1E4A2B;
+  --sand: #C8A96E;
+  --red: #C0392B;
+  --red-soft: #E74C3C;
+  --white: #FFFFFF;
+  --off-white: #F4F1EB;
   --gray-light: #F0F0F0;
   --gray-alt: #F9F9F9;
   --gray-summary: #E8E8E8;
   --grid-border: #CCCCCC;
-  --white: #FFFFFF;
   --black: #1a1a1a;
   --accent-red: #C0392B;
   --accent-green: #27AE60;
+
+  /* UI (dashboard) */
   --ui-bg: #0D1B2A;
   --ui-surface: #1B2838;
   --ui-surface2: #243447;
@@ -30,19 +43,78 @@
   --ui-accent: #4FC3F7;
   --ui-gold: #FFD54F;
   --ui-radius: 6px;
+
+  /* Play mode */
+  --play-bg: #0A1A0F;
+  --play-surface: #122218;
+  --play-card: #1A3022;
+  --play-border: #2A4A35;
+  --play-text: #E8F0E8;
+  --play-text-dim: #7A9A7A;
+  --play-gold: #D4AF37;
+  --play-gold-glow: rgba(212,175,55,0.25);
+  --play-birdie: #4FC3F7;
+  --play-eagle: #FFD700;
+  --play-bogey: #E67E22;
+  --play-double: #E74C3C;
+
+  --tap-min: 52px;
 }
 
-/* ========== RESET & BASE ========== */
+/* ======================================================
+   RESET
+   ====================================================== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 14px; }
+html { font-size: 14px; -webkit-tap-highlight-color: transparent; }
 body {
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Barlow', -apple-system, sans-serif;
   background: var(--ui-bg);
   color: var(--ui-text);
   line-height: 1.5;
+  overscroll-behavior: none;
 }
 
-/* ========== DASHBOARD (SCREEN ONLY) ========== */
+/* ======================================================
+   APP TABS
+   ====================================================== */
+.app-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  display: flex;
+  background: #080F14;
+  border-bottom: 2px solid var(--ui-border);
+}
+.app-tab {
+  flex: 1;
+  padding: 14px 8px;
+  text-align: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ui-text-muted);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s;
+  user-select: none;
+}
+.app-tab.active {
+  color: var(--ui-gold);
+  border-bottom-color: var(--ui-gold);
+}
+.app-tab:not(.active):hover { color: var(--ui-text); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ======================================================
+   DASHBOARD (SCREEN ONLY)
+   ====================================================== */
 .dashboard {
   max-width: 1100px;
   margin: 0 auto;
@@ -55,19 +127,15 @@ body {
   margin-bottom: 24px;
 }
 .dash-header h1 {
-  font-size: 1.6rem;
-  font-weight: 700;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 900;
   color: var(--ui-gold);
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   text-transform: uppercase;
 }
-.dash-header p {
-  color: var(--ui-text-muted);
-  font-size: 0.82rem;
-  margin-top: 4px;
-}
+.dash-header p { color: var(--ui-text-muted); font-size: 0.82rem; margin-top: 4px; }
 
-/* --- Sections --- */
 .section {
   background: var(--ui-surface);
   border: 1px solid var(--ui-border);
@@ -76,7 +144,8 @@ body {
   margin-bottom: 16px;
 }
 .section-title {
-  font-size: 0.78rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.82rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.5px;
@@ -92,29 +161,12 @@ body {
   height: 14px;
   background: var(--ui-accent);
   border-radius: 2px;
+  flex-shrink: 0;
 }
 
-/* --- Form Elements --- */
-.form-row {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-  min-width: 140px;
-}
-.form-group label {
-  font-size: 0.7rem;
-  color: var(--ui-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  font-weight: 600;
-}
+.form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px; }
+.form-group label { font-size: 0.7rem; color: var(--ui-text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
 .form-group input, .form-group select {
   background: var(--ui-surface2);
   border: 1px solid var(--ui-border);
@@ -125,40 +177,19 @@ body {
   font-family: inherit;
   transition: border-color 0.2s;
 }
-.form-group input:focus, .form-group select:focus {
-  outline: none;
-  border-color: var(--ui-accent);
-}
+.form-group input:focus, .form-group select:focus { outline: none; border-color: var(--ui-accent); }
 .form-group input::placeholder { color: var(--ui-text-muted); opacity: 0.6; }
 
-/* --- Quick Fill --- */
-.qf-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-@media (max-width: 720px) {
-  .qf-grid { grid-template-columns: 1fr; }
-}
+.qf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 720px) { .qf-grid { grid-template-columns: 1fr; } }
 .qf-card {
   background: var(--ui-surface2);
   border: 1px dashed var(--ui-border);
   border-radius: var(--ui-radius);
   padding: 14px;
 }
-.qf-card h4 {
-  font-size: 0.78rem;
-  color: var(--ui-gold);
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.qf-card p {
-  font-size: 0.72rem;
-  color: var(--ui-text-muted);
-  margin-bottom: 10px;
-}
+.qf-card h4 { font-size: 0.78rem; color: var(--ui-gold); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.qf-card p { font-size: 0.72rem; color: var(--ui-text-muted); margin-bottom: 10px; }
 .qf-card input[type=text], .qf-card input[list] {
   width: 100%;
   background: var(--ui-surface);
@@ -170,366 +201,82 @@ body {
   font-family: inherit;
 }
 .qf-card input:focus { outline: none; border-color: var(--ui-accent); }
-.qf-status {
-  font-size: 0.72rem;
-  color: var(--ui-accent);
-  margin-top: 8px;
-  min-height: 16px;
-}
+.qf-status { font-size: 0.72rem; color: var(--ui-accent); margin-top: 8px; min-height: 16px; }
 .qf-status.err { color: var(--accent-red); }
-.qf-progress {
-  height: 3px;
-  background: var(--ui-border);
-  border-radius: 2px;
-  margin-top: 6px;
-  overflow: hidden;
-}
-.qf-progress-fill {
-  height: 100%;
-  background: var(--ui-accent);
-  width: 0%;
-  transition: width 0.2s;
-}
+.qf-progress { height: 3px; background: var(--ui-border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.qf-progress-fill { height: 100%; background: var(--ui-accent); width: 0%; transition: width 0.2s; }
 .hidden { display: none !important; }
 
-/* --- Hole Data Grid --- */
-.hole-grid {
-  overflow-x: auto;
-  margin-top: 8px;
-}
-.hole-grid table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.78rem;
-}
-.hole-grid th, .hole-grid td {
-  padding: 4px 2px;
-  text-align: center;
-  border: 1px solid var(--ui-border);
-  min-width: 38px;
-}
-.hole-grid th {
-  background: var(--ui-surface2);
-  color: var(--ui-accent);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-.hole-grid td.label-cell {
-  text-align: left;
-  font-weight: 700;
-  color: var(--ui-gold);
-  padding-left: 6px;
-  min-width: 55px;
-  background: var(--ui-surface2);
-}
-.hole-grid td.summary-cell {
-  background: var(--ui-surface2);
-  color: var(--ui-gold);
-  font-weight: 700;
-}
-.hole-grid input {
-  width: 100%;
-  background: transparent;
-  border: none;
-  color: var(--ui-text);
-  text-align: center;
-  font-size: 0.78rem;
-  font-family: inherit;
-  padding: 2px 0;
-}
+.hole-grid { overflow-x: auto; margin-top: 8px; }
+.hole-grid table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.hole-grid th, .hole-grid td { padding: 4px 2px; text-align: center; border: 1px solid var(--ui-border); min-width: 38px; }
+.hole-grid th { background: var(--ui-surface2); color: var(--ui-accent); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.5px; }
+.hole-grid td.label-cell { text-align: left; font-weight: 700; color: var(--ui-gold); padding-left: 6px; min-width: 55px; background: var(--ui-surface2); }
+.hole-grid td.summary-cell { background: var(--ui-surface2); color: var(--ui-gold); font-weight: 700; }
+.hole-grid input { width: 100%; background: transparent; border: none; color: var(--ui-text); text-align: center; font-size: 0.78rem; font-family: inherit; padding: 2px 0; }
 .hole-grid input:focus { outline: none; background: rgba(79,195,247,0.08); }
 
-/* --- Players --- */
-.player-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(44,62,80,0.5);
-}
+.player-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(44,62,80,0.5); }
 .player-row:last-child { border-bottom: none; }
-.player-num {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--ui-accent);
-  color: var(--ui-bg);
-  font-size: 0.68rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.player-row input {
-  background: var(--ui-surface2);
-  border: 1px solid var(--ui-border);
-  border-radius: 4px;
-  padding: 6px 10px;
-  color: var(--ui-text);
-  font-size: 0.85rem;
-  font-family: inherit;
-}
+.player-num { width: 22px; height: 22px; border-radius: 50%; background: var(--ui-accent); color: var(--ui-bg); font-size: 0.68rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.player-row input { background: var(--ui-surface2); border: 1px solid var(--ui-border); border-radius: 4px; padding: 6px 10px; color: var(--ui-text); font-size: 0.85rem; font-family: inherit; }
 .player-row input:focus { outline: none; border-color: var(--ui-accent); }
 .player-row .name-input { flex: 2; min-width: 120px; }
 .player-row .abbr-input { width: 60px; text-align: center; text-transform: uppercase; }
 .player-row .move-btns { display: flex; gap: 2px; }
-.player-row .move-btns button {
-  width: 24px; height: 24px;
-  background: var(--ui-surface2);
-  border: 1px solid var(--ui-border);
-  border-radius: 3px;
-  color: var(--ui-text-muted);
-  cursor: pointer;
-  font-size: 0.7rem;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s;
-}
+.player-row .move-btns button { width: 24px; height: 24px; background: var(--ui-surface2); border: 1px solid var(--ui-border); border-radius: 3px; color: var(--ui-text-muted); cursor: pointer; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
 .player-row .move-btns button:hover { background: var(--ui-border); color: var(--ui-text); }
 
-/* --- Buttons --- */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: 4px;
-  border: 1px solid var(--ui-border);
-  background: var(--ui-surface2);
-  color: var(--ui-text);
-  font-size: 0.78rem;
-  font-family: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-}
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 4px; border: 1px solid var(--ui-border); background: var(--ui-surface2); color: var(--ui-text); font-size: 0.78rem; font-family: inherit; font-weight: 600; cursor: pointer; transition: all 0.15s; }
 .btn:hover { background: var(--ui-border); }
-.btn-accent {
-  background: var(--ui-accent);
-  color: var(--ui-bg);
-  border-color: var(--ui-accent);
-}
+.btn-accent { background: var(--ui-accent); color: var(--ui-bg); border-color: var(--ui-accent); }
 .btn-accent:hover { background: #81D4FA; }
-.btn-gold {
-  background: var(--ui-gold);
-  color: var(--ui-bg);
-  border-color: var(--ui-gold);
-  font-weight: 700;
-}
+.btn-gold { background: var(--ui-gold); color: var(--ui-bg); border-color: var(--ui-gold); font-weight: 700; }
 .btn-gold:hover { background: #FFE082; }
 .btn-sm { padding: 4px 10px; font-size: 0.72rem; }
 .btn-danger { color: var(--accent-red); }
 .btn-danger:hover { background: rgba(192,57,43,0.15); }
 .btn-full { width: 100%; justify-content: center; }
-.btn-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 
-/* --- Format Toggles --- */
-.format-toggle {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  background: var(--ui-surface2);
-  border: 1px solid var(--ui-border);
-  border-radius: 4px;
-  margin-bottom: 6px;
-  transition: border-color 0.2s;
-}
+.format-toggle { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--ui-surface2); border: 1px solid var(--ui-border); border-radius: 4px; margin-bottom: 6px; transition: border-color 0.2s; }
 .format-toggle.active { border-color: var(--ui-accent); }
-.format-toggle .ft-check {
-  width: 18px; height: 18px;
-  accent-color: var(--ui-accent);
-  cursor: pointer;
-}
-.format-toggle .ft-label {
-  flex: 1;
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-.format-toggle .ft-desc {
-  color: var(--ui-text-muted);
-  font-size: 0.72rem;
-}
+.format-toggle .ft-check { width: 18px; height: 18px; accent-color: var(--ui-accent); cursor: pointer; }
+.format-toggle .ft-label { flex: 1; font-weight: 600; font-size: 0.85rem; }
+.format-toggle .ft-desc { color: var(--ui-text-muted); font-size: 0.72rem; }
 .format-toggle .ft-arrows { display: flex; gap: 2px; }
-.format-toggle .ft-arrows button {
-  width: 26px; height: 26px;
-  background: var(--ui-surface);
-  border: 1px solid var(--ui-border);
-  border-radius: 3px;
-  color: var(--ui-text-muted);
-  cursor: pointer;
-  font-size: 0.75rem;
-  display: flex; align-items: center; justify-content: center;
-}
+.format-toggle .ft-arrows button { width: 26px; height: 26px; background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: 3px; color: var(--ui-text-muted); cursor: pointer; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; }
 .format-toggle .ft-arrows button:hover { background: var(--ui-border); color: var(--ui-text); }
 
-/* --- Preset --- */
-.preset-area {
-  display: flex;
-  gap: 8px;
-  align-items: stretch;
-  margin-top: 8px;
-}
-.preset-area textarea {
-  flex: 1;
-  background: var(--ui-surface2);
-  border: 1px solid var(--ui-border);
-  border-radius: 4px;
-  padding: 8px;
-  color: var(--ui-text);
-  font-family: 'Courier New', monospace;
-  font-size: 0.72rem;
-  resize: vertical;
-  min-height: 60px;
-}
+.preset-area { display: flex; gap: 8px; align-items: stretch; margin-top: 8px; }
+.preset-area textarea { flex: 1; background: var(--ui-surface2); border: 1px solid var(--ui-border); border-radius: 4px; padding: 8px; color: var(--ui-text); font-family: 'Courier New', monospace; font-size: 0.72rem; resize: vertical; min-height: 60px; }
 .preset-area textarea:focus { outline: none; border-color: var(--ui-accent); }
 
-/* --- Print Button --- */
-.print-bar {
-  text-align: center;
-  padding: 20px 0;
-}
+.print-bar { text-align: center; padding: 20px 0; }
 
-/* --- MODAL --- */
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-  backdrop-filter: blur(3px);
-}
-.modal-content {
-  background: var(--ui-surface);
-  border: 1px solid var(--ui-border);
-  border-radius: var(--ui-radius);
-  max-width: 720px;
-  width: 100%;
-  max-height: 92vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-}
-.modal-header {
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--ui-border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
-}
-.modal-header h2 {
-  color: var(--ui-gold);
-  font-size: 0.95rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-.modal-close {
-  background: transparent;
-  border: none;
-  color: var(--ui-text-muted);
-  font-size: 1.6rem;
-  cursor: pointer;
-  line-height: 1;
-  padding: 0 4px;
-}
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; backdrop-filter: blur(3px); }
+.modal-content { background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--ui-radius); max-width: 720px; width: 100%; max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.modal-header { padding: 14px 20px; border-bottom: 1px solid var(--ui-border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+.modal-header h2 { color: var(--ui-gold); font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; }
+.modal-close { background: transparent; border: none; color: var(--ui-text-muted); font-size: 1.6rem; cursor: pointer; line-height: 1; padding: 0 4px; }
 .modal-close:hover { color: var(--ui-text); }
-.modal-body {
-  padding: 16px 20px;
-  overflow-y: auto;
-  flex: 1;
-}
-.modal-body p.help {
-  font-size: 0.8rem;
-  color: var(--ui-text-muted);
-  margin-bottom: 12px;
-}
-.modal-footer {
-  padding: 12px 20px;
-  border-top: 1px solid var(--ui-border);
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  flex-shrink: 0;
-}
+.modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+.modal-body p.help { font-size: 0.8rem; color: var(--ui-text-muted); margin-bottom: 12px; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid var(--ui-border); display: flex; gap: 8px; justify-content: flex-end; flex-shrink: 0; }
 
-/* OCR preview table (pivoted: rows=holes, cols=par/yards/hdcp) */
-.ocr-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.82rem;
-}
-.ocr-table th {
-  background: var(--ui-surface2);
-  color: var(--ui-accent);
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 8px 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border: 1px solid var(--ui-border);
-}
-.ocr-table td {
-  padding: 4px;
-  border: 1px solid var(--ui-border);
-  text-align: center;
-}
-.ocr-table td.hole-num {
-  background: var(--ui-surface2);
-  color: var(--ui-gold);
-  font-weight: 700;
-  width: 48px;
-}
-.ocr-table input {
-  width: 100%;
-  background: var(--ui-surface2);
-  border: 1px solid var(--ui-border);
-  border-radius: 3px;
-  padding: 5px 6px;
-  color: var(--ui-text);
-  font-family: inherit;
-  font-size: 0.82rem;
-  text-align: center;
-}
-.ocr-table input:focus {
-  outline: none;
-  border-color: var(--ui-accent);
-}
-.ocr-table input.missing {
-  background: rgba(192,57,43,0.12);
-  border-color: var(--accent-red);
-}
+.ocr-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.ocr-table th { background: var(--ui-surface2); color: var(--ui-accent); font-size: 0.7rem; font-weight: 700; padding: 8px 6px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid var(--ui-border); }
+.ocr-table td { padding: 4px; border: 1px solid var(--ui-border); text-align: center; }
+.ocr-table td.hole-num { background: var(--ui-surface2); color: var(--ui-gold); font-weight: 700; width: 48px; }
+.ocr-table input { width: 100%; background: var(--ui-surface2); border: 1px solid var(--ui-border); border-radius: 3px; padding: 5px 6px; color: var(--ui-text); font-family: inherit; font-size: 0.82rem; text-align: center; }
+.ocr-table input:focus { outline: none; border-color: var(--ui-accent); }
+.ocr-table input.missing { background: rgba(192,57,43,0.12); border-color: var(--accent-red); }
+.ocr-raw-toggle { margin-top: 14px; font-size: 0.72rem; color: var(--ui-text-muted); cursor: pointer; }
+.ocr-raw { background: var(--ui-surface2); border: 1px solid var(--ui-border); border-radius: 4px; padding: 8px; margin-top: 8px; font-family: 'Courier New', monospace; font-size: 0.7rem; color: var(--ui-text-muted); white-space: pre-wrap; max-height: 140px; overflow-y: auto; }
 
-.ocr-raw-toggle {
-  margin-top: 14px;
-  font-size: 0.72rem;
-  color: var(--ui-text-muted);
-  cursor: pointer;
-}
-.ocr-raw {
-  background: var(--ui-surface2);
-  border: 1px solid var(--ui-border);
-  border-radius: 4px;
-  padding: 8px;
-  margin-top: 8px;
-  font-family: 'Courier New', monospace;
-  font-size: 0.7rem;
-  color: var(--ui-text-muted);
-  white-space: pre-wrap;
-  max-height: 140px;
-  overflow-y: auto;
-}
-
-/* ========== SCORECARD (PRINT TARGET) ========== */
+/* ======================================================
+   PRINT TARGET
+   ====================================================== */
 #scorecard-preview {
   background: white;
   color: var(--black);
@@ -543,81 +290,20 @@ body {
   flex-direction: column;
   position: relative;
 }
-
-.sc-header {
-  background: var(--navy);
-  color: var(--white);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 10px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
+.sc-header { background: var(--navy); color: var(--white); display: flex; align-items: center; justify-content: space-between; padding: 4px 10px; border-radius: 2px; flex-shrink: 0; }
 .sc-header-left { font-size: 7pt; opacity: 0.9; }
 .sc-header-center { font-size: 13pt; font-weight: 700; letter-spacing: 1px; text-align: center; }
 .sc-header-right { font-size: 6.5pt; opacity: 0.85; text-align: right; }
-
 .sc-format { flex-shrink: 0; }
-.sc-format-header {
-  background: var(--navy);
-  color: var(--gold);
-  font-size: 8pt;
-  font-weight: 700;
-  padding: 2px 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 3px;
-}
-.sc-format-header .sc-rule {
-  color: var(--white);
-  font-size: 5.5pt;
-  font-weight: 400;
-  opacity: 0.85;
-}
-
-.sc-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  font-size: 7pt;
-}
-.sc-table th, .sc-table td {
-  border: 0.5px solid var(--grid-border);
-  padding: 1.5px 2px;
-  text-align: center;
-  vertical-align: middle;
-  overflow: hidden;
-  white-space: nowrap;
-}
-.sc-table .col-label {
-  text-align: left;
-  font-weight: 700;
-  padding-left: 4px;
-  width: 62px;
-  min-width: 62px;
-  max-width: 62px;
-}
-.sc-table .col-summary {
-  background: var(--gray-summary) !important;
-  font-weight: 700;
-}
-.sc-table tr.row-header th {
-  background: var(--gray-light);
-  font-weight: 700;
-  font-size: 6.5pt;
-  color: #333;
-}
-.sc-table tr.row-par td, .sc-table tr.row-yards td, .sc-table tr.row-hdcp td {
-  font-size: 6.5pt;
-  color: #444;
-}
-.sc-table tr.row-par td.col-label, .sc-table tr.row-yards td.col-label, .sc-table tr.row-hdcp td.col-label {
-  font-size: 6.5pt;
-  font-weight: 700;
-  color: #333;
-}
+.sc-format-header { background: var(--navy); color: var(--gold); font-size: 8pt; font-weight: 700; padding: 2px 8px; display: flex; justify-content: space-between; align-items: center; margin-top: 3px; }
+.sc-format-header .sc-rule { color: var(--white); font-size: 5.5pt; font-weight: 400; opacity: 0.85; }
+.sc-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 7pt; }
+.sc-table th, .sc-table td { border: 0.5px solid var(--grid-border); padding: 1.5px 2px; text-align: center; vertical-align: middle; overflow: hidden; white-space: nowrap; }
+.sc-table .col-label { text-align: left; font-weight: 700; padding-left: 4px; width: 62px; min-width: 62px; max-width: 62px; }
+.sc-table .col-summary { background: var(--gray-summary) !important; font-weight: 700; }
+.sc-table tr.row-header th { background: var(--gray-light); font-weight: 700; font-size: 6.5pt; color: #333; }
+.sc-table tr.row-par td, .sc-table tr.row-yards td, .sc-table tr.row-hdcp td { font-size: 6.5pt; color: #444; }
+.sc-table tr.row-par td.col-label, .sc-table tr.row-yards td.col-label, .sc-table tr.row-hdcp td.col-label { font-size: 6.5pt; font-weight: 700; color: #333; }
 .sc-table tr.row-player td { height: 14px; }
 .sc-table tr.row-player td.col-label { font-weight: 700; font-size: 7pt; }
 .sc-table tr.row-player:nth-child(even) td { background: var(--gray-alt); }
@@ -625,58 +311,890 @@ body {
 .sc-table tr.row-ptm td { font-size: 6.5pt; color: #555; }
 .sc-table tr.row-ptm td.col-label { font-weight: 700; color: var(--black); font-size: 7pt; }
 .sc-table tr.row-ptm:nth-child(even) td { background: var(--gray-alt); }
-
 .sc-table tr.row-wolf-is td { font-weight: 700; font-size: 7pt; }
 .sc-table tr.row-wolf-partners td { font-size: 5.5pt; color: #555; }
 .sc-table tr.row-wolf-partners td.col-label { font-size: 6pt; font-weight: 700; color: #333; }
 .sc-table tr.row-wolf-blank td { height: 13px; }
 .sc-table tr.row-wolf-blank td.col-label { font-weight: 600; font-size: 6.5pt; }
 .sc-table tr.row-wolf-blank:nth-child(even) td { background: var(--gray-alt); }
-
 .sc-table.par3-table { table-layout: auto; }
 .sc-table.par3-table th, .sc-table.par3-table td { font-size: 6.5pt; padding: 1.5px 4px; }
 .sc-table.par3-table tr.row-player td { height: 13px; }
-
-.sc-ptm-footer {
-  font-size: 6pt;
-  display: flex;
-  justify-content: space-between;
-  padding: 2px 4px;
-  border: 0.5px solid var(--grid-border);
-  border-top: none;
-  background: var(--white);
-}
+.sc-ptm-footer { font-size: 6pt; display: flex; justify-content: space-between; padding: 2px 4px; border: 0.5px solid var(--grid-border); border-top: none; background: var(--white); }
 .sc-ptm-footer span { color: #333; }
-
-.sc-wolf-legend {
-  font-size: 5.5pt;
-  text-align: center;
-  padding: 2px 0;
-  color: #444;
-}
-
-.sc-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  padding: 3px 4px;
-  border-top: 1px solid var(--grid-border);
-  font-size: 6pt;
-  color: #333;
-  margin-top: auto;
-  flex-shrink: 0;
-}
+.sc-wolf-legend { font-size: 5.5pt; text-align: center; padding: 2px 0; color: #444; }
+.sc-footer { display: flex; justify-content: space-between; align-items: flex-end; padding: 3px 4px; border-top: 1px solid var(--grid-border); font-size: 6pt; color: #333; margin-top: auto; flex-shrink: 0; }
 .sc-footer-left { display: flex; gap: 16px; }
 .sc-footer-left span { border-bottom: 1px solid #999; padding-bottom: 1px; min-width: 90px; display: inline-block; }
 .sc-footer-right { font-size: 5.5pt; color: #555; text-align: right; max-width: 55%; }
-
 .sc-spacer { flex: 1; }
 
+.preview-wrapper { background: #374151; border-radius: var(--ui-radius); padding: 16px; overflow-x: auto; }
+.preview-label { color: var(--ui-text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: 600; }
+
+/* ======================================================
+   PLAY MODE
+   ====================================================== */
+#play-panel {
+  background: var(--play-bg);
+  min-height: calc(100vh - 52px);
+  display: flex;
+  flex-direction: column;
+  max-width: 540px;
+  margin: 0 auto;
+  position: relative;
+  padding-bottom: 140px; /* room for summary bar */
+}
+
+/* -- Hole nav strip -- */
+.hole-nav {
+  position: sticky;
+  top: 52px; /* below app tabs */
+  z-index: 100;
+  background: var(--play-surface);
+  border-bottom: 1px solid var(--play-border);
+  padding: 0;
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.hole-nav::-webkit-scrollbar { display: none; }
+.hole-nav-btn {
+  flex: 0 0 auto;
+  min-width: 44px;
+  height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--play-text-dim);
+  cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: all 0.15s;
+  padding: 0 2px;
+  position: relative;
+}
+.hole-nav-btn.active {
+  color: var(--play-gold);
+  border-bottom-color: var(--play-gold);
+}
+.hole-nav-btn .hole-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: transparent;
+}
+.hole-nav-btn.scored .hole-dot { background: var(--play-text-dim); }
+.hole-nav-btn.active .hole-dot { background: var(--play-gold); }
+.hole-nav-btn .hnb-par {
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: var(--play-text-dim);
+  letter-spacing: 0.3px;
+}
+
+/* -- Hole header -- */
+.hole-header {
+  padding: 16px 16px 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hole-badge {
+  background: var(--play-card);
+  border: 2px solid var(--play-gold);
+  border-radius: 12px;
+  padding: 6px 14px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.hole-badge .hb-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: var(--play-gold);
+  line-height: 1;
+}
+.hole-badge .hb-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--play-text-dim);
+  text-transform: uppercase;
+}
+.hole-meta { flex: 1; }
+.hole-meta-row {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+.hole-meta .hm-par {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--play-text);
+}
+.hole-meta .hm-par-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--play-text-dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.hole-meta .hm-yds {
+  font-size: 1rem;
+  color: var(--play-text-dim);
+  font-weight: 500;
+}
+.hole-meta .hm-hdcp {
+  font-size: 0.75rem;
+  color: var(--play-text-dim);
+}
+.hole-nav-arrows {
+  display: flex;
+  gap: 6px;
+}
+.hole-nav-arrows button {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--play-card);
+  border: 1px solid var(--play-border);
+  color: var(--play-text);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.hole-nav-arrows button:active { background: var(--play-border); }
+.hole-nav-arrows button:disabled { opacity: 0.3; cursor: default; }
+
+/* -- Format tabs within play -- */
+.play-fmt-tabs {
+  display: flex;
+  padding: 0 16px;
+  gap: 6px;
+  margin-bottom: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.play-fmt-tabs::-webkit-scrollbar { display: none; }
+.play-fmt-tab {
+  flex: 0 0 auto;
+  padding: 7px 14px;
+  border-radius: 20px;
+  background: var(--play-card);
+  border: 1px solid var(--play-border);
+  color: var(--play-text-dim);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.play-fmt-tab.active {
+  background: var(--play-gold);
+  color: var(--play-bg);
+  border-color: var(--play-gold);
+}
+
+/* -- Format content panes -- */
+.play-fmt-content { padding: 12px 16px; }
+.play-fmt-pane { display: none; }
+.play-fmt-pane.active { display: block; }
+
+/* -- STROKE PLAY scoring -- */
+.stroke-player-card {
+  background: var(--play-card);
+  border: 1px solid var(--play-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: border-color 0.2s;
+}
+.stroke-player-card.has-score { border-color: #3A5A3A; }
+.spc-name {
+  flex: 1;
+  min-width: 0;
+}
+.spc-name .spc-full {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--play-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.spc-name .spc-toPar {
+  font-size: 0.72rem;
+  color: var(--play-text-dim);
+  font-weight: 500;
+}
+.spc-name .spc-toPar.under { color: #4FC3F7; }
+.spc-name .spc-toPar.over { color: var(--play-bogey); }
+.spc-name .spc-toPar.dbl { color: var(--play-double); }
+
+.score-picker {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--play-surface);
+  border: 1px solid var(--play-border);
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.score-picker button {
+  width: 44px;
+  height: 52px;
+  border: none;
+  background: transparent;
+  color: var(--play-text);
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.score-picker button:active { background: var(--play-border); }
+.score-display {
+  width: 54px;
+  height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--play-text);
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+.score-display.eagle { color: var(--play-eagle); text-shadow: 0 0 12px rgba(255,215,0,0.5); }
+.score-display.birdie { color: var(--play-birdie); }
+.score-display.par { color: var(--play-text); }
+.score-display.bogey { color: var(--play-bogey); }
+.score-display.double { color: var(--play-double); }
+.score-display .score-label {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: inherit;
+  opacity: 0.75;
+  margin-top: -4px;
+}
+.score-display.empty { color: var(--play-text-dim); }
+.score-display.empty::after { content: '—'; font-size: 1.6rem; }
+
+/* Quick score grid (tap a number) */
+.quick-score-grid {
+  display: none;
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--play-surface);
+  border: 1px solid var(--play-border);
+  border-radius: 12px;
+  padding: 10px;
+  z-index: 50;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  gap: 6px;
+  display: none;
+}
+.quick-score-grid.open {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+}
+.qs-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  border: 1px solid var(--play-border);
+  background: var(--play-card);
+  color: var(--play-text);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.qs-btn:active { transform: scale(0.92); }
+.qs-btn.eagle { border-color: var(--play-eagle); color: var(--play-eagle); }
+.qs-btn.birdie { border-color: var(--play-birdie); color: var(--play-birdie); }
+.qs-btn.selected { background: var(--play-gold); color: var(--play-bg); border-color: var(--play-gold); }
+
+/* Score picker wrapper for relative positioning */
+.spc-picker-wrap {
+  position: relative;
+}
+
+/* -- PTM scoring -- */
+.ptm-header-info {
+  background: var(--play-card);
+  border: 1px solid var(--play-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 0.78rem;
+  color: var(--play-text-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ptm-header-info strong { color: var(--play-gold); font-size: 0.82rem; }
+.ptm-money-icon { font-size: 1.2rem; }
+
+.ptm-player-card {
+  background: var(--play-card);
+  border: 2px solid var(--play-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+.ptm-player-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--play-gold-glow);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.ptm-player-card.holding {
+  border-color: var(--play-gold);
+}
+.ptm-player-card.holding::before { opacity: 1; }
+.ptm-player-card:active { transform: scale(0.98); }
+
+.ptm-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--play-surface);
+  border: 2px solid var(--play-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--play-text);
+  flex-shrink: 0;
+  transition: all 0.2s;
+  position: relative;
+  z-index: 1;
+}
+.ptm-player-card.holding .ptm-avatar {
+  background: var(--play-gold);
+  color: var(--play-bg);
+  border-color: var(--play-gold);
+}
+.ptm-player-info {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+.ptm-player-info .ptm-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--play-text);
+}
+.ptm-player-info .ptm-holdings {
+  font-size: 0.72rem;
+  color: var(--play-text-dim);
+}
+.ptm-money-badge {
+  font-size: 1.5rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+  position: relative;
+  z-index: 1;
+}
+.ptm-player-card.holding .ptm-money-badge { opacity: 1; }
+.ptm-score-context {
+  font-size: 0.72rem;
+  color: var(--play-text-dim);
+  position: relative;
+  z-index: 1;
+  text-align: right;
+}
+.ptm-score-context.bogey-plus { color: var(--play-bogey); }
+
+/* -- Wolf scoring -- */
+.wolf-hole-header {
+  background: var(--play-card);
+  border: 1px solid var(--play-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.wolf-is-label {
+  font-size: 0.72rem;
+  color: var(--play-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600;
+}
+.wolf-name-badge {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--accent-red);
+  letter-spacing: 0.5px;
+}
+.wolf-mode-chips {
+  display: flex;
+  gap: 6px;
+}
+.wolf-chip {
+  padding: 5px 10px;
+  border-radius: 16px;
+  border: 1px solid var(--play-border);
+  background: var(--play-surface);
+  color: var(--play-text-dim);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.wolf-chip.active { background: var(--accent-red); color: var(--white); border-color: var(--accent-red); }
+.wolf-chip.lone-active { background: #8B0000; color: var(--white); border-color: #8B0000; }
+
+.wolf-player-card {
+  background: var(--play-card);
+  border: 2px solid var(--play-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  position: relative;
+}
+.wolf-player-card.is-wolf {
+  border-color: var(--accent-red);
+  background: rgba(192,57,43,0.08);
+}
+.wolf-player-card.is-partner {
+  border-color: var(--play-birdie);
+  background: rgba(79,195,247,0.06);
+}
+.wolf-player-card.lone-wolf {
+  border-color: #8B0000;
+  background: rgba(139,0,0,0.12);
+}
+.wolf-player-card:active { transform: scale(0.98); }
+
+.wolf-role-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  background: var(--play-surface);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.wolf-player-card.is-wolf .wolf-role-icon { background: var(--accent-red); }
+.wolf-player-card.is-partner .wolf-role-icon { background: var(--play-birdie); }
+.wolf-player-card.lone-wolf .wolf-role-icon { background: #8B0000; }
+
+.wolf-player-info { flex: 1; min-width: 0; }
+.wolf-player-info .wpi-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--play-text);
+}
+.wolf-player-info .wpi-role {
+  font-size: 0.7rem;
+  color: var(--play-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+}
+.wolf-player-info .wpi-role.wolf-role { color: var(--accent-red); }
+.wolf-player-info .wpi-role.partner-role { color: var(--play-birdie); }
+.wolf-player-info .wpi-role.lone-role { color: #CC3333; }
+.wolf-pts-bubble {
+  background: var(--play-surface);
+  border: 1px solid var(--play-border);
+  border-radius: 8px;
+  padding: 4px 10px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.wolf-pts-bubble .wpb-pts {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--play-gold);
+}
+.wolf-pts-bubble .wpb-label {
+  font-size: 0.55rem;
+  color: var(--play-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Wolf points result */
+.wolf-result-bar {
+  background: var(--play-card);
+  border: 1px solid var(--play-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-top: 12px;
+  font-size: 0.78rem;
+  color: var(--play-text-dim);
+  text-align: center;
+}
+.wolf-result-bar strong { color: var(--play-gold); }
+
+/* -- Par 3 Challenge -- */
+.par3-player-card {
+  background: var(--play-card);
+  border: 1px solid var(--play-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.par3-name {
+  flex: 1;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--play-text);
+}
+.par3-dist-input {
+  width: 70px;
+  background: var(--play-surface);
+  border: 1px solid var(--play-border);
+  border-radius: 8px;
+  padding: 8px 8px;
+  color: var(--play-text);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: center;
+  flex-shrink: 0;
+}
+.par3-dist-input:focus { outline: none; border-color: var(--play-gold); }
+.par3-dist-label {
+  font-size: 0.7rem;
+  color: var(--play-text-dim);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.par3-not-applicable {
+  background: var(--play-card);
+  border: 1px dashed var(--play-border);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  color: var(--play-text-dim);
+  font-size: 0.85rem;
+}
+
+/* -- Summary bar (sticky bottom) -- */
+.play-summary-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 540px;
+  margin: 0 auto;
+  background: var(--play-surface);
+  border-top: 1px solid var(--play-border);
+  z-index: 90;
+  padding: 8px 12px 12px;
+}
+.psb-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--play-text-dim);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  text-align: center;
+}
+.psb-players {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.psb-player {
+  flex: 1;
+  min-width: 70px;
+  max-width: 110px;
+  background: var(--play-card);
+  border: 1px solid var(--play-border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  text-align: center;
+}
+.psb-player-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--play-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.psb-player-score {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--play-text);
+}
+.psb-player-score.under { color: var(--play-birdie); }
+.psb-player-score.over { color: var(--play-bogey); }
+.psb-player-score.dbl { color: var(--play-double); }
+.psb-player-tpar {
+  font-size: 0.65rem;
+  color: var(--play-text-dim);
+}
+
+/* Play mode start screen */
+.play-start {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  text-align: center;
+  gap: 16px;
+}
+.play-start h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--play-gold);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+.play-start p { color: var(--play-text-dim); font-size: 0.9rem; line-height: 1.6; }
+.play-start .course-display {
+  background: var(--play-card);
+  border: 1px solid var(--play-border);
+  border-radius: 12px;
+  padding: 14px 20px;
+  width: 100%;
+}
+.play-start .course-display .cd-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--play-text);
+  text-transform: uppercase;
+}
+.play-start .course-display .cd-sub { font-size: 0.8rem; color: var(--play-text-dim); margin-top: 2px; }
+.play-start .btn-start {
+  background: var(--play-gold);
+  color: var(--play-bg);
+  border: none;
+  border-radius: 12px;
+  padding: 16px 40px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  cursor: pointer;
+  text-transform: uppercase;
+  width: 100%;
+  transition: background 0.15s;
+}
+.play-start .btn-start:active { background: #E8C040; }
+
+.play-active { display: none; }
+.play-active.on { display: block; }
+.play-start-wrap { display: block; }
+.play-start-wrap.off { display: none; }
+
+/* Score popup overlay */
+.score-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 300;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+.score-popup {
+  background: var(--play-surface);
+  border-top: 2px solid var(--play-border);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 20px 36px;
+  width: 100%;
+  max-width: 540px;
+}
+.sp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.sp-header h3 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--play-gold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.sp-close {
+  background: var(--play-card);
+  border: 1px solid var(--play-border);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--play-text);
+  font-size: 1rem;
+}
+.sp-scores-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.sp-score-btn {
+  height: 60px;
+  border-radius: 10px;
+  border: 2px solid var(--play-border);
+  background: var(--play-card);
+  color: var(--play-text);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  transition: all 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.sp-score-btn:active { transform: scale(0.94); }
+.sp-score-btn .sp-label { font-size: 0.5rem; font-weight: 700; letter-spacing: 0.3px; color: inherit; opacity: 0.7; text-transform: uppercase; }
+.sp-score-btn.eagle { border-color: var(--play-eagle); color: var(--play-eagle); }
+.sp-score-btn.birdie { border-color: var(--play-birdie); color: var(--play-birdie); }
+.sp-score-btn.double { border-color: var(--play-double); color: var(--play-double); }
+.sp-score-btn.triple { border-color: #8B3A3A; color: #CC5555; }
+.sp-score-btn.selected { background: var(--play-gold); color: var(--play-bg); border-color: var(--play-gold); }
+.sp-score-btn.selected .sp-label { color: var(--play-bg); opacity: 0.7; }
+.sp-clear-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid var(--play-border);
+  border-radius: 10px;
+  color: var(--play-text-dim);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background 0.15s;
+}
+.sp-clear-btn:active { background: var(--play-border); }
+
+/* reset play */
+.play-reset-btn {
+  margin: 8px 16px 0;
+  padding: 10px;
+  width: calc(100% - 32px);
+  background: transparent;
+  border: 1px dashed var(--play-border);
+  border-radius: 8px;
+  color: var(--play-text-dim);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* ======================================================
+   PRINT
+   ====================================================== */
 @media print {
   @page { size: 11in 8.5in; margin: 0.2in; }
   body { background: white; }
   .dashboard { display: none !important; }
   .modal { display: none !important; }
+  .app-tabs { display: none !important; }
+  #play-panel { display: none !important; }
+  #print-panel { display: block !important; }
   #scorecard-preview {
     width: 100% !important;
     height: 100% !important;
@@ -699,53 +1217,36 @@ body {
     print-color-adjust: exact !important;
   }
 }
-
-.preview-wrapper {
-  background: #374151;
-  border-radius: var(--ui-radius);
-  padding: 16px;
-  overflow-x: auto;
-}
-.preview-label {
-  color: var(--ui-text-muted);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 10px;
-  font-weight: 600;
-}
 </style>
 </head>
 <body>
 
-<!-- ===================== DASHBOARD ===================== -->
+<!-- ========== APP TABS ========== -->
+<div class="app-tabs">
+  <button class="app-tab active" onclick="switchTab('setup')">⚙ Setup</button>
+  <button class="app-tab" onclick="switchTab('play')">⛳ Play</button>
+  <button class="app-tab" onclick="switchTab('print')">🖨 Print</button>
+</div>
+
+<!-- ========== SETUP TAB ========== -->
+<div id="setup-panel" class="tab-panel active">
 <div class="dashboard">
+
   <div class="dash-header">
-    <h1>EGT Scorecard Generator</h1>
-    <p>Dynamic scorecard builder &middot; Exact print replica &middot; Any course, any crew</p>
+    <h1>EGT Scorecard</h1>
+    <p>Setup your round — then switch to Play Mode</p>
   </div>
 
-  <!-- QUICK FILL (NEW) -->
+  <!-- QUICK FILL -->
   <div class="section">
     <div class="section-title">Quick Fill (Optional)</div>
     <div class="qf-grid">
-
-      <!-- NJ Course Dropdown -->
       <div class="qf-card">
         <h4>🏌️ Select NJ Course</h4>
-        <p>Pick a course to auto-fill par, yards &amp; handicap for all 18 holes. Type to search.</p>
-        <input
-          type="text"
-          id="nj-course-input"
-          list="nj-course-list"
-          placeholder="Start typing a course name..."
-          autocomplete="off"
-          oninput="handleNjCourseInput(this.value)"
-          onchange="handleNjCourseInput(this.value, true)"
-        >
+        <p>Pick a course to auto-fill par, yards &amp; handicap for all 18 holes.</p>
+        <input type="text" id="nj-course-input" list="nj-course-list" placeholder="Start typing a course name..." autocomplete="off" oninput="handleNjCourseInput(this.value)" onchange="handleNjCourseInput(this.value, true)">
         <datalist id="nj-course-list"></datalist>
         <div id="nj-status" class="qf-status"></div>
-        <!-- Fallback: load JSON manually when fetch fails (e.g. file:// origin) -->
         <div id="nj-manual-load" class="hidden" style="margin-top:8px;">
           <label class="btn btn-sm btn-full" style="cursor:pointer;">
             📁 Load nj_courses.json manually
@@ -753,11 +1254,9 @@ body {
           </label>
         </div>
       </div>
-
-      <!-- Scorecard OCR Upload -->
       <div class="qf-card">
         <h4>📸 Upload Scorecard Photo</h4>
-        <p>Snap or upload a scorecard image. OCR extracts par, yards &amp; handicap — you confirm before applying.</p>
+        <p>OCR extracts par, yards &amp; handicap — you confirm before applying.</p>
         <label class="btn btn-accent btn-full" style="cursor:pointer;">
           📷 Choose Image / Take Photo
           <input type="file" id="ocr-file-input" accept="image/*" style="display:none" onchange="handleScorecardUpload(event)">
@@ -865,7 +1364,7 @@ body {
     <div class="section-title">Presets</div>
     <div class="btn-row" style="margin-top:0; margin-bottom:8px;">
       <button class="btn btn-sm" onclick="loadBeaverBrook()">Load Beaver Brook Default</button>
-      <button class="btn btn-sm" onclick="exportPreset()">Export Current → Clipboard</button>
+      <button class="btn btn-sm" onclick="exportPreset()">Export → Clipboard</button>
     </div>
     <div class="preset-area">
       <textarea id="preset-json" placeholder="Paste a JSON preset here, then click Import..."></textarea>
@@ -873,29 +1372,114 @@ body {
     </div>
   </div>
 
-  <!-- PRINT BUTTON -->
   <div class="print-bar">
-    <button class="btn btn-gold" style="font-size:1rem; padding: 12px 36px;" onclick="window.print()">
-      🖨️&ensp;Print Scorecard
+    <button class="btn btn-gold" style="font-size:1rem; padding:12px 36px;" onclick="switchTab('play')">
+      ⛳&ensp;Start Round →
     </button>
   </div>
 
-  <!-- LIVE PREVIEW -->
-  <div class="preview-wrapper">
-    <div class="preview-label">Live Preview (exact print output)</div>
-    <div id="scorecard-preview"></div>
-  </div>
-</div>
+</div><!-- /dashboard -->
+</div><!-- /setup-panel -->
 
-<!-- ===================== OCR CONFIRMATION MODAL ===================== -->
+<!-- ========== PLAY TAB ========== -->
+<div id="play-panel" class="tab-panel">
+
+  <!-- Start screen -->
+  <div id="play-start-wrap" class="play-start-wrap">
+    <div class="play-start">
+      <h2>Ready to Play?</h2>
+      <div class="course-display" id="play-course-display">
+        <div class="cd-name" id="pcd-name">—</div>
+        <div class="cd-sub" id="pcd-sub">—</div>
+      </div>
+      <p>Scores from Play Mode sync into your printable scorecard automatically.</p>
+      <button class="btn-start" onclick="startPlay()">Tee It Up</button>
+    </div>
+  </div>
+
+  <!-- Active play -->
+  <div id="play-active-wrap" class="play-active">
+    <!-- Hole nav -->
+    <div class="hole-nav" id="hole-nav"></div>
+
+    <!-- Hole header -->
+    <div class="hole-header">
+      <div class="hole-badge">
+        <div class="hb-num" id="ph-num">1</div>
+        <div class="hb-label">Hole</div>
+      </div>
+      <div class="hole-meta">
+        <div class="hole-meta-row">
+          <span class="hm-par" id="ph-par">4</span>
+          <span class="hm-par-label">Par</span>
+          <span class="hm-yds" id="ph-yds">400 yds</span>
+        </div>
+        <div class="hm-hdcp" id="ph-hdcp">Hdcp: —</div>
+      </div>
+      <div class="hole-nav-arrows">
+        <button id="btn-prev-hole" onclick="goHole(playState.currentHole - 1)">‹</button>
+        <button id="btn-next-hole" onclick="goHole(playState.currentHole + 1)">›</button>
+      </div>
+    </div>
+
+    <!-- Format tabs -->
+    <div class="play-fmt-tabs" id="play-fmt-tabs"></div>
+
+    <!-- Format content -->
+    <div class="play-fmt-content">
+      <!-- Stroke -->
+      <div class="play-fmt-pane active" id="fmt-pane-stroke" data-fmt="stroke">
+        <div id="stroke-cards"></div>
+      </div>
+      <!-- PTM -->
+      <div class="play-fmt-pane" id="fmt-pane-ptm" data-fmt="ptm">
+        <div id="ptm-cards"></div>
+      </div>
+      <!-- Wolf -->
+      <div class="play-fmt-pane" id="fmt-pane-wolf" data-fmt="wolf">
+        <div id="wolf-cards"></div>
+      </div>
+      <!-- Par3 -->
+      <div class="play-fmt-pane" id="fmt-pane-par3" data-fmt="par3">
+        <div id="par3-cards"></div>
+      </div>
+    </div>
+
+    <button class="play-reset-btn" onclick="confirmResetPlay()">↺ Reset Round Scores</button>
+  </div>
+
+  <!-- Summary bar -->
+  <div class="play-summary-bar" id="play-summary-bar" style="display:none">
+    <div class="psb-title">Round — Stroke vs Par</div>
+    <div class="psb-players" id="psb-players"></div>
+  </div>
+
+</div><!-- /play-panel -->
+
+<!-- ========== PRINT TAB ========== -->
+<div id="print-panel" class="tab-panel">
+  <div class="dashboard">
+    <div class="print-bar">
+      <button class="btn btn-gold" style="font-size:1rem; padding:12px 36px;" onclick="window.print()">
+        🖨️&ensp;Print Scorecard
+      </button>
+    </div>
+    <div class="preview-wrapper">
+      <div class="preview-label">Live Preview (exact print output)</div>
+      <div id="scorecard-preview"></div>
+    </div>
+  </div>
+</div><!-- /print-panel -->
+
+<!-- ========== OCR MODAL ========== -->
 <div id="ocr-modal" class="modal hidden">
   <div class="modal-content">
     <div class="modal-header">
       <h2>Confirm Extracted Scorecard Data</h2>
-      <button class="modal-close" onclick="closeOcrModal()" aria-label="Close">&times;</button>
+      <button class="modal-close" onclick="closeOcrModal()">&times;</button>
     </div>
     <div class="modal-body">
-      <p class="help">Review the extracted values. Red cells weren't detected — fill them in manually. Click <b>Apply</b> to populate the hole data.</p>
+      <p class="help">Review the extracted values. Red cells weren't detected — fill them in manually.</p>
       <div id="ocr-preview-grid"></div>
       <div class="ocr-raw-toggle" onclick="toggleRawOcr()">▸ Show raw OCR text</div>
       <div id="ocr-raw" class="ocr-raw hidden"></div>
@@ -907,11 +1491,23 @@ body {
   </div>
 </div>
 
-<!-- ===================== JAVASCRIPT ===================== -->
+<!-- ========== SCORE POPUP OVERLAY ========== -->
+<div id="score-popup-overlay" class="score-popup-overlay hidden" onclick="handleOverlayClick(event)">
+  <div class="score-popup" onclick="event.stopPropagation()">
+    <div class="sp-header">
+      <h3 id="sp-title">Enter Score</h3>
+      <button class="sp-close" onclick="closeScorePopup()">✕</button>
+    </div>
+    <div class="sp-scores-grid" id="sp-scores-grid"></div>
+    <button class="sp-clear-btn" onclick="clearScorePopup()">Clear Score</button>
+  </div>
+</div>
+
+<!-- ========== JAVASCRIPT ========== -->
 <script>
-/* ==================================================================
+/* ==============================================================
    STATE
-   ================================================================== */
+   ============================================================== */
 const BEAVER_BROOK = {
   course_name: "BEAVER BROOK COUNTRY CLUB",
   tee_color: "Black Tees",
@@ -932,22 +1528,55 @@ const BEAVER_BROOK = {
   ],
   formats: [
     { id:"stroke", label:"Stroke Play", enabled:true },
-    { id:"ptm", label:"PTM (Pass The Money)", enabled:true },
-    { id:"wolf", label:"Wolf", enabled:true },
-    { id:"par3", label:"Par 3 Challenge", enabled:true }
+    { id:"ptm",    label:"PTM (Pass The Money)", enabled:true },
+    { id:"wolf",   label:"Wolf", enabled:true },
+    { id:"par3",   label:"Par 3 Challenge", enabled:true }
   ]
 };
 
 let state = JSON.parse(JSON.stringify(BEAVER_BROOK));
 
-// NJ courses — populated from nj_courses.json on load
+/* Play state — reset when round starts */
+function makePlayState() {
+  const n = state.players.length;
+  return {
+    currentHole: 0,       // 0-indexed
+    activeFmt: 'stroke',
+    scores: Array.from({ length: n }, () => new Array(18).fill(null)),
+    ptmHolder: new Array(18).fill(null),   // playerIndex | null
+    wolfPartner: new Array(18).fill(null), // playerIndex | -1 (lone wolf) | null
+    wolfBlind: new Array(18).fill(false),
+    par3Dist: Array.from({ length: n }, () => new Array(18).fill(null))
+  };
+}
+let playState = makePlayState();
+
+/* Score popup state */
+let scorePopupCtx = null; // { playerIndex, holeIndex }
+
+/* NJ courses */
 let njCourses = [];
-let lastOcrData = null; // cached for modal
+let lastOcrData = null;
 let lastOcrRawText = '';
 
-/* ==================================================================
-   DASHBOARD RENDERING  (existing)
-   ================================================================== */
+/* ==============================================================
+   TAB SWITCHING
+   ============================================================== */
+function switchTab(tab) {
+  document.querySelectorAll('.app-tab').forEach((t, i) => {
+    const ids = ['setup','play','print'];
+    t.classList.toggle('active', ids[i] === tab);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(tab + '-panel').classList.add('active');
+
+  if (tab === 'play') renderPlayStart();
+  if (tab === 'print') rebuild();
+}
+
+/* ==============================================================
+   DASHBOARD RENDERING
+   ============================================================== */
 function loadStateToUI() {
   document.getElementById('inp-course').value = state.course_name;
   document.getElementById('inp-tee').value = state.tee_color;
@@ -987,8 +1616,7 @@ function renderPlayers() {
       <div class="move-btns">
         <button title="Move up" onclick="movePlayer(${i},-1)">▲</button>
         <button title="Move down" onclick="movePlayer(${i},1)">▼</button>
-      </div>
-    `;
+      </div>`;
     c.appendChild(d);
   });
 }
@@ -996,21 +1624,18 @@ function renderPlayers() {
 function addPlayer() {
   if (state.players.length >= 6) return;
   state.players.push({ full_name: '', abbreviation: '' });
-  renderPlayers();
-  rebuild();
+  renderPlayers(); rebuild();
 }
 function removePlayer() {
   if (state.players.length <= 2) return;
   state.players.pop();
-  renderPlayers();
-  rebuild();
+  renderPlayers(); rebuild();
 }
 function movePlayer(i, dir) {
   const j = i + dir;
   if (j < 0 || j >= state.players.length) return;
   [state.players[i], state.players[j]] = [state.players[j], state.players[i]];
-  renderPlayers();
-  rebuild();
+  renderPlayers(); rebuild();
 }
 
 function renderFormats() {
@@ -1025,8 +1650,7 @@ function renderFormats() {
       <div class="ft-arrows">
         <button title="Move up" onclick="moveFmt(${i},-1)">▲</button>
         <button title="Move down" onclick="moveFmt(${i},1)">▼</button>
-      </div>
-    `;
+      </div>`;
     c.appendChild(d);
   });
 }
@@ -1034,15 +1658,14 @@ function moveFmt(i, dir) {
   const j = i + dir;
   if (j < 0 || j >= state.formats.length) return;
   [state.formats[i], state.formats[j]] = [state.formats[j], state.formats[i]];
-  renderFormats();
-  rebuild();
+  renderFormats(); rebuild();
 }
 
-function esc(s) { return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-/* ==================================================================
-   SUMMARIES + REBUILD  (existing, unchanged)
-   ================================================================== */
+/* ==============================================================
+   SUMMARIES + PRINT REBUILD
+   ============================================================== */
 function calcSummaries() {
   let po=0,pi=0,yo=0,yi=0;
   for(let i=0;i<9;i++){po+=state.holes[i].par;yo+=state.holes[i].yards;}
@@ -1060,6 +1683,7 @@ function rebuild() {
   readUIToState();
   const s = calcSummaries();
   const el = document.getElementById('scorecard-preview');
+  if (!el) return;
   const enabledFmts = state.formats.filter(f => f.enabled);
   const fmtList = enabledFmts.map(f => f.label).join(' | ');
   const totalPar = s.po + s.pi;
@@ -1131,11 +1755,23 @@ function buildStroke(num) {
   for(let i=9;i<18;i++) t+=`<td>${h[i].hdcp}</td>`;
   t+=`<td class="col-summary"></td><td class="col-summary"></td></tr>`;
   state.players.forEach(p => {
+    // Pull scores from playState if available
+    const pi2 = state.players.indexOf(p);
     t+=`<tr class="row-player"><td class="col-label">${esc(p.full_name)}</td>`;
-    for(let i=0;i<9;i++) t+=`<td></td>`;
-    t+=`<td class="col-summary"></td>`;
-    for(let i=0;i<9;i++) t+=`<td></td>`;
-    t+=`<td class="col-summary"></td><td class="col-summary"></td></tr>`;
+    let out=0,outFilled=true,inVal=0,inFilled=true;
+    for(let i=0;i<9;i++) {
+      const sc = (playState && playState.scores[pi2]) ? playState.scores[pi2][i] : null;
+      t+=`<td>${sc !== null ? sc : ''}</td>`;
+      if(sc===null) outFilled=false; else out+=sc;
+    }
+    t+=`<td class="col-summary">${outFilled ? out : ''}</td>`;
+    for(let i=9;i<18;i++) {
+      const sc = (playState && playState.scores[pi2]) ? playState.scores[pi2][i] : null;
+      t+=`<td>${sc !== null ? sc : ''}</td>`;
+      if(sc===null) inFilled=false; else inVal+=sc;
+    }
+    t+=`<td class="col-summary">${inFilled ? inVal : ''}</td>`;
+    t+=`<td class="col-summary">${(outFilled&&inFilled) ? (out+inVal) : ''}</td></tr>`;
   });
   t+=`</table></div>`;
   return t;
@@ -1158,13 +1794,22 @@ function buildPTM(num) {
   t+=`<th class="col-summary">9★</th>`;
   for(let i=10;i<=18;i++) t+=`<th>${i}</th>`;
   t+=`<th class="col-summary">18★</th><th class="col-summary">WIN$</th></tr>`;
-  state.players.forEach(p => {
+  state.players.forEach((p, pi2) => {
     const ab = esc(p.abbreviation || '?');
     t+=`<tr class="row-ptm"><td class="col-label">${esc(p.full_name)}</td>`;
-    for(let i=0;i<9;i++) t+=`<td>${ab}</td>`;
-    t+=`<td class="col-summary">${ab}</td>`;
-    for(let i=0;i<9;i++) t+=`<td>${ab}</td>`;
-    t+=`<td class="col-summary">${ab}</td><td class="col-summary"></td></tr>`;
+    for(let i=0;i<9;i++) {
+      const isHolder = playState && playState.ptmHolder[i] === pi2;
+      t+=`<td style="${isHolder?'font-weight:900;text-decoration:underline;':''}">${ab}</td>`;
+    }
+    const h9 = playState && playState.ptmHolder[8] === pi2;
+    t+=`<td class="col-summary" style="${h9?'font-weight:900;':''}">${h9?'★':ab}</td>`;
+    for(let i=9;i<18;i++) {
+      const isHolder = playState && playState.ptmHolder[i] === pi2;
+      t+=`<td style="${isHolder?'font-weight:900;text-decoration:underline;':''}">${ab}</td>`;
+    }
+    const h18 = playState && playState.ptmHolder[17] === pi2;
+    t+=`<td class="col-summary" style="${h18?'font-weight:900;':''}">${h18?'★':ab}</td>`;
+    t+=`<td class="col-summary"></td></tr>`;
   });
   t+=`</table>`;
   t+=`<div class="sc-ptm-footer">
@@ -1204,21 +1849,40 @@ function buildWolf(num) {
   t+=`<td class="col-summary"></td><td class="col-summary"></td></tr>`;
   t+=`<tr class="row-wolf-partners"><td class="col-label">PARTNERS (circle)</td>`;
   for(let i=0;i<9;i++) {
-    const others = players.filter((_,idx)=>idx!==wolfOrder[i]).map(p=>esc(p.abbreviation)).join(' ');
-    t+=`<td>${others}</td>`;
+    const wp = playState && playState.wolfPartner[i];
+    let cell;
+    if (wp === -1) {
+      cell = `<span style="text-decoration:underline;color:#C0392B">LONE</span>`;
+    } else if (wp !== null && players[wp]) {
+      cell = `<span style="text-decoration:underline">${esc(players[wp].abbreviation)}</span>`;
+    } else {
+      const others = players.filter((_,idx)=>idx!==wolfOrder[i]).map(p=>esc(p.abbreviation)).join(' ');
+      cell = others;
+    }
+    t+=`<td>${cell}</td>`;
   }
   t+=`<td class="col-summary"></td>`;
   for(let i=9;i<18;i++) {
-    const others = players.filter((_,idx)=>idx!==wolfOrder[i]).map(p=>esc(p.abbreviation)).join(' ');
-    t+=`<td>${others}</td>`;
+    const wp = playState && playState.wolfPartner[i];
+    let cell;
+    if (wp === -1) {
+      cell = `<span style="text-decoration:underline;color:#C0392B">LONE</span>`;
+    } else if (wp !== null && players[wp]) {
+      cell = `<span style="text-decoration:underline">${esc(players[wp].abbreviation)}</span>`;
+    } else {
+      const others = players.filter((_,idx)=>idx!==wolfOrder[i]).map(p=>esc(p.abbreviation)).join(' ');
+      cell = others;
+    }
+    t+=`<td>${cell}</td>`;
   }
   t+=`<td class="col-summary"></td><td class="col-summary"></td></tr>`;
   t+=`<tr class="row-wolf-blank"><td class="col-label">HOLE WIN</td>`;
   for(let c=0;c<21;c++) t+=`<td${c===9||c>=19?' class="col-summary"':''}></td>`;
   t+=`</tr>`;
   players.forEach(p => {
+    const pts = calcWolfTotalPts(state.players.indexOf(p));
     t+=`<tr class="row-wolf-blank"><td class="col-label" style="font-size:6pt">${esc(p.full_name)} PTS</td>`;
-    for(let c=0;c<21;c++) t+=`<td${c===9||c>=19?' class="col-summary"':''}></td>`;
+    for(let c=0;c<21;c++) t+=`<td${c===9||c>=19?' class="col-summary"':''}>${c===20&&pts?pts:''}</td>`;
     t+=`</tr>`;
   });
   t+=`</table>`;
@@ -1251,10 +1915,18 @@ function buildPar3(num) {
   t += `<tr class="row-par"><td class="col-label">PAR</td>`;
   par3s.forEach(() => { t += `<td>3</td><td>—</td>`; });
   t += `<td class="col-summary">E</td><td class="col-summary">—</td></tr>`;
-  state.players.forEach(p => {
+  state.players.forEach((p, pi2) => {
     t += `<tr class="row-player"><td class="col-label">${esc(p.full_name)}</td>`;
-    par3s.forEach(() => { t += `<td></td><td></td>`; });
-    t += `<td class="col-summary"></td><td class="col-summary"></td></tr>`;
+    let vsPar = 0, vsParFilled = true, totDist = 0, totDistFilled = true;
+    par3s.forEach(i => {
+      const sc = playState && playState.scores[pi2] ? playState.scores[pi2][i] : null;
+      const dist = playState && playState.par3Dist[pi2] ? playState.par3Dist[pi2][i] : null;
+      t += `<td>${sc !== null ? sc : ''}</td><td>${dist !== null ? dist + '"' : ''}</td>`;
+      if (sc === null) vsParFilled = false; else vsPar += (sc - 3);
+      if (dist === null) totDistFilled = false; else totDist += dist;
+    });
+    const vsParStr = vsParFilled ? (vsPar === 0 ? 'E' : (vsPar > 0 ? '+'+vsPar : vsPar)) : '';
+    t += `<td class="col-summary">${vsParStr}</td><td class="col-summary">${totDistFilled ? totDist+'"' : ''}</td></tr>`;
   });
   t += `<tr class="row-player"><td class="col-label" style="font-weight:800">GROUP TOTAL</td>`;
   par3s.forEach(() => { t += `<td></td><td></td>`; });
@@ -1265,6 +1937,7 @@ function buildPar3(num) {
 
 function adjustRowHeights(enabledFmts) {
   const preview = document.getElementById('scorecard-preview');
+  if (!preview) return;
   const fmtCount = enabledFmts.length;
   if (fmtCount === 0) return;
   const missingFormats = 4 - fmtCount;
@@ -1285,14 +1958,13 @@ function adjustRowHeights(enabledFmts) {
   pRows.forEach(tr => {
     const baseH = 14;
     tr.style.height = (baseH + missingFormats * 3) + 'px';
-    const tds = tr.querySelectorAll('td');
-    tds.forEach(td => { td.style.height = (baseH + missingFormats * 3) + 'px'; });
+    tr.querySelectorAll('td').forEach(td => { td.style.height = (baseH + missingFormats * 3) + 'px'; });
   });
 }
 
-/* ==================================================================
-   PRESETS  (existing)
-   ================================================================== */
+/* ==============================================================
+   PRESETS
+   ============================================================== */
 function loadBeaverBrook() {
   state = JSON.parse(JSON.stringify(BEAVER_BROOK));
   loadStateToUI();
@@ -1302,9 +1974,7 @@ function exportPreset() {
   readUIToState();
   const json = JSON.stringify(state, null, 2);
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(json).then(() => {
-      alert('Preset copied to clipboard!');
-    }).catch(() => {
+    navigator.clipboard.writeText(json).then(() => alert('Preset copied to clipboard!')).catch(() => {
       document.getElementById('preset-json').value = json;
     });
   } else {
@@ -1326,14 +1996,9 @@ function importPreset() {
   }
 }
 
-/* ==================================================================
-   NEW: NJ COURSES DROPDOWN
-   ==================================================================
-   Loads nj_courses.json on startup and exposes a searchable datalist.
-   On selecting an exact match, applies the course's hole data into
-   state.holes (preserving players, formats, tee_color).
-   ================================================================== */
-
+/* ==============================================================
+   NJ COURSES
+   ============================================================== */
 async function loadNjCourses() {
   try {
     const res = await fetch('./nj_courses.json', { cache: 'no-store' });
@@ -1361,26 +2026,23 @@ function populateCourseDropdown() {
 
 function handleNjCourseInput(value, force) {
   if (!value) return;
-  // Only apply on exact-match (datalist selection) OR force (onchange blur)
   const match = njCourses.find(c => c.course_name.toLowerCase() === value.trim().toLowerCase());
   if (match) {
     applyCourse(match);
     setNjStatus(`✓ Loaded "${match.course_name}"`, false);
   } else if (force && value.trim()) {
-    setNjStatus(`No exact match for "${value}". Keep typing or pick from the list.`, true);
+    setNjStatus(`No exact match. Keep typing or pick from the list.`, true);
   }
 }
 
 function applyCourse(course) {
   if (!course || !Array.isArray(course.holes)) return;
   state.course_name = course.course_name || state.course_name;
-  // Map incoming holes (supports hcp OR hdcp key) to state shape
   const mapped = course.holes.map(h => ({
     par: parseInt(h.par) || 4,
     yards: parseInt(h.yards) || 0,
     hdcp: parseInt(h.hcp !== undefined ? h.hcp : h.hdcp) || 0
   }));
-  // Ensure exactly 18 holes
   while (mapped.length < 18) mapped.push({ par: 4, yards: 0, hdcp: 0 });
   state.holes = mapped.slice(0, 18);
   loadStateToUI();
@@ -1411,30 +2073,21 @@ function setNjStatus(msg, isErr) {
   el.classList.toggle('err', !!isErr);
 }
 
-/* ==================================================================
-   NEW: OCR — UPLOAD SCORECARD PHOTO
-   ==================================================================
-   Pipeline: file → Image → canvas preprocess (grayscale + contrast,
-   max 1800px) → Tesseract.recognize → parseScorecardText → modal
-   with editable 18×3 grid → user confirms → state.holes updated.
-   ================================================================== */
-
+/* ==============================================================
+   OCR
+   ============================================================== */
 async function handleScorecardUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
-  event.target.value = ''; // allow re-upload of same file
-
+  event.target.value = '';
   try {
-    if (typeof Tesseract === 'undefined') {
-      throw new Error('Tesseract.js failed to load (check internet connection).');
-    }
+    if (typeof Tesseract === 'undefined') throw new Error('Tesseract.js failed to load.');
     setOcrStatus('Loading image...', 10, false);
     const img = await loadImage(file);
-    setOcrStatus('Preprocessing image (grayscale + contrast)...', 25, false);
+    setOcrStatus('Preprocessing image...', 25, false);
     const canvas = preprocessImage(img);
     setOcrStatus('Running OCR — this takes 10–30 seconds...', 40, false);
     const text = await runOcr(canvas, (p) => {
-      // Tesseract progress 0..1 mapped to 40..85
       setOcrStatus('Running OCR — ' + Math.round(p*100) + '%', 40 + p*45, false);
     });
     lastOcrRawText = text;
@@ -1463,8 +2116,6 @@ function loadImage(file) {
   });
 }
 
-/* Preprocess: downscale (max 1800px), grayscale, high contrast threshold.
-   Improves OCR accuracy on photos with variable lighting. */
 function preprocessImage(img) {
   const maxDim = 1800;
   const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
@@ -1475,10 +2126,8 @@ function preprocessImage(img) {
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   const d = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = d.data;
-  // Grayscale + adaptive-ish contrast
   for (let i = 0; i < data.length; i += 4) {
     const gray = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
-    // Contrast stretch: darker < 110 → black, lighter > 170 → white, mid stays
     let v;
     if (gray < 110) v = Math.max(0, gray - 30);
     else if (gray > 170) v = Math.min(255, gray + 30);
@@ -1492,81 +2141,38 @@ function preprocessImage(img) {
 async function runOcr(canvas, onProgress) {
   const result = await Tesseract.recognize(canvas, 'eng', {
     logger: m => {
-      if (m.status === 'recognizing text' && typeof onProgress === 'function') {
-        onProgress(m.progress || 0);
-      }
+      if (m.status === 'recognizing text' && typeof onProgress === 'function') onProgress(m.progress || 0);
     }
   });
   return result.data.text || '';
 }
 
-/* ------------------ PARSER ------------------
-   Strategy: split text into lines. For each line:
-   1. Extract all integers.
-   2. Normalize 18 numbers (strip typical OUT/IN/TOT subtotals if present).
-   3. Classify as par, yards, or hdcp by (a) label keyword match, then
-      (b) numeric fingerprint.
-   First valid row per category wins.
-*/
 function parseScorecardText(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   const result = { par: [], yards: [], hdcp: [], _raw: text };
-
   for (const line of lines) {
     const lower = line.toLowerCase();
     const allNums = (line.match(/\d+/g) || []).map(Number);
     if (allNums.length < 9) continue;
-
     const nums18 = extract18Numbers(allNums);
     if (!nums18) continue;
-
-    const labelPar  = /\bpar\b/.test(lower);
-    const labelYds  = /\b(yard|yards|yds|yd|blue|black|gold|white|red|tees?|championship)\b/.test(lower);
-    const labelHcp  = /\b(hdcp|hcp|hdc|handicap|index|stroke)\b/.test(lower);
-
-    // PAR check (label priority, else fingerprint)
-    if (!result.par.length && (labelPar || isLikelyParRow(nums18))) {
-      if (isLikelyParRow(nums18)) { result.par = nums18; continue; }
-    }
-    // HDCP check
-    if (!result.hdcp.length && (labelHcp || isLikelyHdcpRow(nums18))) {
-      if (isLikelyHdcpRow(nums18)) { result.hdcp = nums18; continue; }
-    }
-    // YARDS check (do last — broadest range)
-    if (!result.yards.length && (labelYds || isLikelyYardsRow(nums18))) {
-      if (isLikelyYardsRow(nums18)) { result.yards = nums18; continue; }
-    }
+    if (!result.par.length && isLikelyParRow(nums18)) { result.par = nums18; continue; }
+    if (!result.hdcp.length && isLikelyHdcpRow(nums18)) { result.hdcp = nums18; continue; }
+    if (!result.yards.length && isLikelyYardsRow(nums18)) { result.yards = nums18; continue; }
   }
   return result;
 }
 
-/* Given 9–23 numbers, try to return exactly 18 hole values by stripping
-   subtotal positions (OUT at idx 9, IN at idx ~19, TOT at idx ~20). */
 function extract18Numbers(nums) {
   if (nums.length === 18) return nums.slice();
   if (nums.length < 18) return null;
-
-  // Try: strip one subtotal after 9th (OUT), one after 18th (IN), optional TOT
   const attempts = [];
-  // 19 numbers: likely 18 + TOT at end → drop last
   if (nums.length === 19) attempts.push([...nums.slice(0, 18)]);
-  // 20: 9 + OUT + 9 + IN → remove idx 9 and 19
   if (nums.length === 20) attempts.push([...nums.slice(0,9), ...nums.slice(10,19)]);
-  // 21: 9 + OUT + 9 + IN + TOT → remove idx 9, keep 10..18, drop last two
   if (nums.length === 21) attempts.push([...nums.slice(0,9), ...nums.slice(10,19)]);
-  // 22: sometimes leading hole labels 1..9 concatenated... fallback: drop first then 20-case
-  if (nums.length === 22) {
-    attempts.push([...nums.slice(1,10), ...nums.slice(11,20)]);
-    attempts.push([...nums.slice(0,9), ...nums.slice(10,19)]);
-  }
-  // 23: leading hole labels + 20-case
-  if (nums.length === 23) {
-    attempts.push([...nums.slice(1,10), ...nums.slice(11,20)]);
-  }
-  // Generic fallback: just take first 18
+  if (nums.length === 22) { attempts.push([...nums.slice(1,10), ...nums.slice(11,20)]); attempts.push([...nums.slice(0,9), ...nums.slice(10,19)]); }
+  if (nums.length === 23) attempts.push([...nums.slice(1,10), ...nums.slice(11,20)]);
   attempts.push(nums.slice(0, 18));
-
-  // Return the first attempt that has exactly 18
   for (const a of attempts) if (a.length === 18) return a;
   return null;
 }
@@ -1575,26 +2181,21 @@ function isLikelyParRow(nums) {
   if (nums.length !== 18) return false;
   if (!nums.every(n => n >= 3 && n <= 6)) return false;
   const sum = nums.reduce((a,b)=>a+b,0);
-  return sum >= 66 && sum <= 78; // realistic 18-hole par
+  return sum >= 66 && sum <= 78;
 }
-
 function isLikelyYardsRow(nums) {
   if (nums.length !== 18) return false;
   if (!nums.every(n => n >= 50 && n <= 750)) return false;
-  // At least one hole should be a real par-4/5 (>= 280yds) to reject par/hdcp rows
   if (!nums.some(n => n >= 260)) return false;
   const sum = nums.reduce((a,b)=>a+b,0);
-  return sum >= 3500 && sum <= 9000; // realistic course total
+  return sum >= 3500 && sum <= 9000;
 }
-
 function isLikelyHdcpRow(nums) {
   if (nums.length !== 18) return false;
   if (!nums.every(n => n >= 1 && n <= 18)) return false;
-  // Must be a permutation of 1..18 (all unique)
   return new Set(nums).size === 18;
 }
 
-/* ------------------ OCR MODAL ------------------ */
 function openOcrModal(data) {
   lastOcrData = data;
   renderOcrPreviewGrid(data);
@@ -1602,31 +2203,18 @@ function openOcrModal(data) {
   document.getElementById('ocr-raw').classList.add('hidden');
   document.getElementById('ocr-modal').classList.remove('hidden');
 }
-
-function closeOcrModal() {
-  document.getElementById('ocr-modal').classList.add('hidden');
-}
-
-function toggleRawOcr() {
-  document.getElementById('ocr-raw').classList.toggle('hidden');
-}
+function closeOcrModal() { document.getElementById('ocr-modal').classList.add('hidden'); }
+function toggleRawOcr() { document.getElementById('ocr-raw').classList.toggle('hidden'); }
 
 function renderOcrPreviewGrid(data) {
-  let html = '<table class="ocr-table"><thead><tr>'
-    + '<th>Hole</th><th>PAR</th><th>YARDS</th><th>HDCP</th>'
-    + '</tr></thead><tbody>';
+  let html = '<table class="ocr-table"><thead><tr><th>Hole</th><th>PAR</th><th>YARDS</th><th>HDCP</th></tr></thead><tbody>';
   for (let i = 0; i < 18; i++) {
-    const pv = data.par[i];
-    const yv = data.yards[i];
-    const hv = data.hdcp[i];
-    const pClass = pv === undefined ? 'missing' : '';
-    const yClass = yv === undefined ? 'missing' : '';
-    const hClass = hv === undefined ? 'missing' : '';
+    const pv = data.par[i], yv = data.yards[i], hv = data.hdcp[i];
     html += `<tr>
       <td class="hole-num">${i+1}</td>
-      <td><input class="${pClass}" id="ocr-par-${i}" type="number" min="3" max="6" value="${pv ?? ''}"></td>
-      <td><input class="${yClass}" id="ocr-yards-${i}" type="number" min="50" max="800" value="${yv ?? ''}"></td>
-      <td><input class="${hClass}" id="ocr-hdcp-${i}" type="number" min="1" max="18" value="${hv ?? ''}"></td>
+      <td><input class="${pv===undefined?'missing':''}" id="ocr-par-${i}" type="number" min="3" max="6" value="${pv??''}"></td>
+      <td><input class="${yv===undefined?'missing':''}" id="ocr-yards-${i}" type="number" min="50" max="800" value="${yv??''}"></td>
+      <td><input class="${hv===undefined?'missing':''}" id="ocr-hdcp-${i}" type="number" min="1" max="18" value="${hv??''}"></td>
     </tr>`;
   }
   html += '</tbody></table>';
@@ -1638,7 +2226,6 @@ function applyOcrData() {
     const p = parseInt(document.getElementById(`ocr-par-${i}`).value);
     const y = parseInt(document.getElementById(`ocr-yards-${i}`).value);
     const h = parseInt(document.getElementById(`ocr-hdcp-${i}`).value);
-    // Only overwrite if valid number provided; otherwise keep existing
     state.holes[i] = {
       par: Number.isFinite(p) ? p : state.holes[i].par,
       yards: Number.isFinite(y) ? y : state.holes[i].yards,
@@ -1656,9 +2243,582 @@ function setOcrStatus(msg, pct, isErr) {
   document.getElementById('ocr-progress-fill').style.width = Math.min(100, Math.max(0, pct)) + '%';
 }
 
-/* ==================================================================
+/* ==============================================================
+   PLAY MODE
+   ============================================================== */
+
+function renderPlayStart() {
+  const pcd = document.getElementById('pcd-name');
+  const sub = document.getElementById('pcd-sub');
+  if (pcd) pcd.textContent = state.course_name || '—';
+  if (sub) {
+    const enabledFmts = state.formats.filter(f => f.enabled).map(f => f.label).join(' · ');
+    sub.textContent = `${state.tee_color} · ${state.players.length} players · ${enabledFmts}`;
+  }
+}
+
+function startPlay() {
+  // Reset play state with current number of players
+  playState = makePlayState();
+  document.getElementById('play-start-wrap').classList.add('off');
+  document.getElementById('play-active-wrap').classList.add('on');
+  document.getElementById('play-summary-bar').style.display = 'block';
+  buildHoleNav();
+  renderPlayFmtTabs();
+  goHole(0);
+}
+
+function confirmResetPlay() {
+  if (confirm('Reset all round scores? This cannot be undone.')) {
+    playState = makePlayState();
+    buildHoleNav();
+    goHole(0);
+    renderSummaryBar();
+  }
+}
+
+function buildHoleNav() {
+  const nav = document.getElementById('hole-nav');
+  nav.innerHTML = '';
+  for (let i = 0; i < 18; i++) {
+    const par = state.holes[i].par;
+    const btn = document.createElement('button');
+    btn.className = 'hole-nav-btn' + (i === playState.currentHole ? ' active' : '');
+    btn.id = `hnb-${i}`;
+    // Mark as scored if any player has a score on this hole
+    const anyScored = playState.scores.some(ps => ps[i] !== null);
+    if (anyScored) btn.classList.add('scored');
+    btn.innerHTML = `${i+1}<div class="hole-dot"></div><span class="hnb-par">P${par}</span>`;
+    btn.addEventListener('click', () => goHole(i));
+    nav.appendChild(btn);
+  }
+}
+
+function goHole(idx) {
+  if (idx < 0 || idx > 17) return;
+  playState.currentHole = idx;
+  // Update nav
+  document.querySelectorAll('.hole-nav-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === idx);
+    const anyScored = playState.scores.some(ps => ps[i] !== null);
+    b.classList.toggle('scored', anyScored);
+  });
+  // Scroll nav
+  const btn = document.getElementById(`hnb-${idx}`);
+  if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  // Update hole header
+  const h = state.holes[idx];
+  document.getElementById('ph-num').textContent = idx + 1;
+  document.getElementById('ph-par').textContent = h.par;
+  document.getElementById('ph-yds').textContent = h.yards + ' yds';
+  document.getElementById('ph-hdcp').textContent = 'Hdcp: ' + h.hdcp;
+  document.getElementById('btn-prev-hole').disabled = idx === 0;
+  document.getElementById('btn-next-hole').disabled = idx === 17;
+  // Render each format pane
+  renderStrokePaneForHole(idx);
+  renderPtmPaneForHole(idx);
+  renderWolfPaneForHole(idx);
+  renderPar3PaneForHole(idx);
+  renderSummaryBar();
+}
+
+/* -- Format tabs -- */
+function renderPlayFmtTabs() {
+  const container = document.getElementById('play-fmt-tabs');
+  container.innerHTML = '';
+  const enabledFmts = state.formats.filter(f => f.enabled);
+  if (enabledFmts.length === 0) return;
+  enabledFmts.forEach((f, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'play-fmt-tab' + (i === 0 ? ' active' : '');
+    btn.textContent = shortFmtLabel(f.id);
+    btn.addEventListener('click', () => switchPlayFmt(f.id));
+    container.appendChild(btn);
+  });
+  // Set first enabled fmt active
+  playState.activeFmt = enabledFmts[0].id;
+  showFmtPane(enabledFmts[0].id);
+}
+
+function shortFmtLabel(id) {
+  return { stroke: 'Stroke', ptm: 'PTM $', wolf: 'Wolf 🐺', par3: 'Par 3' }[id] || id;
+}
+
+function switchPlayFmt(fmtId) {
+  playState.activeFmt = fmtId;
+  document.querySelectorAll('.play-fmt-tab').forEach(b => {
+    b.classList.toggle('active', b.textContent === shortFmtLabel(fmtId));
+  });
+  showFmtPane(fmtId);
+}
+
+function showFmtPane(fmtId) {
+  document.querySelectorAll('.play-fmt-pane').forEach(p => {
+    p.classList.toggle('active', p.dataset.fmt === fmtId);
+  });
+}
+
+/* -- STROKE PLAY -- */
+function renderStrokePaneForHole(holeIdx) {
+  const container = document.getElementById('stroke-cards');
+  container.innerHTML = '';
+  const par = state.holes[holeIdx].par;
+  state.players.forEach((p, pi) => {
+    const score = playState.scores[pi] ? playState.scores[pi][holeIdx] : null;
+    const card = document.createElement('div');
+    card.className = 'stroke-player-card' + (score !== null ? ' has-score' : '');
+    card.id = `spc-${pi}`;
+    const toParText = buildToParText(pi);
+    const sdClass = scoreDisplayClass(score, par);
+    const sdLabel = scoreLabel(score, par);
+    card.innerHTML = `
+      <div class="spc-name">
+        <div class="spc-full">${esc(p.full_name)}</div>
+        <div class="spc-toPar ${toParCssClass(pi)}">${toParText}</div>
+      </div>
+      <div class="score-picker">
+        <button onclick="adjustScore(${pi},${holeIdx},-1)" aria-label="Decrease">−</button>
+        <div class="score-display ${sdClass}" id="sd-${pi}-${holeIdx}" onclick="openScorePopup(${pi},${holeIdx})">
+          ${score !== null ? `${score}<div class="score-label">${sdLabel}</div>` : ''}
+        </div>
+        <button onclick="adjustScore(${pi},${holeIdx},+1)" aria-label="Increase">+</button>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+function adjustScore(pi, holeIdx, delta) {
+  const cur = playState.scores[pi][holeIdx];
+  if (cur === null) {
+    playState.scores[pi][holeIdx] = state.holes[holeIdx].par + delta;
+  } else {
+    playState.scores[pi][holeIdx] = Math.max(1, Math.min(12, cur + delta));
+  }
+  refreshHoleDisplay(holeIdx);
+}
+
+function refreshHoleDisplay(holeIdx) {
+  renderStrokePaneForHole(holeIdx);
+  renderPtmPaneForHole(holeIdx);
+  renderPar3PaneForHole(holeIdx);
+  renderSummaryBar();
+  // Update nav dot
+  const btn = document.getElementById(`hnb-${holeIdx}`);
+  if (btn) {
+    const anyScored = playState.scores.some(ps => ps[holeIdx] !== null);
+    btn.classList.toggle('scored', anyScored);
+  }
+}
+
+function scoreDisplayClass(score, par) {
+  if (score === null) return 'empty';
+  const diff = score - par;
+  if (diff <= -2) return 'eagle';
+  if (diff === -1) return 'birdie';
+  if (diff === 0) return 'par';
+  if (diff === 1) return 'bogey';
+  return 'double';
+}
+
+function scoreLabel(score, par) {
+  if (score === null) return '';
+  const diff = score - par;
+  if (diff <= -2) return score === 1 ? 'ACE' : 'EAGLE';
+  if (diff === -1) return 'BIRDIE';
+  if (diff === 0) return 'PAR';
+  if (diff === 1) return 'BOGEY';
+  if (diff === 2) return 'DBL';
+  return '+' + diff;
+}
+
+function buildToParText(pi) {
+  const scores = playState.scores[pi];
+  if (!scores) return 'thru —';
+  let total = 0, parTotal = 0, played = 0;
+  for (let i = 0; i < 18; i++) {
+    if (scores[i] !== null) {
+      total += scores[i];
+      parTotal += state.holes[i].par;
+      played++;
+    }
+  }
+  if (played === 0) return 'thru —';
+  const diff = total - parTotal;
+  const diffStr = diff === 0 ? 'E' : (diff > 0 ? '+' + diff : String(diff));
+  return `${diffStr} · thru ${played}`;
+}
+
+function toParCssClass(pi) {
+  const scores = playState.scores[pi];
+  if (!scores) return '';
+  let total = 0, parTotal = 0, played = 0;
+  for (let i = 0; i < 18; i++) {
+    if (scores[i] !== null) { total += scores[i]; parTotal += state.holes[i].par; played++; }
+  }
+  if (played === 0) return '';
+  const diff = total - parTotal;
+  if (diff < 0) return 'under';
+  if (diff > 3) return 'dbl';
+  if (diff > 0) return 'over';
+  return '';
+}
+
+/* -- SCORE POPUP -- */
+function openScorePopup(pi, holeIdx) {
+  scorePopupCtx = { pi, holeIdx };
+  const par = state.holes[holeIdx].par;
+  const cur = playState.scores[pi][holeIdx];
+  const playerName = state.players[pi].full_name;
+
+  document.getElementById('sp-title').textContent = `${playerName} — Hole ${holeIdx+1}`;
+  const grid = document.getElementById('sp-scores-grid');
+  grid.innerHTML = '';
+
+  // Scores 1-10
+  for (let s = 1; s <= 10; s++) {
+    const btn = document.createElement('button');
+    btn.className = 'sp-score-btn';
+    const diff = s - par;
+    if (diff <= -2) btn.classList.add(s === 1 ? 'ace' : 'eagle');
+    else if (diff === -1) btn.classList.add('birdie');
+    else if (diff === 2) btn.classList.add('double');
+    else if (diff >= 3) btn.classList.add('triple');
+    if (cur === s) btn.classList.add('selected');
+    const lbl = scoreLabel(s, par);
+    btn.innerHTML = `${s}<div class="sp-label">${lbl}</div>`;
+    btn.addEventListener('click', () => {
+      playState.scores[pi][holeIdx] = s;
+      closeScorePopup();
+      refreshHoleDisplay(holeIdx);
+    });
+    grid.appendChild(btn);
+  }
+
+  document.getElementById('score-popup-overlay').classList.remove('hidden');
+}
+
+function closeScorePopup() {
+  document.getElementById('score-popup-overlay').classList.add('hidden');
+  scorePopupCtx = null;
+}
+
+function clearScorePopup() {
+  if (!scorePopupCtx) return;
+  playState.scores[scorePopupCtx.pi][scorePopupCtx.holeIdx] = null;
+  closeScorePopup();
+  refreshHoleDisplay(scorePopupCtx ? scorePopupCtx.holeIdx : playState.currentHole);
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('score-popup-overlay')) closeScorePopup();
+}
+
+/* -- PTM -- */
+function renderPtmPaneForHole(holeIdx) {
+  const container = document.getElementById('ptm-cards');
+  container.innerHTML = '';
+  const curHolder = playState.ptmHolder[holeIdx];
+
+  // Info bar: who had money coming in
+  const prevHolder = holeIdx > 0 ? playState.ptmHolder[holeIdx - 1] : null;
+  let infoText = '';
+  if (holeIdx === 0) {
+    infoText = 'Hole 1 — tap to assign money holder for this hole.';
+  } else if (prevHolder !== null && state.players[prevHolder]) {
+    const ps = state.players[prevHolder];
+    const prevScore = playState.scores[prevHolder] ? playState.scores[prevHolder][holeIdx-1] : null;
+    const prevPar = state.holes[holeIdx-1].par;
+    let reason = '';
+    if (prevScore !== null && prevScore > prevPar) reason = ' — made bogey or worse (money passes)';
+    else if (prevScore !== null) reason = ' — held (par or better)';
+    infoText = `Coming in: ${ps.full_name}${reason}`;
+  }
+
+  // Auto-suggest: if prev hole holder had bogey+, suggest passing
+  let suggestedHolder = curHolder;
+  if (curHolder === null && holeIdx > 0 && prevHolder !== null) {
+    const prevScore = playState.scores[prevHolder] ? playState.scores[prevHolder][holeIdx-1] : null;
+    const prevPar = state.holes[holeIdx-1].par;
+    if (prevScore !== null && prevScore > prevPar) suggestedHolder = null; // pass — tap to assign
+    else suggestedHolder = prevHolder; // suggest keeping
+  }
+
+  const infoEl = document.createElement('div');
+  infoEl.className = 'ptm-header-info';
+  infoEl.innerHTML = `<span class="ptm-money-icon">💰</span><span>${infoText || 'Tap player holding the money this hole.'}</span>`;
+  container.appendChild(infoEl);
+
+  state.players.forEach((p, pi) => {
+    const isHolder = curHolder === pi;
+    const card = document.createElement('div');
+    card.className = 'ptm-player-card' + (isHolder ? ' holding' : '');
+    const score = playState.scores[pi] ? playState.scores[pi][holeIdx] : null;
+    const par = state.holes[holeIdx].par;
+    const scoreCtx = score !== null ? `${score} (${scoreLabel(score, par)})` : '—';
+    const isBogeyPlus = score !== null && score > par;
+    // Count how many holes this player held money
+    let holdings = 0;
+    for (let i = 0; i < 18; i++) { if (playState.ptmHolder[i] === pi) holdings++; }
+    card.innerHTML = `
+      <div class="ptm-avatar">${esc(p.abbreviation || p.full_name.charAt(0))}</div>
+      <div class="ptm-player-info">
+        <div class="ptm-name">${esc(p.full_name)}</div>
+        <div class="ptm-holdings">Held ${holdings} hole${holdings !== 1 ? 's' : ''} this round</div>
+      </div>
+      <div class="ptm-score-context ${isBogeyPlus ? 'bogey-plus' : ''}">${scoreCtx}</div>
+      <div class="ptm-money-badge">💰</div>`;
+    card.addEventListener('click', () => {
+      // Toggle: tap again to clear
+      playState.ptmHolder[holeIdx] = isHolder ? null : pi;
+      renderPtmPaneForHole(holeIdx);
+    });
+    container.appendChild(card);
+  });
+
+  // Hole 9 / 18 special callout
+  if (holeIdx === 8 || holeIdx === 17) {
+    const note = document.createElement('div');
+    note.className = 'ptm-header-info';
+    note.style.marginTop = '8px';
+    note.style.borderColor = 'var(--play-gold)';
+    note.innerHTML = `<span>⭐</span><strong>Hole ${holeIdx+1} — Money holder keeps half the pot!</strong>`;
+    container.appendChild(note);
+  }
+}
+
+/* -- WOLF -- */
+function getWolfIndex(holeIdx) {
+  return holeIdx % state.players.length;
+}
+
+function calcWolfTotalPts(pi) {
+  let pts = 0;
+  for (let h = 0; h < 18; h++) {
+    const wp = playState.wolfPartner[h];
+    if (wp === null) continue; // not decided
+    const wolfIdx = getWolfIndex(h);
+    const lone = wp === -1;
+    const blind = playState.wolfBlind[h];
+    // Collect scores
+    const scores = state.players.map((_, i) => playState.scores[i] ? playState.scores[i][h] : null);
+    if (scores.some(s => s === null)) continue; // incomplete hole
+    const wolfScore = scores[wolfIdx];
+    const partnerScore = lone ? null : scores[wp];
+    const opponents = state.players.map((_, i) => i).filter(i => {
+      if (lone) return i !== wolfIdx;
+      return i !== wolfIdx && i !== wp;
+    });
+    const oppBestScore = Math.min(...opponents.map(i => scores[i]));
+    const wolfTeamBest = lone ? wolfScore : Math.min(wolfScore, partnerScore);
+    const wolfTeamWins = wolfTeamBest < oppBestScore;
+    const wolfTeamLoses = oppBestScore < wolfTeamBest;
+    const tie = wolfTeamBest === oppBestScore;
+    if (tie) continue;
+    if (lone) {
+      if (wolfTeamWins) {
+        if (pi === wolfIdx) pts += (blind ? 8 : 4);
+      } else {
+        if (opponents.includes(pi)) pts += 1;
+      }
+    } else {
+      if (wolfTeamWins) {
+        if (pi === wolfIdx || pi === wp) pts += 2;
+      } else {
+        if (opponents.includes(pi)) pts += 3;
+      }
+    }
+  }
+  return pts;
+}
+
+function renderWolfPaneForHole(holeIdx) {
+  const container = document.getElementById('wolf-cards');
+  container.innerHTML = '';
+  const wolfIdx = getWolfIndex(holeIdx);
+  const wolfPlayer = state.players[wolfIdx];
+  const curPartner = playState.wolfPartner[holeIdx];
+  const isLone = curPartner === -1;
+  const isBlind = playState.wolfBlind[holeIdx];
+
+  // Wolf header
+  const header = document.createElement('div');
+  header.className = 'wolf-hole-header';
+  header.innerHTML = `
+    <div>
+      <div class="wolf-is-label">Wolf This Hole</div>
+      <div class="wolf-name-badge">${esc(wolfPlayer ? wolfPlayer.full_name : '—')}</div>
+    </div>
+    <div class="wolf-mode-chips">
+      <div class="wolf-chip ${isLone && !isBlind ? 'lone-active' : ''}" onclick="setLoneWolf(${holeIdx}, false)">Lone Wolf</div>
+      <div class="wolf-chip ${isBlind ? 'lone-active' : ''}" onclick="setLoneWolf(${holeIdx}, true)">Blind Wolf</div>
+    </div>`;
+  container.appendChild(header);
+
+  // Player cards
+  state.players.forEach((p, pi) => {
+    const isWolf = pi === wolfIdx;
+    const isPartner = !isLone && curPartner === pi && !isWolf;
+    const isThisLone = isWolf && isLone;
+
+    const card = document.createElement('div');
+    card.className = 'wolf-player-card';
+    if (isWolf && !isLone) card.classList.add('is-wolf');
+    if (isPartner) card.classList.add('is-partner');
+    if (isThisLone) card.classList.add('lone-wolf');
+
+    let roleText = '', roleClass = '', icon = '👤';
+    if (isWolf && !isLone) { roleText = 'Wolf'; roleClass = 'wolf-role'; icon = '🐺'; }
+    else if (isWolf && isLone && !isBlind) { roleText = 'Lone Wolf'; roleClass = 'lone-role'; icon = '🐺'; }
+    else if (isWolf && isBlind) { roleText = 'Blind Wolf'; roleClass = 'lone-role'; icon = '🐺'; }
+    else if (isPartner) { roleText = 'Partner'; roleClass = 'partner-role'; icon = '🤝'; }
+    else { roleText = 'Opponent'; roleClass = ''; icon = '⛳'; }
+
+    const pts = calcWolfTotalPts(pi);
+    card.innerHTML = `
+      <div class="wolf-role-icon">${icon}</div>
+      <div class="wolf-player-info">
+        <div class="wpi-name">${esc(p.full_name)}</div>
+        <div class="wpi-role ${roleClass}">${roleText}</div>
+      </div>
+      <div class="wolf-pts-bubble">
+        <div class="wpb-pts">${pts}</div>
+        <div class="wpb-label">pts</div>
+      </div>`;
+
+    // Tap non-wolf to toggle partner (only if not lone wolf)
+    if (!isWolf && !isLone) {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', () => {
+        // Toggle partner selection
+        playState.wolfPartner[holeIdx] = isPartner ? wolfIdx : pi;
+        // If we just set a partner, clear lone wolf
+        playState.wolfBlind[holeIdx] = false;
+        renderWolfPaneForHole(holeIdx);
+      });
+    }
+    container.appendChild(card);
+  });
+
+  // Result bar — show if all players have scores
+  const scores = state.players.map((_, i) => playState.scores[i] ? playState.scores[i][holeIdx] : null);
+  if (scores.every(s => s !== null) && curPartner !== null) {
+    const resultEl = document.createElement('div');
+    resultEl.className = 'wolf-result-bar';
+    resultEl.innerHTML = buildWolfResultText(holeIdx);
+    container.appendChild(resultEl);
+  }
+}
+
+function setLoneWolf(holeIdx, blind) {
+  const wolfIdx = getWolfIndex(holeIdx);
+  const cur = playState.wolfPartner[holeIdx];
+  const alreadySet = cur === -1 && playState.wolfBlind[holeIdx] === blind;
+  if (alreadySet) {
+    // Toggle off
+    playState.wolfPartner[holeIdx] = null;
+    playState.wolfBlind[holeIdx] = false;
+  } else {
+    playState.wolfPartner[holeIdx] = -1;
+    playState.wolfBlind[holeIdx] = blind;
+  }
+  renderWolfPaneForHole(holeIdx);
+}
+
+function buildWolfResultText(holeIdx) {
+  const wolfIdx = getWolfIndex(holeIdx);
+  const wp = playState.wolfPartner[holeIdx];
+  const lone = wp === -1;
+  const blind = playState.wolfBlind[holeIdx];
+  const scores = state.players.map((_, i) => playState.scores[i][holeIdx]);
+  const wolfScore = scores[wolfIdx];
+  const partnerScore = lone ? null : (wp >= 0 ? scores[wp] : null);
+  const opponentIdxs = state.players.map((_, i) => i).filter(i => {
+    if (lone) return i !== wolfIdx;
+    return i !== wolfIdx && i !== wp;
+  });
+  const oppBestScore = Math.min(...opponentIdxs.map(i => scores[i]));
+  const wolfTeamBest = lone ? wolfScore : Math.min(wolfScore, partnerScore);
+
+  if (wolfTeamBest < oppBestScore) {
+    if (lone) return `<strong>Lone Wolf wins!</strong> ${state.players[wolfIdx].full_name} gets <strong>${blind?8:4} pts</strong>`;
+    return `<strong>Wolf team wins!</strong> ${state.players[wolfIdx].full_name} &amp; ${state.players[wp]?.full_name} get <strong>2 pts each</strong>`;
+  } else if (oppBestScore < wolfTeamBest) {
+    if (lone) return `<strong>Opponents win!</strong> Each opponent gets <strong>1 pt</strong>`;
+    const names = opponentIdxs.map(i => state.players[i].full_name).join(', ');
+    return `<strong>Opponents win!</strong> ${names} get <strong>3 pts each</strong>`;
+  }
+  return 'Tied — no points awarded';
+}
+
+/* -- PAR 3 -- */
+function renderPar3PaneForHole(holeIdx) {
+  const container = document.getElementById('par3-cards');
+  container.innerHTML = '';
+  const h = state.holes[holeIdx];
+  if (h.par !== 3) {
+    const msg = document.createElement('div');
+    msg.className = 'par3-not-applicable';
+    msg.textContent = `Hole ${holeIdx+1} is a Par ${h.par} — Par 3 Challenge only applies on par-3 holes.`;
+    container.appendChild(msg);
+    return;
+  }
+  state.players.forEach((p, pi) => {
+    const score = playState.scores[pi] ? playState.scores[pi][holeIdx] : null;
+    const dist = playState.par3Dist[pi] ? playState.par3Dist[pi][holeIdx] : null;
+    const card = document.createElement('div');
+    card.className = 'par3-player-card';
+    card.innerHTML = `
+      <div class="par3-name">${esc(p.full_name)}</div>
+      <input class="par3-dist-input" type="number" min="0" max="9999" placeholder="—" value="${dist !== null ? dist : ''}"
+        id="p3dist-${pi}-${holeIdx}" aria-label="Pin distance inches">
+      <div class="par3-dist-label">ft</div>`;
+    // Score display (from stroke section)
+    if (score !== null) {
+      const sdiv = document.createElement('div');
+      sdiv.style.cssText = 'font-family:var(--play-text);font-size:1.1rem;font-weight:700;color:var(--play-text-dim);min-width:28px;text-align:center;';
+      sdiv.textContent = score;
+      card.insertBefore(sdiv, card.querySelector('input'));
+    }
+    const input = card.querySelector('.par3-dist-input');
+    input.addEventListener('change', () => {
+      const val = parseInt(input.value);
+      playState.par3Dist[pi][holeIdx] = Number.isFinite(val) ? val : null;
+    });
+    container.appendChild(card);
+  });
+}
+
+/* -- SUMMARY BAR -- */
+function renderSummaryBar() {
+  const bar = document.getElementById('psb-players');
+  if (!bar) return;
+  bar.innerHTML = '';
+  state.players.forEach((p, pi) => {
+    const scores = playState.scores[pi];
+    let total = 0, parTotal = 0, played = 0;
+    for (let i = 0; i < 18; i++) {
+      if (scores[i] !== null) {
+        total += scores[i];
+        parTotal += state.holes[i].par;
+        played++;
+      }
+    }
+    const diff = total - parTotal;
+    const diffStr = played === 0 ? '—' : (diff === 0 ? 'E' : (diff > 0 ? '+' + diff : String(diff)));
+    const cls = played === 0 ? '' : diff < 0 ? 'under' : diff > 3 ? 'dbl' : diff > 0 ? 'over' : '';
+    const el = document.createElement('div');
+    el.className = 'psb-player';
+    el.innerHTML = `
+      <div class="psb-player-name">${esc(p.abbreviation || p.full_name)}</div>
+      <div class="psb-player-score ${cls}">${diffStr}</div>
+      <div class="psb-player-tpar">${played > 0 ? 'thru ' + played : '—'}</div>`;
+    bar.appendChild(el);
+  });
+}
+
+/* ==============================================================
    INIT
-   ================================================================== */
+   ============================================================== */
 window.addEventListener('DOMContentLoaded', () => {
   loadBeaverBrook();
   loadNjCourses();
