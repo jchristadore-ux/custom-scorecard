@@ -2,9 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>EGT Scorecard</title>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js" async></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -190,7 +193,7 @@ body {
 }
 .qf-card h4 { font-size: 0.78rem; color: var(--ui-gold); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
 .qf-card p { font-size: 0.72rem; color: var(--ui-text-muted); margin-bottom: 10px; }
-.qf-card input[type=text], .qf-card input[list] {
+.qf-card input[type=text], .qf-card input[list], .qf-card select {
   width: 100%;
   background: var(--ui-surface);
   border: 1px solid var(--ui-border);
@@ -200,7 +203,19 @@ body {
   font-size: 0.85rem;
   font-family: inherit;
 }
-.qf-card input:focus { outline: none; border-color: var(--ui-accent); }
+.qf-card select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 10px 10px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ui-text-muted) 50%),
+                    linear-gradient(135deg, var(--ui-text-muted) 50%, transparent 50%);
+  background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 28px;
+  cursor: pointer;
+}
+.qf-card input:focus, .qf-card select:focus { outline: none; border-color: var(--ui-accent); }
 .qf-status { font-size: 0.72rem; color: var(--ui-accent); margin-top: 8px; min-height: 16px; }
 .qf-status.err { color: var(--accent-red); }
 .qf-progress { height: 3px; background: var(--ui-border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
@@ -338,12 +353,16 @@ body {
 #play-panel {
   background: var(--play-bg);
   min-height: calc(100vh - 52px);
-  display: flex;
-  flex-direction: column;
   max-width: 540px;
   margin: 0 auto;
   position: relative;
   padding-bottom: 140px; /* room for summary bar */
+}
+/* Only show as flex when this tab is active — otherwise .tab-panel's
+   display:none must win. Specificity (1,1,0) beats .tab-panel.active (0,2,0). */
+#play-panel.active {
+  display: flex;
+  flex-direction: column;
 }
 
 /* -- Hole nav strip -- */
@@ -1449,8 +1468,9 @@ body {
       <div class="qf-card">
         <h4>🏌️ Select NJ Course</h4>
         <p>Pick a course to auto-fill par, yards &amp; handicap for all 18 holes.</p>
-        <input type="text" id="nj-course-input" list="nj-course-list" placeholder="Start typing a course name..." autocomplete="off" oninput="handleNjCourseInput(this.value)" onchange="handleNjCourseInput(this.value, true)">
-        <datalist id="nj-course-list"></datalist>
+        <select id="nj-course-select" onchange="handleNjCourseSelect(this.value)">
+          <option value="">— Select an NJ course —</option>
+        </select>
         <div id="nj-status" class="qf-status"></div>
         <div id="nj-manual-load" class="hidden" style="margin-top:8px;">
           <label class="btn btn-sm btn-full" style="cursor:pointer;">
@@ -2220,23 +2240,25 @@ async function loadNjCourses() {
 }
 
 function populateCourseDropdown() {
-  const list = document.getElementById('nj-course-list');
-  list.innerHTML = '';
-  njCourses.forEach(c => {
+  const select = document.getElementById('nj-course-select');
+  if (!select) return;
+  select.innerHTML = '<option value="">— Select an NJ course —</option>';
+  njCourses.forEach((c, i) => {
     const opt = document.createElement('option');
-    opt.value = c.course_name;
-    list.appendChild(opt);
+    opt.value = String(i);
+    opt.textContent = c.course_name;
+    select.appendChild(opt);
   });
 }
 
-function handleNjCourseInput(value, force) {
-  if (!value) return;
-  const match = njCourses.find(c => c.course_name.toLowerCase() === value.trim().toLowerCase());
+function handleNjCourseSelect(idxStr) {
+  if (!idxStr) return;
+  const idx = parseInt(idxStr, 10);
+  if (!Number.isFinite(idx) || idx < 0 || idx >= njCourses.length) return;
+  const match = njCourses[idx];
   if (match) {
     applyCourse(match);
     setNjStatus(`✓ Loaded "${match.course_name}"`, false);
-  } else if (force && value.trim()) {
-    setNjStatus(`No exact match. Keep typing or pick from the list.`, true);
   }
 }
 
@@ -3063,9 +3085,29 @@ function renderSummaryBar() {
 /* ==============================================================
    INIT
    ============================================================== */
+function showInitError(msg) {
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#C0392B;color:#fff;padding:12px 16px;text-align:center;z-index:9999;font-family:-apple-system,sans-serif;font-size:14px;line-height:1.4;';
+  banner.innerHTML = '<strong>Startup error:</strong> ' + String(msg).replace(/</g,'&lt;') + ' — tap to dismiss';
+  banner.onclick = () => banner.remove();
+  document.body.appendChild(banner);
+}
+
+// Global error catcher — surfaces JS errors on iPad where no console is visible
+window.addEventListener('error', (e) => {
+  showInitError((e.message || 'Unknown error') + ' @ ' + (e.filename || '').split('/').pop() + ':' + e.lineno);
+});
+
 window.addEventListener('DOMContentLoaded', () => {
-  loadBeaverBrook();
-  loadNjCourses();
+  try {
+    loadBeaverBrook();
+  } catch (err) {
+    console.error('loadBeaverBrook failed:', err);
+    showInitError('Could not load default course data: ' + err.message);
+    return;
+  }
+  // NJ courses are optional — fetch failure is handled internally
+  try { loadNjCourses(); } catch (err) { console.warn('loadNjCourses failed:', err); }
 });
 </script>
 </body>
