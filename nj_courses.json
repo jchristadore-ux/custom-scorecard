@@ -1,140 +1,2601 @@
 [
   {
-    "course_name": "Beaver Brook Country Club (Annandale, NJ) — Black Tees",
+    "course_name": "Beaver Brook Country Club (Annandale, NJ) \u2014 Black Tees",
     "holes": [
-      {"hole":1,"par":5,"yards":495,"hcp":13},
-      {"hole":2,"par":5,"yards":474,"hcp":11},
-      {"hole":3,"par":4,"yards":371,"hcp":5},
-      {"hole":4,"par":3,"yards":159,"hcp":17},
-      {"hole":5,"par":4,"yards":392,"hcp":7},
-      {"hole":6,"par":4,"yards":396,"hcp":3},
-      {"hole":7,"par":3,"yards":172,"hcp":15},
-      {"hole":8,"par":4,"yards":396,"hcp":1},
-      {"hole":9,"par":4,"yards":302,"hcp":9},
-      {"hole":10,"par":4,"yards":358,"hcp":10},
-      {"hole":11,"par":4,"yards":374,"hcp":6},
-      {"hole":12,"par":3,"yards":128,"hcp":18},
-      {"hole":13,"par":4,"yards":365,"hcp":4},
-      {"hole":14,"par":3,"yards":146,"hcp":16},
-      {"hole":15,"par":4,"yards":433,"hcp":2},
-      {"hole":16,"par":4,"yards":414,"hcp":8},
-      {"hole":17,"par":5,"yards":504,"hcp":12},
-      {"hole":18,"par":5,"yards":476,"hcp":14}
+      {
+        "hole": 1,
+        "par": 5,
+        "yards": 495,
+        "hcp": 13
+      },
+      {
+        "hole": 2,
+        "par": 5,
+        "yards": 474,
+        "hcp": 11
+      },
+      {
+        "hole": 3,
+        "par": 4,
+        "yards": 371,
+        "hcp": 5
+      },
+      {
+        "hole": 4,
+        "par": 3,
+        "yards": 159,
+        "hcp": 17
+      },
+      {
+        "hole": 5,
+        "par": 4,
+        "yards": 392,
+        "hcp": 7
+      },
+      {
+        "hole": 6,
+        "par": 4,
+        "yards": 396,
+        "hcp": 3
+      },
+      {
+        "hole": 7,
+        "par": 3,
+        "yards": 172,
+        "hcp": 15
+      },
+      {
+        "hole": 8,
+        "par": 4,
+        "yards": 396,
+        "hcp": 1
+      },
+      {
+        "hole": 9,
+        "par": 4,
+        "yards": 302,
+        "hcp": 9
+      },
+      {
+        "hole": 10,
+        "par": 4,
+        "yards": 358,
+        "hcp": 10
+      },
+      {
+        "hole": 11,
+        "par": 4,
+        "yards": 374,
+        "hcp": 6
+      },
+      {
+        "hole": 12,
+        "par": 3,
+        "yards": 128,
+        "hcp": 18
+      },
+      {
+        "hole": 13,
+        "par": 4,
+        "yards": 365,
+        "hcp": 4
+      },
+      {
+        "hole": 14,
+        "par": 3,
+        "yards": 146,
+        "hcp": 16
+      },
+      {
+        "hole": 15,
+        "par": 4,
+        "yards": 433,
+        "hcp": 2
+      },
+      {
+        "hole": 16,
+        "par": 4,
+        "yards": 414,
+        "hcp": 8
+      },
+      {
+        "hole": 17,
+        "par": 5,
+        "yards": 504,
+        "hcp": 12
+      },
+      {
+        "hole": 18,
+        "par": 5,
+        "yards": 476,
+        "hcp": 14
+      }
     ]
   },
   {
-    "course_name": "Galloping Hill Golf Course (Kenilworth, NJ) — Blue Tees",
+    "course_name": "Galloping Hill Golf Course (Kenilworth, NJ) \u2014 Blue Tees",
     "holes": [
-      {"hole":1,"par":4,"yards":418,"hcp":5},
-      {"hole":2,"par":4,"yards":380,"hcp":11},
-      {"hole":3,"par":3,"yards":195,"hcp":15},
-      {"hole":4,"par":5,"yards":528,"hcp":7},
-      {"hole":5,"par":4,"yards":405,"hcp":3},
-      {"hole":6,"par":3,"yards":170,"hcp":17},
-      {"hole":7,"par":4,"yards":432,"hcp":1},
-      {"hole":8,"par":5,"yards":540,"hcp":9},
-      {"hole":9,"par":4,"yards":365,"hcp":13},
-      {"hole":10,"par":4,"yards":410,"hcp":6},
-      {"hole":11,"par":4,"yards":395,"hcp":8},
-      {"hole":12,"par":3,"yards":185,"hcp":14},
-      {"hole":13,"par":5,"yards":515,"hcp":12},
-      {"hole":14,"par":4,"yards":388,"hcp":10},
-      {"hole":15,"par":4,"yards":425,"hcp":2},
-      {"hole":16,"par":3,"yards":160,"hcp":18},
-      {"hole":17,"par":5,"yards":505,"hcp":16},
-      {"hole":18,"par":4,"yards":440,"hcp":4}
+      {
+        "hole": 1,
+        "par": 4,
+        "yards": 418,
+        "hcp": 5
+      },
+      {
+        "hole": 2,
+        "par": 4,
+        "yards": 380,
+        "hcp": 11
+      },
+      {
+        "hole": 3,
+        "par": 3,
+        "yards": 195,
+        "hcp": 15
+      },
+      {
+        "hole": 4,
+        "par": 5,
+        "yards": 528,
+        "hcp": 7
+      },
+      {
+        "hole": 5,
+        "par": 4,
+        "yards": 405,
+        "hcp": 3
+      },
+      {
+        "hole": 6,
+        "par": 3,
+        "yards": 170,
+        "hcp": 17
+      },
+      {
+        "hole": 7,
+        "par": 4,
+        "yards": 432,
+        "hcp": 1
+      },
+      {
+        "hole": 8,
+        "par": 5,
+        "yards": 540,
+        "hcp": 9
+      },
+      {
+        "hole": 9,
+        "par": 4,
+        "yards": 365,
+        "hcp": 13
+      },
+      {
+        "hole": 10,
+        "par": 4,
+        "yards": 410,
+        "hcp": 6
+      },
+      {
+        "hole": 11,
+        "par": 4,
+        "yards": 395,
+        "hcp": 8
+      },
+      {
+        "hole": 12,
+        "par": 3,
+        "yards": 185,
+        "hcp": 14
+      },
+      {
+        "hole": 13,
+        "par": 5,
+        "yards": 515,
+        "hcp": 12
+      },
+      {
+        "hole": 14,
+        "par": 4,
+        "yards": 388,
+        "hcp": 10
+      },
+      {
+        "hole": 15,
+        "par": 4,
+        "yards": 425,
+        "hcp": 2
+      },
+      {
+        "hole": 16,
+        "par": 3,
+        "yards": 160,
+        "hcp": 18
+      },
+      {
+        "hole": 17,
+        "par": 5,
+        "yards": 505,
+        "hcp": 16
+      },
+      {
+        "hole": 18,
+        "par": 4,
+        "yards": 440,
+        "hcp": 4
+      }
     ]
   },
   {
-    "course_name": "Neshanic Valley Golf Course (Neshanic Station, NJ) — Meadow Course Blue Tees",
+    "course_name": "Neshanic Valley Golf Course (Neshanic Station, NJ) \u2014 Meadow Course Blue Tees",
     "holes": [
-      {"hole":1,"par":4,"yards":405,"hcp":7},
-      {"hole":2,"par":5,"yards":535,"hcp":3},
-      {"hole":3,"par":4,"yards":392,"hcp":13},
-      {"hole":4,"par":3,"yards":178,"hcp":15},
-      {"hole":5,"par":4,"yards":420,"hcp":5},
-      {"hole":6,"par":4,"yards":360,"hcp":11},
-      {"hole":7,"par":3,"yards":190,"hcp":17},
-      {"hole":8,"par":5,"yards":548,"hcp":1},
-      {"hole":9,"par":4,"yards":380,"hcp":9},
-      {"hole":10,"par":4,"yards":415,"hcp":4},
-      {"hole":11,"par":3,"yards":165,"hcp":16},
-      {"hole":12,"par":5,"yards":520,"hcp":10},
-      {"hole":13,"par":4,"yards":398,"hcp":6},
-      {"hole":14,"par":4,"yards":370,"hcp":14},
-      {"hole":15,"par":3,"yards":205,"hcp":12},
-      {"hole":16,"par":4,"yards":432,"hcp":2},
-      {"hole":17,"par":5,"yards":510,"hcp":8},
-      {"hole":18,"par":4,"yards":445,"hcp":18}
+      {
+        "hole": 1,
+        "par": 4,
+        "yards": 405,
+        "hcp": 7
+      },
+      {
+        "hole": 2,
+        "par": 5,
+        "yards": 535,
+        "hcp": 3
+      },
+      {
+        "hole": 3,
+        "par": 4,
+        "yards": 392,
+        "hcp": 13
+      },
+      {
+        "hole": 4,
+        "par": 3,
+        "yards": 178,
+        "hcp": 15
+      },
+      {
+        "hole": 5,
+        "par": 4,
+        "yards": 420,
+        "hcp": 5
+      },
+      {
+        "hole": 6,
+        "par": 4,
+        "yards": 360,
+        "hcp": 11
+      },
+      {
+        "hole": 7,
+        "par": 3,
+        "yards": 190,
+        "hcp": 17
+      },
+      {
+        "hole": 8,
+        "par": 5,
+        "yards": 548,
+        "hcp": 1
+      },
+      {
+        "hole": 9,
+        "par": 4,
+        "yards": 380,
+        "hcp": 9
+      },
+      {
+        "hole": 10,
+        "par": 4,
+        "yards": 415,
+        "hcp": 4
+      },
+      {
+        "hole": 11,
+        "par": 3,
+        "yards": 165,
+        "hcp": 16
+      },
+      {
+        "hole": 12,
+        "par": 5,
+        "yards": 520,
+        "hcp": 10
+      },
+      {
+        "hole": 13,
+        "par": 4,
+        "yards": 398,
+        "hcp": 6
+      },
+      {
+        "hole": 14,
+        "par": 4,
+        "yards": 370,
+        "hcp": 14
+      },
+      {
+        "hole": 15,
+        "par": 3,
+        "yards": 205,
+        "hcp": 12
+      },
+      {
+        "hole": 16,
+        "par": 4,
+        "yards": 432,
+        "hcp": 2
+      },
+      {
+        "hole": 17,
+        "par": 5,
+        "yards": 510,
+        "hcp": 8
+      },
+      {
+        "hole": 18,
+        "par": 4,
+        "yards": 445,
+        "hcp": 18
+      }
     ]
   },
   {
-    "course_name": "Ballyowen Golf Club (Hamburg, NJ) — Gold Tees",
+    "course_name": "Ballyowen Golf Club (Hamburg, NJ) \u2014 Gold Tees",
     "holes": [
-      {"hole":1,"par":4,"yards":398,"hcp":9},
-      {"hole":2,"par":5,"yards":545,"hcp":5},
-      {"hole":3,"par":4,"yards":375,"hcp":13},
-      {"hole":4,"par":3,"yards":175,"hcp":17},
-      {"hole":5,"par":4,"yards":425,"hcp":3},
-      {"hole":6,"par":5,"yards":560,"hcp":7},
-      {"hole":7,"par":4,"yards":405,"hcp":1},
-      {"hole":8,"par":3,"yards":160,"hcp":15},
-      {"hole":9,"par":4,"yards":385,"hcp":11},
-      {"hole":10,"par":4,"yards":410,"hcp":6},
-      {"hole":11,"par":3,"yards":195,"hcp":14},
-      {"hole":12,"par":5,"yards":525,"hcp":10},
-      {"hole":13,"par":4,"yards":390,"hcp":8},
-      {"hole":14,"par":4,"yards":440,"hcp":2},
-      {"hole":15,"par":3,"yards":180,"hcp":16},
-      {"hole":16,"par":5,"yards":535,"hcp":12},
-      {"hole":17,"par":4,"yards":420,"hcp":4},
-      {"hole":18,"par":4,"yards":365,"hcp":18}
+      {
+        "hole": 1,
+        "par": 4,
+        "yards": 398,
+        "hcp": 9
+      },
+      {
+        "hole": 2,
+        "par": 5,
+        "yards": 545,
+        "hcp": 5
+      },
+      {
+        "hole": 3,
+        "par": 4,
+        "yards": 375,
+        "hcp": 13
+      },
+      {
+        "hole": 4,
+        "par": 3,
+        "yards": 175,
+        "hcp": 17
+      },
+      {
+        "hole": 5,
+        "par": 4,
+        "yards": 425,
+        "hcp": 3
+      },
+      {
+        "hole": 6,
+        "par": 5,
+        "yards": 560,
+        "hcp": 7
+      },
+      {
+        "hole": 7,
+        "par": 4,
+        "yards": 405,
+        "hcp": 1
+      },
+      {
+        "hole": 8,
+        "par": 3,
+        "yards": 160,
+        "hcp": 15
+      },
+      {
+        "hole": 9,
+        "par": 4,
+        "yards": 385,
+        "hcp": 11
+      },
+      {
+        "hole": 10,
+        "par": 4,
+        "yards": 410,
+        "hcp": 6
+      },
+      {
+        "hole": 11,
+        "par": 3,
+        "yards": 195,
+        "hcp": 14
+      },
+      {
+        "hole": 12,
+        "par": 5,
+        "yards": 525,
+        "hcp": 10
+      },
+      {
+        "hole": 13,
+        "par": 4,
+        "yards": 390,
+        "hcp": 8
+      },
+      {
+        "hole": 14,
+        "par": 4,
+        "yards": 440,
+        "hcp": 2
+      },
+      {
+        "hole": 15,
+        "par": 3,
+        "yards": 180,
+        "hcp": 16
+      },
+      {
+        "hole": 16,
+        "par": 5,
+        "yards": 535,
+        "hcp": 12
+      },
+      {
+        "hole": 17,
+        "par": 4,
+        "yards": 420,
+        "hcp": 4
+      },
+      {
+        "hole": 18,
+        "par": 4,
+        "yards": 365,
+        "hcp": 18
+      }
     ]
   },
   {
-    "course_name": "Crystal Springs Golf Resort — Wild Turkey (Hamburg, NJ) — Championship Tees",
+    "course_name": "Crystal Springs Golf Resort \u2014 Wild Turkey (Hamburg, NJ) \u2014 Championship Tees",
     "holes": [
-      {"hole":1,"par":4,"yards":430,"hcp":5},
-      {"hole":2,"par":4,"yards":385,"hcp":11},
-      {"hole":3,"par":3,"yards":205,"hcp":13},
-      {"hole":4,"par":5,"yards":555,"hcp":7},
-      {"hole":5,"par":4,"yards":410,"hcp":3},
-      {"hole":6,"par":3,"yards":175,"hcp":17},
-      {"hole":7,"par":4,"yards":445,"hcp":1},
-      {"hole":8,"par":5,"yards":540,"hcp":9},
-      {"hole":9,"par":4,"yards":380,"hcp":15},
-      {"hole":10,"par":4,"yards":400,"hcp":8},
-      {"hole":11,"par":5,"yards":530,"hcp":10},
-      {"hole":12,"par":3,"yards":190,"hcp":14},
-      {"hole":13,"par":4,"yards":415,"hcp":4},
-      {"hole":14,"par":4,"yards":370,"hcp":12},
-      {"hole":15,"par":3,"yards":165,"hcp":18},
-      {"hole":16,"par":5,"yards":520,"hcp":16},
-      {"hole":17,"par":4,"yards":425,"hcp":2},
-      {"hole":18,"par":4,"yards":395,"hcp":6}
+      {
+        "hole": 1,
+        "par": 4,
+        "yards": 430,
+        "hcp": 5
+      },
+      {
+        "hole": 2,
+        "par": 4,
+        "yards": 385,
+        "hcp": 11
+      },
+      {
+        "hole": 3,
+        "par": 3,
+        "yards": 205,
+        "hcp": 13
+      },
+      {
+        "hole": 4,
+        "par": 5,
+        "yards": 555,
+        "hcp": 7
+      },
+      {
+        "hole": 5,
+        "par": 4,
+        "yards": 410,
+        "hcp": 3
+      },
+      {
+        "hole": 6,
+        "par": 3,
+        "yards": 175,
+        "hcp": 17
+      },
+      {
+        "hole": 7,
+        "par": 4,
+        "yards": 445,
+        "hcp": 1
+      },
+      {
+        "hole": 8,
+        "par": 5,
+        "yards": 540,
+        "hcp": 9
+      },
+      {
+        "hole": 9,
+        "par": 4,
+        "yards": 380,
+        "hcp": 15
+      },
+      {
+        "hole": 10,
+        "par": 4,
+        "yards": 400,
+        "hcp": 8
+      },
+      {
+        "hole": 11,
+        "par": 5,
+        "yards": 530,
+        "hcp": 10
+      },
+      {
+        "hole": 12,
+        "par": 3,
+        "yards": 190,
+        "hcp": 14
+      },
+      {
+        "hole": 13,
+        "par": 4,
+        "yards": 415,
+        "hcp": 4
+      },
+      {
+        "hole": 14,
+        "par": 4,
+        "yards": 370,
+        "hcp": 12
+      },
+      {
+        "hole": 15,
+        "par": 3,
+        "yards": 165,
+        "hcp": 18
+      },
+      {
+        "hole": 16,
+        "par": 5,
+        "yards": 520,
+        "hcp": 16
+      },
+      {
+        "hole": 17,
+        "par": 4,
+        "yards": 425,
+        "hcp": 2
+      },
+      {
+        "hole": 18,
+        "par": 4,
+        "yards": 395,
+        "hcp": 6
+      }
     ]
   },
   {
-    "course_name": "Hominy Hill Golf Course (Colts Neck, NJ) — Blue Tees",
+    "course_name": "Hominy Hill Golf Course (Colts Neck, NJ) \u2014 Blue Tees",
     "holes": [
-      {"hole":1,"par":4,"yards":410,"hcp":7},
-      {"hole":2,"par":4,"yards":380,"hcp":13},
-      {"hole":3,"par":3,"yards":185,"hcp":15},
-      {"hole":4,"par":5,"yards":545,"hcp":1},
-      {"hole":5,"par":4,"yards":420,"hcp":3},
-      {"hole":6,"par":3,"yards":170,"hcp":17},
-      {"hole":7,"par":4,"yards":395,"hcp":11},
-      {"hole":8,"par":5,"yards":530,"hcp":5},
-      {"hole":9,"par":4,"yards":360,"hcp":9},
-      {"hole":10,"par":4,"yards":405,"hcp":8},
-      {"hole":11,"par":4,"yards":435,"hcp":2},
-      {"hole":12,"par":3,"yards":175,"hcp":16},
-      {"hole":13,"par":5,"yards":560,"hcp":6},
-      {"hole":14,"par":4,"yards":375,"hcp":14},
-      {"hole":15,"par":3,"yards":200,"hcp":12},
-      {"hole":16,"par":4,"yards":390,"hcp":10},
-      {"hole":17,"par":5,"yards":515,"hcp":4},
-      {"hole":18,"par":4,"yards":425,"hcp":18}
+      {
+        "hole": 1,
+        "par": 4,
+        "yards": 410,
+        "hcp": 7
+      },
+      {
+        "hole": 2,
+        "par": 4,
+        "yards": 380,
+        "hcp": 13
+      },
+      {
+        "hole": 3,
+        "par": 3,
+        "yards": 185,
+        "hcp": 15
+      },
+      {
+        "hole": 4,
+        "par": 5,
+        "yards": 545,
+        "hcp": 1
+      },
+      {
+        "hole": 5,
+        "par": 4,
+        "yards": 420,
+        "hcp": 3
+      },
+      {
+        "hole": 6,
+        "par": 3,
+        "yards": 170,
+        "hcp": 17
+      },
+      {
+        "hole": 7,
+        "par": 4,
+        "yards": 395,
+        "hcp": 11
+      },
+      {
+        "hole": 8,
+        "par": 5,
+        "yards": 530,
+        "hcp": 5
+      },
+      {
+        "hole": 9,
+        "par": 4,
+        "yards": 360,
+        "hcp": 9
+      },
+      {
+        "hole": 10,
+        "par": 4,
+        "yards": 405,
+        "hcp": 8
+      },
+      {
+        "hole": 11,
+        "par": 4,
+        "yards": 435,
+        "hcp": 2
+      },
+      {
+        "hole": 12,
+        "par": 3,
+        "yards": 175,
+        "hcp": 16
+      },
+      {
+        "hole": 13,
+        "par": 5,
+        "yards": 560,
+        "hcp": 6
+      },
+      {
+        "hole": 14,
+        "par": 4,
+        "yards": 375,
+        "hcp": 14
+      },
+      {
+        "hole": 15,
+        "par": 3,
+        "yards": 200,
+        "hcp": 12
+      },
+      {
+        "hole": 16,
+        "par": 4,
+        "yards": 390,
+        "hcp": 10
+      },
+      {
+        "hole": 17,
+        "par": 5,
+        "yards": 515,
+        "hcp": 4
+      },
+      {
+        "hole": 18,
+        "par": 4,
+        "yards": 425,
+        "hcp": 18
+      }
+    ]
+  },
+  {
+    "course_name": "Heron Glen Golf Course (Ringoes, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
+    ]
+  },
+  {
+    "course_name": "Knob Hill Golf Club (Englishtown, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
+    ]
+  },
+  {
+    "course_name": "River Vale Country Club (River Vale, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
+    ]
+  },
+  {
+    "course_name": "Shore Gate Golf Club (Ocean View, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
+    ]
+  },
+  {
+    "course_name": "Rutgers University Golf Course (Piscataway, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
+    ]
+  },
+  {
+    "course_name": "Old Bridge Golf Club (Matawan, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
+    ]
+  },
+  {
+    "course_name": "RiverWinds Golf Course (West Deptford, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
+    ]
+  },
+  {
+    "course_name": "Eagle Ridge Golf Club (Lakewood, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
+    ]
+  },
+  {
+    "course_name": "Bowling Green Golf Club (Oak Ridge, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
+    ]
+  },
+  {
+    "course_name": "Farmstead Golf & Country Club (Lafayette, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
+    ]
+  },
+  {
+    "course_name": "LBI National Golf & Resort (Little Egg Harbor, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
+    ]
+  },
+  {
+    "course_name": "Ramblewood Country Club (Mount Laurel, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
+    ]
+  },
+  {
+    "course_name": "Vineyards National Golf Course (Egg Harbor City, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
+    ]
+  },
+  {
+    "course_name": "Pennsauken Country Club (Pennsauken, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
+    ]
+  },
+  {
+    "course_name": "Mercer Oaks West Golf Course (Princeton Junction, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
+    ]
+  },
+  {
+    "course_name": "Pinelands Golf Club (Hammonton, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
+    ]
+  },
+  {
+    "course_name": "Francis A. Byrne Golf Course (West Orange, NJ)",
+    "holes": [
+      {
+        "hole": 1,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 2,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 3,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 4,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 5,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 6,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 7,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 8,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 9,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 10,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 11,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 12,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 13,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 14,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 15,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 16,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 17,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      },
+      {
+        "hole": 18,
+        "par": null,
+        "yards": null,
+        "hcp": null
+      }
     ]
   }
 ]
