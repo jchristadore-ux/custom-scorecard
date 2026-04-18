@@ -1187,6 +1187,211 @@ body {
 /* ======================================================
    PRINT
    ====================================================== */
+/* ======================================================
+   iPAD LANDSCAPE OPTIMIZATION
+   ------------------------------------------------------
+   Triggers on landscape tablets (≥900px wide).
+   Goals: no vertical scrolling, clipboard-style layout,
+   glove-friendly tap targets, Wolf points always visible.
+   ====================================================== */
+@media (orientation: landscape) and (min-width: 900px) {
+
+  /* Play panel fills viewport width — not the 540px mobile column */
+  #play-panel {
+    max-width: 100%;
+    padding-bottom: 100px; /* reserve for sticky summary bar */
+    min-height: 100vh;
+  }
+
+  /* Compact hole nav — we need vertical space elsewhere */
+  .hole-nav { top: 48px; }
+  .hole-nav-btn {
+    min-width: 56px;
+    height: 50px;
+    font-size: 1.05rem;
+  }
+  .hole-nav-btn .hnb-par { font-size: 0.62rem; }
+
+  /* Hole header row — horizontal, compact */
+  .hole-header {
+    padding: 12px 28px 6px;
+    gap: 18px;
+  }
+  .hole-badge { padding: 6px 22px; }
+  .hole-badge .hb-num { font-size: 2.6rem; }
+  .hole-badge .hb-label { font-size: 0.62rem; }
+  .hole-meta .hm-par { font-size: 2rem; }
+  .hole-meta .hm-par-label { font-size: 0.78rem; }
+  .hole-meta .hm-yds { font-size: 1.15rem; }
+  .hole-meta .hm-hdcp { font-size: 0.82rem; }
+  .hole-nav-arrows button {
+    width: 52px;
+    height: 52px;
+    font-size: 1.5rem;
+  }
+
+  /* Format tabs — slightly larger */
+  .play-fmt-tabs { padding: 4px 28px 10px; gap: 10px; }
+  .play-fmt-tab {
+    padding: 9px 20px;
+    font-size: 0.92rem;
+    letter-spacing: 1.2px;
+  }
+
+  /* Content padding */
+  .play-fmt-content { padding: 10px 28px 8px; }
+
+  /* ===== Horizontal card grid for all formats ===== */
+  #stroke-cards,
+  #ptm-cards,
+  #wolf-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 10px;
+  }
+
+  /* ----- STROKE CARD — clipboard column style ----- */
+  .stroke-player-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 16px 12px;
+    min-height: 190px;
+    gap: 12px;
+    margin-bottom: 0;
+  }
+  .spc-name { width: 100%; }
+  .spc-name .spc-full { font-size: 1.35rem; white-space: normal; line-height: 1.1; }
+  .spc-name .spc-toPar { font-size: 0.88rem; margin-top: 2px; }
+  .score-picker { margin: 0 auto; border-radius: 14px; }
+  .score-picker button {
+    width: 58px;
+    height: 68px;
+    font-size: 1.9rem;
+  }
+  .score-display {
+    width: 76px;
+    height: 68px;
+    font-size: 2.5rem;
+  }
+  .score-display .score-label { font-size: 0.62rem; margin-top: -2px; }
+
+  /* ----- PTM CARD ----- */
+  .ptm-player-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 16px 12px;
+    min-height: 180px;
+    gap: 8px;
+    margin-bottom: 0;
+  }
+  .ptm-avatar { width: 56px; height: 56px; font-size: 1.2rem; margin: 0 auto; }
+  .ptm-player-info .ptm-name { font-size: 1.3rem; }
+  .ptm-player-info .ptm-holdings { font-size: 0.78rem; }
+  .ptm-money-badge { font-size: 2.2rem; }
+  .ptm-score-context { text-align: center; font-size: 0.82rem; }
+  .ptm-header-info { font-size: 0.88rem; padding: 12px 16px; }
+
+  /* ----- WOLF CARD — the star of this update ----- */
+  .wolf-player-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 14px 12px;
+    min-height: 200px;
+    gap: 10px;
+    margin-bottom: 0;
+  }
+  .wolf-role-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.4rem;
+    margin: 0 auto;
+  }
+  .wolf-player-info .wpi-name { font-size: 1.3rem; }
+  .wolf-player-info .wpi-role { font-size: 0.8rem; letter-spacing: 1px; }
+  .wolf-pts-bubble {
+    margin: 0 auto;
+    padding: 6px 22px;
+    border-radius: 12px;
+  }
+  .wolf-pts-bubble .wpb-pts { font-size: 2.2rem; }
+  .wolf-pts-bubble .wpb-label { font-size: 0.65rem; }
+
+  /* Wolf header inline, larger */
+  .wolf-hole-header { padding: 12px 18px; margin-bottom: 10px; }
+  .wolf-is-label { font-size: 0.78rem; }
+  .wolf-name-badge { font-size: 1.45rem; letter-spacing: 1px; }
+  .wolf-chip { padding: 8px 16px; font-size: 0.88rem; }
+
+  /* Wolf result bar — prominent, always visible */
+  .wolf-result-bar {
+    padding: 14px 18px;
+    font-size: 0.98rem;
+    margin-top: 10px;
+    border-width: 2px;
+  }
+  .wolf-result-bar strong { font-size: 1.05rem; }
+
+  /* ----- PAR 3 CARD ----- */
+  .par3-player-card {
+    padding: 14px 18px;
+    gap: 16px;
+  }
+  .par3-name { font-size: 1.25rem; }
+  .par3-dist-input { width: 96px; padding: 12px; font-size: 1.4rem; }
+  .par3-dist-label { font-size: 0.85rem; }
+
+  /* ----- SUMMARY BAR — full width, larger ----- */
+  .play-summary-bar {
+    max-width: 100%;
+    padding: 10px 28px 12px;
+  }
+  .psb-title { font-size: 0.72rem; margin-bottom: 8px; }
+  .psb-players { gap: 10px; }
+  .psb-player {
+    min-width: 110px;
+    max-width: 170px;
+    padding: 8px 14px;
+  }
+  .psb-player-name { font-size: 0.82rem; }
+  .psb-player-score { font-size: 1.7rem; }
+  .psb-player-tpar { font-size: 0.75rem; }
+
+  /* Reset button — compact, not full-width */
+  .play-reset-btn {
+    display: block;
+    margin: 6px auto 2px;
+    width: auto;
+    max-width: 260px;
+    padding: 8px 20px;
+  }
+
+  /* Start screen — center a proper card */
+  .play-start-wrap { min-height: calc(100vh - 52px); display: flex; align-items: center; justify-content: center; }
+  .play-start { max-width: 680px; width: 100%; padding: 32px 40px; }
+  .play-start h2 { font-size: 2.2rem; }
+  .play-start .course-display .cd-name { font-size: 1.5rem; }
+  .play-start .btn-start { font-size: 1.4rem; padding: 18px 40px; }
+
+  /* Score popup — wider on iPad */
+  .score-popup { max-width: 640px; border-radius: 20px 20px 0 0; }
+  .sp-scores-grid { gap: 10px; }
+  .sp-score-btn { height: 72px; font-size: 1.85rem; }
+  .sp-score-btn .sp-label { font-size: 0.58rem; }
+}
+
+/* Very large landscape (12.9" iPad Pro) — even more breathing room */
+@media (orientation: landscape) and (min-width: 1180px) {
+  .play-fmt-content { padding: 12px 40px 8px; }
+  .hole-header { padding: 14px 40px 6px; }
+  .play-fmt-tabs { padding: 4px 40px 10px; }
+  .play-summary-bar { padding: 12px 40px 14px; }
+  #stroke-cards, #ptm-cards, #wolf-cards {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+}
+
 @media print {
   @page { size: 11in 8.5in; margin: 0.2in; }
   body { background: white; }
@@ -1886,7 +2091,7 @@ function buildWolf(num) {
     t+=`</tr>`;
   });
   t+=`</table>`;
-  t+=`<div class="sc-wolf-legend">Wolf+Partner Win: 2 pts each &ensp;|&ensp; Opponents Beat Wolf Team: 3 pts each &ensp;|&ensp; Lone Wolf Wins: 4 pts &ensp;|&ensp; Opponents Beat Lone Wolf: 1 pt each &ensp;|&ensp; Blind Wolf Wins: 8 pts</div>`;
+  t+=`<div class="sc-wolf-legend">Lone Wolf Wins Outright: 2 pts &ensp;|&ensp; Wolf Team Wins (2v2): 1 pt each &ensp;|&ensp; Opponents Beat Wolf Team: 1 pt each &ensp;|&ensp; Non-Wolf Low Score(s) Beat Lone Wolf: 1 pt each</div>`;
   t+=`</div>`;
   return t;
 }
@@ -2400,6 +2605,7 @@ function adjustScore(pi, holeIdx, delta) {
 function refreshHoleDisplay(holeIdx) {
   renderStrokePaneForHole(holeIdx);
   renderPtmPaneForHole(holeIdx);
+  renderWolfPaneForHole(holeIdx);
   renderPar3PaneForHole(holeIdx);
   renderSummaryBar();
   // Update nav dot
@@ -2591,44 +2797,76 @@ function getWolfIndex(holeIdx) {
   return holeIdx % state.players.length;
 }
 
-function calcWolfTotalPts(pi) {
-  let pts = 0;
-  for (let h = 0; h < 18; h++) {
-    const wp = playState.wolfPartner[h];
-    if (wp === null) continue; // not decided
-    const wolfIdx = getWolfIndex(h);
-    const lone = wp === -1;
-    const blind = playState.wolfBlind[h];
-    // Collect scores
-    const scores = state.players.map((_, i) => playState.scores[i] ? playState.scores[i][h] : null);
-    if (scores.some(s => s === null)) continue; // incomplete hole
-    const wolfScore = scores[wolfIdx];
-    const partnerScore = lone ? null : scores[wp];
-    const opponents = state.players.map((_, i) => i).filter(i => {
-      if (lone) return i !== wolfIdx;
-      return i !== wolfIdx && i !== wp;
-    });
-    const oppBestScore = Math.min(...opponents.map(i => scores[i]));
-    const wolfTeamBest = lone ? wolfScore : Math.min(wolfScore, partnerScore);
-    const wolfTeamWins = wolfTeamBest < oppBestScore;
-    const wolfTeamLoses = oppBestScore < wolfTeamBest;
-    const tie = wolfTeamBest === oppBestScore;
-    if (tie) continue;
-    if (lone) {
-      if (wolfTeamWins) {
-        if (pi === wolfIdx) pts += (blind ? 8 : 4);
-      } else {
-        if (opponents.includes(pi)) pts += 1;
-      }
-    } else {
-      if (wolfTeamWins) {
-        if (pi === wolfIdx || pi === wp) pts += 2;
-      } else {
-        if (opponents.includes(pi)) pts += 3;
-      }
+/* ------------------------------------------------------------------
+   WOLF SCORING — simplified point system (score-driven, no manual entry)
+   ------------------------------------------------------------------
+   For each completed hole:
+     Case A — Two-man team beats the lone wolf   → those 2 each get 1 pt
+     Case B — Lone wolf wins the hole outright   → lone wolf gets 2 pts
+     Case C — Lone wolf loses & 2 tie for low    → those 2 each get 1 pt
+     Case D — Lone wolf loses & all 3 tie        → all 3 each get 1 pt
+   Additional handled cases:
+     • 2v2 wolf team wins  → wolf + partner each 1 pt (symmetric to Case A)
+     • 2v2 opp team wins   → Case A (both opponents 1 pt each)
+     • Wolf ties best non-wolf → no points awarded (tie)
+     • Single non-wolf low in lone-wolf hole → that player 1 pt
+------------------------------------------------------------------ */
+function calcWolfHolePoints(holeIdx) {
+  const n = state.players.length;
+  const pts = new Array(n).fill(0);
+  if (n < 2) return pts;
+
+  const wolfIdx = getWolfIndex(holeIdx);
+  const wp = playState.wolfPartner[holeIdx];
+  const scores = state.players.map((_, i) =>
+    playState.scores[i] ? playState.scores[i][holeIdx] : null
+  );
+  // Need every player's score before points are awarded
+  if (scores.some(s => s === null)) return pts;
+
+  const wolfScore = scores[wolfIdx];
+  const isLone = wp === -1 || wp === null;
+
+  if (isLone) {
+    // Lone wolf: 1 vs 3 (the default and most common scoring path)
+    const oppIdxs = state.players.map((_, i) => i).filter(i => i !== wolfIdx);
+    const minOpp = Math.min(...oppIdxs.map(i => scores[i]));
+
+    if (wolfScore < minOpp) {
+      // Case B — Lone wolf wins outright
+      pts[wolfIdx] = 2;
+    } else if (wolfScore > minOpp) {
+      // Wolf loses — award 1 pt to every non-wolf tied for the low score
+      // This covers Cases A/C (2 tied), D (all 3 tied), and single-winner extension
+      oppIdxs.filter(i => scores[i] === minOpp).forEach(i => pts[i] = 1);
     }
+    // wolfScore === minOpp → tie, no points
+  } else {
+    // 2 vs 2: wolf + partner against the other two (best ball)
+    const wolfTeam = [wolfIdx, wp];
+    const oppIdxs = state.players.map((_, i) => i).filter(i => !wolfTeam.includes(i));
+    const wolfBest = Math.min(...wolfTeam.map(i => scores[i]));
+    const oppBest = Math.min(...oppIdxs.map(i => scores[i]));
+
+    if (oppBest < wolfBest) {
+      // Case A — Two-man team beats wolf team
+      oppIdxs.forEach(i => pts[i] = 1);
+    } else if (wolfBest < oppBest) {
+      // Wolf team wins (symmetric rule)
+      wolfTeam.forEach(i => pts[i] = 1);
+    }
+    // Tie: no points
   }
+
   return pts;
+}
+
+function calcWolfTotalPts(pi) {
+  let total = 0;
+  for (let h = 0; h < 18; h++) {
+    total += calcWolfHolePoints(h)[pi] || 0;
+  }
+  return total;
 }
 
 function renderWolfPaneForHole(holeIdx) {
@@ -2699,14 +2937,19 @@ function renderWolfPaneForHole(holeIdx) {
     container.appendChild(card);
   });
 
-  // Result bar — show if all players have scores
+  // Result bar — always visible so points/results never require navigation
   const scores = state.players.map((_, i) => playState.scores[i] ? playState.scores[i][holeIdx] : null);
-  if (scores.every(s => s !== null) && curPartner !== null) {
-    const resultEl = document.createElement('div');
-    resultEl.className = 'wolf-result-bar';
+  const resultEl = document.createElement('div');
+  resultEl.className = 'wolf-result-bar';
+  if (scores.every(s => s !== null)) {
     resultEl.innerHTML = buildWolfResultText(holeIdx);
-    container.appendChild(resultEl);
+  } else {
+    const missing = scores
+      .map((s, i) => s === null ? esc(state.players[i].full_name) : null)
+      .filter(Boolean);
+    resultEl.innerHTML = `<span style="color:var(--play-text-dim)">Awaiting scores: ${missing.join(', ')}</span>`;
   }
+  container.appendChild(resultEl);
 }
 
 function setLoneWolf(holeIdx, blind) {
@@ -2725,29 +2968,30 @@ function setLoneWolf(holeIdx, blind) {
 }
 
 function buildWolfResultText(holeIdx) {
+  const holePts = calcWolfHolePoints(holeIdx);
+  const winners = holePts.map((p, i) => ({ p, i })).filter(x => x.p > 0);
+  if (winners.length === 0) return '<strong>Tied</strong> — no points awarded';
+
   const wolfIdx = getWolfIndex(holeIdx);
   const wp = playState.wolfPartner[holeIdx];
-  const lone = wp === -1;
-  const blind = playState.wolfBlind[holeIdx];
-  const scores = state.players.map((_, i) => playState.scores[i][holeIdx]);
-  const wolfScore = scores[wolfIdx];
-  const partnerScore = lone ? null : (wp >= 0 ? scores[wp] : null);
-  const opponentIdxs = state.players.map((_, i) => i).filter(i => {
-    if (lone) return i !== wolfIdx;
-    return i !== wolfIdx && i !== wp;
-  });
-  const oppBestScore = Math.min(...opponentIdxs.map(i => scores[i]));
-  const wolfTeamBest = lone ? wolfScore : Math.min(wolfScore, partnerScore);
+  const isLone = wp === -1 || wp === null;
+  const nm = i => esc(state.players[i].full_name);
 
-  if (wolfTeamBest < oppBestScore) {
-    if (lone) return `<strong>Lone Wolf wins!</strong> ${state.players[wolfIdx].full_name} gets <strong>${blind?8:4} pts</strong>`;
-    return `<strong>Wolf team wins!</strong> ${state.players[wolfIdx].full_name} &amp; ${state.players[wp]?.full_name} get <strong>2 pts each</strong>`;
-  } else if (oppBestScore < wolfTeamBest) {
-    if (lone) return `<strong>Opponents win!</strong> Each opponent gets <strong>1 pt</strong>`;
-    const names = opponentIdxs.map(i => state.players[i].full_name).join(', ');
-    return `<strong>Opponents win!</strong> ${names} get <strong>3 pts each</strong>`;
+  // Wolf alone → lone wolf won outright (Case B)
+  if (winners.length === 1 && winners[0].i === wolfIdx) {
+    return `🐺 <strong>Lone Wolf wins!</strong> ${nm(wolfIdx)} gets <strong>2 pts</strong>`;
   }
-  return 'Tied — no points awarded';
+  // Wolf + partner → wolf team won (2v2)
+  if (!isLone && winners.length === 2 &&
+      winners.some(w => w.i === wolfIdx) && winners.some(w => w.i === wp)) {
+    return `🤝 <strong>Wolf team wins!</strong> ${nm(wolfIdx)} &amp; ${nm(wp)} each get <strong>1 pt</strong>`;
+  }
+  // Non-wolf winners (Cases A / C / D, or single-winner extension)
+  const names = winners.map(w => nm(w.i)).join(' &amp; ');
+  const label = winners.length === 3 ? 'All three tied for low'
+              : winners.length === 2 ? 'Two tied for low'
+              : 'Lowest score';
+  return `<strong>${label}!</strong> ${names} each get <strong>1 pt</strong>`;
 }
 
 /* -- PAR 3 -- */
