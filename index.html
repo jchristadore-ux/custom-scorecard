@@ -11,9 +11,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ======================================================
-   CSS VARIABLES
-   ====================================================== */
+/* =====================================================
+   VARIABLES
+   ===================================================== */
 :root {
   --navy: #1B365D;
   --navy-light: #243B6A;
@@ -33,10 +33,8 @@
   --gray-summary: #E8E8E8;
   --grid-border: #CCCCCC;
   --black: #1a1a1a;
-  --accent-red: #C0392B;
   --accent-green: #27AE60;
 
-  /* UI (dashboard) */
   --ui-bg: #0D1B2A;
   --ui-surface: #1B2838;
   --ui-surface2: #243447;
@@ -47,7 +45,6 @@
   --ui-gold: #FFD54F;
   --ui-radius: 6px;
 
-  /* Play mode */
   --play-bg: #0A1A0F;
   --play-surface: #122218;
   --play-card: #1A3022;
@@ -55,256 +52,484 @@
   --play-text: #E8F0E8;
   --play-text-dim: #7A9A7A;
   --play-gold: #D4AF37;
-  --play-gold-glow: rgba(212,175,55,0.25);
+  --play-gold-glow: rgba(212,175,55,0.20);
   --play-birdie: #4FC3F7;
   --play-eagle: #FFD700;
   --play-bogey: #E67E22;
   --play-double: #E74C3C;
 
-  --tap-min: 52px;
+  --tap-min: 48px;
 }
 
-/* ======================================================
+/* =====================================================
    RESET
-   ====================================================== */
+   ===================================================== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 14px; -webkit-tap-highlight-color: transparent; }
 body {
   font-family: 'Barlow', -apple-system, sans-serif;
   background: var(--ui-bg);
   color: var(--ui-text);
-  line-height: 1.5;
+  min-height: 100vh;
   overscroll-behavior: none;
 }
 
-/* ======================================================
+/* =====================================================
    APP TABS
-   ====================================================== */
+   ===================================================== */
 .app-tabs {
-  position: sticky;
-  top: 0;
-  z-index: 200;
   display: flex;
-  background: #080F14;
-  border-bottom: 2px solid var(--ui-border);
+  background: #070F18;
+  border-bottom: 1px solid #1A2A3A;
+  position: sticky; top: 0; z-index: 200;
+  padding: env(safe-area-inset-top,0) 0 0;
 }
 .app-tab {
-  flex: 1;
-  padding: 14px 8px;
-  text-align: center;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 700;
-  font-size: 0.85rem;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--ui-text-muted);
-  cursor: pointer;
-  border: none;
-  background: transparent;
-  border-bottom: 3px solid transparent;
-  margin-bottom: -2px;
-  transition: color 0.2s, border-color 0.2s;
-  user-select: none;
+  flex: 1; padding: 14px 8px; background: none; border: none;
+  color: var(--ui-text-muted); font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.85rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  cursor: pointer; transition: color 0.15s, border-bottom 0.15s;
+  border-bottom: 3px solid transparent; min-height: var(--tap-min);
 }
-.app-tab.active {
-  color: var(--ui-gold);
-  border-bottom-color: var(--ui-gold);
-}
-.app-tab:not(.active):hover { color: var(--ui-text); }
+.app-tab.active { color: var(--ui-gold); border-bottom-color: var(--ui-gold); }
+.app-tab:active { background: rgba(255,255,255,0.04); }
 
+/* =====================================================
+   TAB PANELS
+   ===================================================== */
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
-/* ======================================================
-   DASHBOARD (SCREEN ONLY)
-   ====================================================== */
-.dashboard {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 24px 20px 40px;
-}
-.dash-header {
-  text-align: center;
-  padding: 28px 0 20px;
-  border-bottom: 1px solid var(--ui-border);
-  margin-bottom: 24px;
-}
-.dash-header h1 {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 1.8rem;
-  font-weight: 900;
-  color: var(--ui-gold);
-  letter-spacing: 3px;
-  text-transform: uppercase;
-}
-.dash-header p { color: var(--ui-text-muted); font-size: 0.82rem; margin-top: 4px; }
+/* =====================================================
+   SETUP TAB
+   ===================================================== */
+.dashboard { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; }
+.dash-header { text-align: center; padding: 24px 0 20px; }
+.dash-header h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 2.2rem; font-weight: 900; color: var(--ui-gold); letter-spacing: 2px; text-transform: uppercase; }
+.dash-header p  { color: var(--ui-text-muted); font-size: 0.82rem; margin-top: 4px; }
 
-.section {
-  background: var(--ui-surface);
-  border: 1px solid var(--ui-border);
-  border-radius: var(--ui-radius);
-  padding: 18px 20px;
-  margin-bottom: 16px;
-}
-.section-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 0.82rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--ui-accent);
-  margin-bottom: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.section-title::before {
-  content: '';
-  width: 3px;
-  height: 14px;
-  background: var(--ui-accent);
-  border-radius: 2px;
-  flex-shrink: 0;
-}
+.section { background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--ui-radius); padding: 16px; margin-bottom: 14px; }
+.section-title { font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--ui-text-muted); margin-bottom: 12px; }
 
-.form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
-.form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px; }
-.form-group label { font-size: 0.7rem; color: var(--ui-text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+.form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.form-group { display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
+.form-group label { font-size: 0.7rem; color: var(--ui-text-muted); text-transform: uppercase; letter-spacing: 1px; }
 .form-group input, .form-group select {
-  background: var(--ui-surface2);
-  border: 1px solid var(--ui-border);
-  border-radius: 4px;
-  padding: 7px 10px;
-  color: var(--ui-text);
-  font-size: 0.85rem;
-  font-family: inherit;
-  transition: border-color 0.2s;
+  background: var(--ui-surface2); border: 1px solid var(--ui-border);
+  color: var(--ui-text); border-radius: 4px; padding: 8px 10px;
+  font-size: 0.9rem; font-family: inherit; outline: none;
+  transition: border-color 0.15s;
 }
-.form-group input:focus, .form-group select:focus { outline: none; border-color: var(--ui-accent); }
-.form-group input::placeholder { color: var(--ui-text-muted); opacity: 0.6; }
+.form-group input:focus, .form-group select:focus { border-color: var(--ui-accent); }
 
-.qf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media (max-width: 720px) { .qf-grid { grid-template-columns: 1fr; } }
-.qf-card {
-  background: var(--ui-surface2);
-  border: 1px dashed var(--ui-border);
-  border-radius: var(--ui-radius);
-  padding: 14px;
+.btn {
+  background: var(--ui-surface2); border: 1px solid var(--ui-border);
+  color: var(--ui-text); border-radius: 4px; padding: 10px 16px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem;
+  font-weight: 700; letter-spacing: 0.5px; cursor: pointer; transition: all 0.15s;
+  min-height: var(--tap-min); display: inline-flex; align-items: center; justify-content: center;
 }
-.qf-card h4 { font-size: 0.78rem; color: var(--ui-gold); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-.qf-card p { font-size: 0.72rem; color: var(--ui-text-muted); margin-bottom: 10px; }
-.qf-card input[type=text], .qf-card input[list], .qf-card select {
-  width: 100%;
-  background: var(--ui-surface);
-  border: 1px solid var(--ui-border);
-  border-radius: 4px;
-  padding: 7px 10px;
-  color: var(--ui-text);
-  font-size: 0.85rem;
-  font-family: inherit;
-}
-.qf-card select {
-  appearance: none;
-  -webkit-appearance: none;
-  padding: 10px 10px;
-  background-image: linear-gradient(45deg, transparent 50%, var(--ui-text-muted) 50%),
-                    linear-gradient(135deg, var(--ui-text-muted) 50%, transparent 50%);
-  background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
-  padding-right: 28px;
-  cursor: pointer;
-}
-.qf-card input:focus, .qf-card select:focus { outline: none; border-color: var(--ui-accent); }
-.qf-status { font-size: 0.72rem; color: var(--ui-accent); margin-top: 8px; min-height: 16px; }
-.qf-status.err { color: var(--accent-red); }
-.qf-progress { height: 3px; background: var(--ui-border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
-.qf-progress-fill { height: 100%; background: var(--ui-accent); width: 0%; transition: width 0.2s; }
-.hidden { display: none !important; }
+.btn:active { opacity: 0.75; transform: scale(0.97); }
+.btn-accent { background: var(--ui-accent); color: #000; border-color: var(--ui-accent); }
+.btn-gold   { background: var(--ui-gold); color: #000; border-color: var(--ui-gold); }
+.btn-danger { background: rgba(192,57,43,0.2); color: #E74C3C; border-color: #C0392B; }
+.btn-sm     { min-height: 36px; padding: 6px 12px; font-size: 0.78rem; }
+.btn-full   { width: 100%; }
 
-.hole-grid { overflow-x: auto; margin-top: 8px; }
-.hole-grid table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
-.hole-grid th, .hole-grid td { padding: 4px 2px; text-align: center; border: 1px solid var(--ui-border); min-width: 38px; }
-.hole-grid th { background: var(--ui-surface2); color: var(--ui-accent); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.5px; }
-.hole-grid td.label-cell { text-align: left; font-weight: 700; color: var(--ui-gold); padding-left: 6px; min-width: 55px; background: var(--ui-surface2); }
-.hole-grid td.summary-cell { background: var(--ui-surface2); color: var(--ui-gold); font-weight: 700; }
-.hole-grid input { width: 100%; background: transparent; border: none; color: var(--ui-text); text-align: center; font-size: 0.78rem; font-family: inherit; padding: 2px 0; }
-.hole-grid input:focus { outline: none; background: rgba(79,195,247,0.08); }
-
-.player-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(44,62,80,0.5); }
-.player-row:last-child { border-bottom: none; }
-.player-num { width: 22px; height: 22px; border-radius: 50%; background: var(--ui-accent); color: var(--ui-bg); font-size: 0.68rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.player-row input { background: var(--ui-surface2); border: 1px solid var(--ui-border); border-radius: 4px; padding: 6px 10px; color: var(--ui-text); font-size: 0.85rem; font-family: inherit; }
-.player-row input:focus { outline: none; border-color: var(--ui-accent); }
-.player-row .name-input { flex: 2; min-width: 120px; }
-.player-row .abbr-input { width: 60px; text-align: center; text-transform: uppercase; }
-.player-row .move-btns { display: flex; gap: 2px; }
-.player-row .move-btns button { width: 24px; height: 24px; background: var(--ui-surface2); border: 1px solid var(--ui-border); border-radius: 3px; color: var(--ui-text-muted); cursor: pointer; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
-.player-row .move-btns button:hover { background: var(--ui-border); color: var(--ui-text); }
-
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 4px; border: 1px solid var(--ui-border); background: var(--ui-surface2); color: var(--ui-text); font-size: 0.78rem; font-family: inherit; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-.btn:hover { background: var(--ui-border); }
-.btn-accent { background: var(--ui-accent); color: var(--ui-bg); border-color: var(--ui-accent); }
-.btn-accent:hover { background: #81D4FA; }
-.btn-gold { background: var(--ui-gold); color: var(--ui-bg); border-color: var(--ui-gold); font-weight: 700; }
-.btn-gold:hover { background: #FFE082; }
-.btn-sm { padding: 4px 10px; font-size: 0.72rem; }
-.btn-danger { color: var(--accent-red); }
-.btn-danger:hover { background: rgba(192,57,43,0.15); }
-.btn-full { width: 100%; justify-content: center; }
 .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 
-.format-toggle { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--ui-surface2); border: 1px solid var(--ui-border); border-radius: 4px; margin-bottom: 6px; transition: border-color 0.2s; }
-.format-toggle.active { border-color: var(--ui-accent); }
-.format-toggle .ft-check { width: 18px; height: 18px; accent-color: var(--ui-accent); cursor: pointer; }
-.format-toggle .ft-label { flex: 1; font-weight: 600; font-size: 0.85rem; }
-.format-toggle .ft-desc { color: var(--ui-text-muted); font-size: 0.72rem; }
-.format-toggle .ft-arrows { display: flex; gap: 2px; }
-.format-toggle .ft-arrows button { width: 26px; height: 26px; background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: 3px; color: var(--ui-text-muted); cursor: pointer; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; }
-.format-toggle .ft-arrows button:hover { background: var(--ui-border); color: var(--ui-text); }
+/* Hole Data */
+.hole-grid { overflow-x: auto; }
+.hole-grid table { width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 640px; }
+.hole-grid th, .hole-grid td { border: 1px solid var(--ui-border); padding: 5px 2px; text-align: center; }
+.hole-grid th { background: var(--ui-surface2); color: var(--ui-text-muted); font-size: 0.68rem; }
+.hole-grid input { width: 100%; background: none; border: none; color: var(--ui-text); text-align: center; font-size: 0.78rem; padding: 2px; outline: none; }
+.hole-grid .row-label td:first-child { color: var(--ui-text-muted); font-size: 0.68rem; font-weight: 700; text-align: left; padding-left: 6px; }
+.hole-grid .summary-cell { background: rgba(212,175,55,0.08); color: var(--ui-gold); font-weight: 700; }
 
-.preset-area { display: flex; gap: 8px; align-items: stretch; margin-top: 8px; }
-.preset-area textarea { flex: 1; background: var(--ui-surface2); border: 1px solid var(--ui-border); border-radius: 4px; padding: 8px; color: var(--ui-text); font-family: 'Courier New', monospace; font-size: 0.72rem; resize: vertical; min-height: 60px; }
-.preset-area textarea:focus { outline: none; border-color: var(--ui-accent); }
+/* Players */
+.player-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 0;
+  border-bottom: 1px solid var(--ui-border);
+}
+.player-row:last-child { border-bottom: none; }
+.player-row .drag-handle { color: var(--ui-text-muted); font-size: 1.2rem; cursor: grab; padding: 0 4px; }
+.player-row .player-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; color: var(--ui-gold); width: 22px; }
+.player-row input { flex: 1; }
+.player-row .abbr-input { max-width: 70px; }
+
+/* Formats */
+.format-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 0;
+  border-bottom: 1px solid var(--ui-border);
+}
+.format-row:last-child { border-bottom: none; }
+.format-row .fmt-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1; }
+.toggle-switch {
+  width: 40px; height: 22px; background: var(--ui-border); border-radius: 11px;
+  position: relative; transition: background 0.2s; flex-shrink: 0;
+}
+.toggle-switch::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 16px; height: 16px; border-radius: 50%; background: white;
+  transition: transform 0.2s;
+}
+.toggle-switch.on { background: var(--accent-green); }
+.toggle-switch.on::after { transform: translateX(18px); }
+.fmt-label { font-size: 0.88rem; color: var(--ui-text); }
+
+/* Quick Fill */
+.qf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.qf-card { background: var(--ui-surface2); border: 1px solid var(--ui-border); border-radius: 6px; padding: 14px; }
+.qf-card h4 { font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; color: var(--ui-accent); }
+.qf-card p { font-size: 0.75rem; color: var(--ui-text-muted); margin-bottom: 10px; }
+.qf-status { font-size: 0.75rem; margin-top: 6px; color: var(--ui-text-muted); min-height: 18px; }
+.qf-status.err { color: var(--play-double); }
+.qf-progress { background: var(--ui-border); border-radius: 4px; height: 4px; overflow: hidden; margin-top: 6px; }
+.qf-progress-fill { background: var(--ui-accent); height: 100%; width: 0; transition: width 0.3s; }
+.hidden { display: none !important; }
+
+/* Preset */
+.preset-area { display: flex; gap: 8px; align-items: flex-start; }
+.preset-area textarea { flex: 1; min-height: 70px; background: var(--ui-surface2); border: 1px solid var(--ui-border); color: var(--ui-text); border-radius: 4px; padding: 8px; font-size: 0.75rem; resize: vertical; font-family: monospace; }
 
 .print-bar { text-align: center; padding: 20px 0; }
 
-/* NOTE: `inset:0` is Safari 14.1+. Use explicit sides for Safari 12 (iPadOS 12) compatibility. */
-.modal { position: fixed; top:0; right:0; bottom:0; left:0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
-.modal-content { background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--ui-radius); max-width: 720px; width: 100%; max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
-.modal-header { padding: 14px 20px; border-bottom: 1px solid var(--ui-border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-.modal-header h2 { color: var(--ui-gold); font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; }
-.modal-close { background: transparent; border: none; color: var(--ui-text-muted); font-size: 1.6rem; cursor: pointer; line-height: 1; padding: 0 4px; }
-.modal-close:hover { color: var(--ui-text); }
-.modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
-.modal-body p.help { font-size: 0.8rem; color: var(--ui-text-muted); margin-bottom: 12px; }
-.modal-footer { padding: 12px 20px; border-top: 1px solid var(--ui-border); display: flex; gap: 8px; justify-content: flex-end; flex-shrink: 0; }
+/* =====================================================
+   PLAY MODE
+   ===================================================== */
+#play-panel { background: var(--play-bg); min-height: calc(100vh - 52px); }
 
-.ocr-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-.ocr-table th { background: var(--ui-surface2); color: var(--ui-accent); font-size: 0.7rem; font-weight: 700; padding: 8px 6px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid var(--ui-border); }
-.ocr-table td { padding: 4px; border: 1px solid var(--ui-border); text-align: center; }
-.ocr-table td.hole-num { background: var(--ui-surface2); color: var(--ui-gold); font-weight: 700; width: 48px; }
-.ocr-table input { width: 100%; background: var(--ui-surface2); border: 1px solid var(--ui-border); border-radius: 3px; padding: 5px 6px; color: var(--ui-text); font-family: inherit; font-size: 0.82rem; text-align: center; }
-.ocr-table input:focus { outline: none; border-color: var(--ui-accent); }
-.ocr-table input.missing { background: rgba(192,57,43,0.12); border-color: var(--accent-red); }
-.ocr-raw-toggle { margin-top: 14px; font-size: 0.72rem; color: var(--ui-text-muted); cursor: pointer; }
-.ocr-raw { background: var(--ui-surface2); border: 1px solid var(--ui-border); border-radius: 4px; padding: 8px; margin-top: 8px; font-family: 'Courier New', monospace; font-size: 0.7rem; color: var(--ui-text-muted); white-space: pre-wrap; max-height: 140px; overflow-y: auto; }
+.play-start-wrap {
+  min-height: calc(100vh - 52px); display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.3s;
+}
+.play-start-wrap.off { display: none; }
+.play-active-wrap { display: none; }
+.play-active-wrap.on { display: block; }
 
-/* ======================================================
-   PRINT TARGET
-   ====================================================== */
+.play-start {
+  text-align: center; padding: 32px 20px; max-width: 500px;
+}
+.play-start h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; font-weight: 800; color: var(--play-text); margin-bottom: 16px; }
+.course-display { background: var(--play-card); border: 1px solid var(--play-border); border-radius: 12px; padding: 16px 20px; margin: 16px 0; }
+.cd-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--play-gold); }
+.cd-sub  { font-size: 0.78rem; color: var(--play-text-dim); margin-top: 4px; }
+.btn-start { font-size: 1.2rem; padding: 16px 36px; margin-top: 12px; }
+
+/* Hole Nav */
+.hole-nav-wrap { background: var(--play-surface); border-bottom: 1px solid var(--play-border); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.hole-nav { display: flex; padding: 6px 8px; gap: 4px; min-width: max-content; }
+.hole-nav-btn {
+  min-width: 42px; height: 42px; background: var(--play-card); border: 1px solid var(--play-border);
+  border-radius: 6px; color: var(--play-text-dim); font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.82rem; font-weight: 700; cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 1px; transition: all 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.hole-nav-btn .hnb-par { font-size: 0.55rem; color: var(--play-text-dim); font-weight: 400; }
+.hole-nav-btn.active { background: var(--play-gold); border-color: var(--play-gold); color: var(--play-bg); }
+.hole-nav-btn.active .hnb-par { color: var(--play-bg); opacity: 0.7; }
+.hole-nav-btn.scored { border-color: var(--accent-green); color: var(--play-text); }
+.hole-dot { width: 5px; height: 5px; border-radius: 50%; background: transparent; }
+.hole-nav-btn.scored .hole-dot { background: var(--accent-green); }
+
+/* Hole Header */
+.hole-header {
+  padding: 10px 16px 6px;
+  background: var(--play-surface);
+  border-bottom: 1px solid var(--play-border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.hole-hdr-left { display: flex; align-items: baseline; gap: 10px; }
+.hole-hdr-num { font-family: 'Barlow Condensed', sans-serif; font-size: 2.2rem; font-weight: 900; color: var(--play-gold); line-height: 1; }
+.hole-hdr-info { font-size: 0.75rem; color: var(--play-text-dim); }
+.hole-hdr-info strong { color: var(--play-text); }
+.hole-hdr-nav { display: flex; gap: 8px; }
+.hole-nav-arrow {
+  width: 38px; height: 38px; background: var(--play-card); border: 1px solid var(--play-border);
+  border-radius: 8px; color: var(--play-text); font-size: 1.1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent; transition: all 0.1s;
+}
+.hole-nav-arrow:active { background: var(--play-gold); color: var(--play-bg); }
+
+/* Format Tabs (per-hole) */
+.play-fmt-tabs {
+  display: flex; padding: 8px 12px; gap: 6px;
+  background: var(--play-surface); border-bottom: 1px solid var(--play-border);
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.play-fmt-tab {
+  padding: 7px 14px; border-radius: 6px; border: 1px solid var(--play-border);
+  background: var(--play-card); color: var(--play-text-dim);
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.78rem; font-weight: 700;
+  letter-spacing: 0.5px; cursor: pointer; white-space: nowrap;
+  transition: all 0.12s; -webkit-tap-highlight-color: transparent;
+}
+.play-fmt-tab.active { background: var(--play-gold); border-color: var(--play-gold); color: var(--play-bg); }
+
+/* Format content */
+.play-fmt-content { padding: 12px 12px 80px; }
+
+/* Summary Bar */
+.play-summary-bar {
+  background: var(--play-surface); border-top: 1px solid var(--play-border);
+  padding: 10px 12px; display: none;
+  position: sticky; bottom: 0; z-index: 100;
+}
+#psb-players { display: flex; gap: 8px; overflow-x: auto; justify-content: center; }
+.psb-player { text-align: center; min-width: 60px; flex-shrink: 0; }
+.psb-player-name { font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; color: var(--play-text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+.psb-player-score { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 900; color: var(--play-text); }
+.psb-player-score.under { color: var(--play-birdie); }
+.psb-player-score.over  { color: var(--play-bogey); }
+.psb-player-score.dbl   { color: var(--play-double); }
+.psb-player-tpar { font-size: 0.62rem; color: var(--play-text-dim); }
+
+/* =====================================================
+   STROKE TAB (per-hole)
+   ===================================================== */
+.stroke-player-row {
+  background: var(--play-card); border: 1px solid var(--play-border);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 10px;
+}
+.stroke-player-name {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700;
+  color: var(--play-text); min-width: 80px; flex-shrink: 0;
+}
+.stroke-score-btn {
+  width: 52px; height: 52px; border-radius: 8px; border: 2px solid var(--play-border);
+  background: var(--play-surface); color: var(--play-text); font-size: 1.4rem; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent; transition: all 0.12s; flex-shrink: 0;
+  font-family: 'Barlow Condensed', sans-serif;
+}
+.stroke-score-btn:active { transform: scale(0.93); }
+.stroke-score-btn.eagle  { background: var(--play-eagle); border-color: var(--play-eagle); color: #000; }
+.stroke-score-btn.birdie { background: var(--play-birdie); border-color: var(--play-birdie); color: #000; }
+.stroke-score-btn.par    { background: var(--accent-green); border-color: var(--accent-green); color: #fff; }
+.stroke-score-btn.bogey  { background: var(--play-bogey); border-color: var(--play-bogey); color: #fff; }
+.stroke-score-btn.double { background: var(--play-double); border-color: var(--play-double); color: #fff; }
+.stroke-score-label { font-size: 0.58rem; color: inherit; text-align: center; opacity: 0.85; margin-top: 1px; font-weight: 600; letter-spacing: 0.3px; }
+.stroke-score-col { display: flex; flex-direction: column; align-items: center; }
+.stroke-score-empty { font-size: 1.4rem; color: var(--play-text-dim); }
+
+/* 3-putt toggle (inline, compact) */
+.three-putt-toggle {
+  display: flex; align-items: center; gap: 5px; cursor: pointer;
+  background: var(--play-surface); border: 1px solid var(--play-border);
+  border-radius: 6px; padding: 5px 8px; flex-shrink: 0;
+  transition: all 0.12s; -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.three-putt-toggle.active { background: rgba(192,57,43,0.25); border-color: var(--play-double); }
+.three-putt-toggle .tp-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; font-weight: 700; color: var(--play-text-dim); letter-spacing: 0.5px; }
+.three-putt-toggle.active .tp-label { color: var(--play-double); }
+.three-putt-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--play-border); transition: background 0.15s; }
+.three-putt-toggle.active .three-putt-dot { background: var(--play-double); }
+
+/* Score popup */
+.score-popup-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 1000; display: flex; align-items: flex-end; justify-content: center;
+}
+.score-popup {
+  background: var(--play-surface); border-top: 2px solid var(--play-gold);
+  width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 16px 16px 32px;
+}
+.sp-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--play-gold); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.sp-close { font-size: 1.4rem; cursor: pointer; color: var(--play-text-dim); padding: 4px 8px; }
+.sp-scores-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 10px; }
+.sp-score-btn {
+  height: 64px; border-radius: 8px; border: 2px solid var(--play-border);
+  background: var(--play-card); color: var(--play-text);
+  font-family: 'Barlow Condensed', sans-serif; font-size: 1.6rem; font-weight: 700;
+  cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent; transition: all 0.1s;
+}
+.sp-score-btn:active { transform: scale(0.93); }
+.sp-score-btn.eagle  { background: var(--play-eagle); border-color: var(--play-eagle); color: #000; }
+.sp-score-btn.birdie { background: var(--play-birdie); border-color: var(--play-birdie); color: #000; }
+.sp-score-btn.par    { background: var(--accent-green); border-color: var(--accent-green); color: #fff; }
+.sp-score-btn.bogey  { background: var(--play-bogey); border-color: var(--play-bogey); color: #fff; }
+.sp-score-btn.double { background: var(--play-double); border-color: var(--play-double); color: #fff; }
+.sp-score-btn.selected { outline: 3px solid var(--play-text); }
+.sp-label { font-size: 0.5rem; color: inherit; font-weight: 700; letter-spacing: 0.3px; }
+.sp-clear { width: 100%; background: none; border: 1px solid var(--play-border); color: var(--play-text-dim); border-radius: 8px; padding: 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+
+/* =====================================================
+   PTM TAB — COMPACT GRID
+   ===================================================== */
+/* Status banner */
+.ptm-status-banner {
+  background: var(--play-card); border-left: 3px solid var(--play-gold);
+  padding: 8px 12px; margin-bottom: 10px; border-radius: 0 6px 6px 0;
+  font-size: 0.78rem; color: var(--play-text);
+  display: flex; align-items: center; gap: 8px;
+}
+.ptm-status-banner .psb-icon { font-size: 1rem; }
+.ptm-status-banner strong { color: var(--play-gold); }
+
+/* Compact hole grid */
+.ptm-hole-grid {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.ptm-hole-row {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--play-card); border: 1px solid var(--play-border);
+  border-radius: 8px; padding: 6px 8px; height: 48px;
+}
+.ptm-hole-row.current-hole {
+  border-color: var(--play-gold);
+  background: rgba(212,175,55,0.06);
+}
+.ptm-hole-label {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 800;
+  color: var(--play-text-dim); width: 22px; flex-shrink: 0; text-align: center;
+}
+.ptm-hole-row.current-hole .ptm-hole-label { color: var(--play-gold); }
+.ptm-players-strip { display: flex; gap: 4px; flex: 1; }
+.ptm-player-chip {
+  flex: 1; height: 34px; border-radius: 6px; border: 1px solid var(--play-border);
+  background: var(--play-surface); color: var(--play-text-dim);
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.82rem; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.1s; -webkit-tap-highlight-color: transparent;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: 0 4px; letter-spacing: 0.3px;
+}
+.ptm-player-chip.holding {
+  background: var(--play-gold); border-color: var(--play-gold); color: var(--play-bg);
+}
+.ptm-player-chip.auto { opacity: 0.9; }
+.ptm-player-chip.override { outline: 2px solid var(--play-birdie); }
+.ptm-hole-row .ptm-pass-indicator {
+  font-size: 0.65rem; color: var(--play-double); flex-shrink: 0; width: 14px; text-align: center;
+}
+/* Trigger badges on hole row */
+.ptm-trigger-badge {
+  font-size: 0.6rem; background: rgba(192,57,43,0.25); color: var(--play-double);
+  border-radius: 3px; padding: 1px 4px; flex-shrink: 0;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 0.3px;
+  border: 1px solid rgba(192,57,43,0.4);
+}
+
+/* Legend */
+.ptm-legend {
+  margin-top: 8px; padding: 8px 10px;
+  background: var(--play-surface); border-radius: 6px;
+  font-size: 0.68rem; color: var(--play-text-dim);
+  display: flex; gap: 12px; flex-wrap: wrap;
+}
+.ptm-legend span { display: flex; align-items: center; gap: 4px; }
+
+/* =====================================================
+   WOLF TAB — COMPACT
+   ===================================================== */
+/* Status banner (full-width, top) */
+.wolf-status-banner {
+  width: 100%; padding: 8px 12px; margin-bottom: 10px;
+  background: var(--play-card); border-bottom: 2px solid var(--play-border);
+  border-radius: 8px; font-size: 0.82rem; color: var(--play-text);
+  display: flex; align-items: center; gap: 8px; min-height: 36px;
+  transition: border-color 0.2s;
+}
+.wolf-status-banner.team-win { border-color: var(--accent-green); }
+.wolf-status-banner.wolf-win { border-color: var(--play-gold); }
+.wolf-status-banner.opp-win  { border-color: var(--play-double); }
+
+/* Wolf header: single-line role + controls */
+.wolf-hole-strip {
+  background: var(--play-card); border: 1px solid var(--play-border);
+  border-radius: 10px; padding: 8px 10px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;
+}
+.wolf-is-section { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.wolf-is-label { font-size: 0.65rem; color: var(--play-text-dim); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; }
+.wolf-name-badge { font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 900; color: var(--red); letter-spacing: 0.3px; }
+.wolf-divider { width: 1px; background: var(--play-border); height: 28px; flex-shrink: 0; }
+.wolf-mode-btns { display: flex; gap: 5px; flex: 1; }
+.wolf-mode-btn {
+  height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--play-border);
+  background: var(--play-surface); color: var(--play-text-dim);
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.3px; cursor: pointer; white-space: nowrap;
+  transition: all 0.1s; -webkit-tap-highlight-color: transparent;
+}
+.wolf-mode-btn.active { background: var(--red); border-color: var(--red); color: #fff; }
+.wolf-mode-btn.lone-active  { background: rgba(192,57,43,0.3); border-color: var(--red); color: var(--play-text); }
+.wolf-mode-btn.blind-active { background: #7B1FA2; border-color: #9C27B0; color: #fff; }
+
+/* Wolf players — single horizontal row */
+.wolf-players-row {
+  display: flex; gap: 6px; margin-bottom: 8px;
+}
+.wolf-player-chip {
+  flex: 1; height: 52px; border-radius: 8px;
+  border: 2px solid var(--play-border);
+  background: var(--play-surface); color: var(--play-text-dim);
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.88rem; font-weight: 700;
+  cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  transition: all 0.12s; -webkit-tap-highlight-color: transparent;
+  padding: 4px; letter-spacing: 0.3px;
+}
+.wolf-player-chip .wpc-abbr { font-size: 1.05rem; font-weight: 900; }
+.wolf-player-chip .wpc-role { font-size: 0.58rem; color: var(--play-text-dim); margin-top: 1px; }
+.wolf-player-chip.is-wolf   { border-color: var(--red); color: var(--red); background: rgba(192,57,43,0.12); }
+.wolf-player-chip.is-wolf .wpc-role { color: var(--red); }
+.wolf-player-chip.is-partner { border-color: var(--accent-green); color: var(--accent-green); background: rgba(39,174,96,0.12); }
+.wolf-player-chip.is-partner .wpc-role { color: var(--accent-green); }
+.wolf-player-chip:active { transform: scale(0.95); }
+.wolf-player-chip.is-wolf { cursor: default; }
+
+/* Wolf hole log */
+.wolf-hole-log { background: var(--play-surface); border-radius: 8px; padding: 10px; margin-top: 4px; }
+.wolf-log-title { font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--play-text-dim); margin-bottom: 8px; }
+.wolf-log-rows { display: flex; flex-direction: column; gap: 3px; }
+.wolf-log-row {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.75rem; color: var(--play-text-dim);
+  padding: 4px 6px; border-radius: 4px; background: var(--play-card);
+}
+.wolf-log-row.current { background: rgba(212,175,55,0.08); color: var(--play-text); }
+.wolf-log-row .wlr-hole { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; min-width: 20px; color: var(--play-text-dim); }
+.wolf-log-row.current .wlr-hole { color: var(--play-gold); }
+.wolf-log-row .wlr-wolf { min-width: 38px; color: var(--red); font-weight: 700; }
+.wolf-log-row .wlr-mode { min-width: 44px; font-size: 0.68rem; }
+.wolf-log-row .wlr-result { margin-left: auto; font-weight: 700; }
+
+/* Wolf scoreboard */
+.wolf-scoreboard { display: flex; gap: 8px; margin-top: 8px; }
+.wolf-score-chip { flex: 1; background: var(--play-card); border: 1px solid var(--play-border); border-radius: 8px; padding: 8px 6px; text-align: center; }
+.wsc-name { font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; font-weight: 700; color: var(--play-text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+.wsc-pts { font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; font-weight: 900; color: var(--play-text); }
+.wsc-pts.leading { color: var(--play-gold); }
+
+/* PAR 3 */
+.par3-player-card {
+  background: var(--play-card); border: 1px solid var(--play-border);
+  border-radius: 10px; padding: 10px 14px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 12px;
+}
+.par3-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700; color: var(--play-text); min-width: 70px; }
+.par3-dist-input { width: 80px; background: var(--play-surface); border: 1px solid var(--play-border); color: var(--play-text); border-radius: 6px; padding: 8px; text-align: center; font-size: 1rem; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; }
+.par3-dist-label { font-size: 0.7rem; color: var(--play-text-dim); }
+.par3-not-applicable { color: var(--play-text-dim); font-size: 0.85rem; padding: 20px; text-align: center; }
+.par3-score-val { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--play-text-dim); min-width: 28px; text-align: center; }
+
+/* =====================================================
+   PRINT TAB
+   ===================================================== */
+#print-panel { background: #555; min-height: calc(100vh - 52px); padding: 20px; }
+.print-controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 16px; flex-wrap: wrap; }
 #scorecard-preview {
-  background: white;
-  color: var(--black);
-  width: 11in;
-  height: 8.5in;
-  margin: 0 auto;
-  padding: 0.25in 0.3in;
+  background: white; color: var(--black);
+  width: 11in; height: 8.5in;
+  margin: 0 auto; padding: 0.25in 0.3in;
   font-family: Arial, Helvetica, sans-serif;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  position: relative;
+  overflow: hidden; display: flex; flex-direction: column; position: relative;
 }
 .sc-header { background: var(--navy); color: var(--white); display: flex; align-items: center; justify-content: space-between; padding: 4px 10px; border-radius: 2px; flex-shrink: 0; }
 .sc-header-left { font-size: 7pt; opacity: 0.9; }
@@ -331,488 +556,83 @@ body {
 .sc-table tr.row-wolf-partners td { font-size: 5.5pt; color: #555; }
 .sc-table tr.row-wolf-partners td.col-label { font-size: 6pt; font-weight: 700; color: #333; }
 .sc-table tr.row-wolf-blank td { height: 13px; }
-.sc-table tr.row-wolf-blank td.col-label { font-weight: 600; font-size: 6.5pt; }
-.sc-table tr.row-wolf-blank:nth-child(even) td { background: var(--gray-alt); }
-.sc-table.par3-table { table-layout: auto; }
-.sc-table.par3-table th, .sc-table.par3-table td { font-size: 6.5pt; padding: 1.5px 4px; }
-.sc-table.par3-table tr.row-player td { height: 13px; }
-.sc-ptm-footer { font-size: 6pt; display: flex; justify-content: space-between; padding: 2px 4px; border: 0.5px solid var(--grid-border); border-top: none; background: var(--white); }
-.sc-ptm-footer span { color: #333; }
-.sc-wolf-legend { font-size: 5.5pt; text-align: center; padding: 2px 0; color: #444; }
-.sc-footer { display: flex; justify-content: space-between; align-items: flex-end; padding: 3px 4px; border-top: 1px solid var(--grid-border); font-size: 6pt; color: #333; margin-top: auto; flex-shrink: 0; }
-.sc-footer-left { display: flex; gap: 16px; }
-.sc-footer-left span { border-bottom: 1px solid #999; padding-bottom: 1px; min-width: 90px; display: inline-block; }
-.sc-footer-right { font-size: 5.5pt; color: #555; text-align: right; max-width: 55%; }
 .sc-spacer { flex: 1; }
+.sc-ptm-footer { display: flex; justify-content: space-between; padding: 2px 4px; font-size: 6.5pt; color: #555; border-top: 0.5px solid var(--grid-border); margin-top: 1px; }
+.sc-wolf-legend { font-size: 5.5pt; color: #555; padding: 2px 4px; border-top: 0.5px solid var(--grid-border); }
+.sc-footer { display: flex; justify-content: space-between; border-top: 1px solid var(--grid-border); padding-top: 4px; margin-top: 4px; flex-shrink: 0; }
+.sc-footer-left { display: flex; gap: 20px; font-size: 6.5pt; color: #555; }
+.sc-footer-right { font-size: 6pt; color: #777; max-width: 340px; text-align: right; }
 
-.preview-wrapper { background: #374151; border-radius: var(--ui-radius); padding: 16px; overflow-x: auto; }
-.preview-label { color: var(--ui-text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: 600; }
+/* =====================================================
+   OCR MODAL
+   ===================================================== */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  z-index: 500; display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.modal-box { background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: 12px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--ui-border); }
+.modal-header h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--ui-gold); }
+.modal-close { font-size: 1.5rem; cursor: pointer; color: var(--ui-text-muted); padding: 0 6px; }
+.modal-body { padding: 16px; }
 
-/* ======================================================
-   PLAY MODE
-   ====================================================== */
-#play-panel {
-  background: var(--play-bg);
-  min-height: calc(100vh - 52px);
-  max-width: 540px;
-  margin: 0 auto;
-  position: relative;
-  padding-bottom: 140px;
-}
-#play-panel.active { display: flex; flex-direction: column; }
-
-.hole-nav {
-  position: sticky;
-  top: 52px;
-  z-index: 100;
-  background: var(--play-surface);
-  border-bottom: 1px solid var(--play-border);
-  padding: 0;
-  display: flex;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-.hole-nav::-webkit-scrollbar { display: none; }
-.hole-nav-btn {
-  flex: 0 0 auto;
-  min-width: 44px;
-  height: 52px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  background: transparent;
-  border: none;
-  border-bottom: 3px solid transparent;
-  color: var(--play-text-dim);
-  cursor: pointer;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 700;
-  transition: all 0.15s;
-  padding: 0 2px;
-  position: relative;
-}
-.hole-nav-btn.active { color: var(--play-gold); border-bottom-color: var(--play-gold); }
-.hole-nav-btn .hole-dot { width: 6px; height: 6px; border-radius: 50%; background: transparent; }
-.hole-nav-btn.scored .hole-dot { background: var(--play-text-dim); }
-.hole-nav-btn.active .hole-dot { background: var(--play-gold); }
-.hole-nav-btn .hnb-par { font-size: 0.55rem; font-weight: 600; color: var(--play-text-dim); letter-spacing: 0.3px; }
-
-.hole-header { padding: 16px 16px 8px; display: flex; align-items: center; gap: 12px; }
-.hole-badge { background: var(--play-card); border: 2px solid var(--play-gold); border-radius: 12px; padding: 6px 14px; text-align: center; flex-shrink: 0; }
-.hole-badge .hb-num { font-family: 'Barlow Condensed', sans-serif; font-size: 2.4rem; font-weight: 900; color: var(--play-gold); line-height: 1; }
-.hole-badge .hb-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.6rem; font-weight: 700; letter-spacing: 1.5px; color: var(--play-text-dim); text-transform: uppercase; }
-.hole-meta { flex: 1; }
-.hole-meta-row { display: flex; gap: 12px; align-items: baseline; }
-.hole-meta .hm-par { font-family: 'Barlow Condensed', sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--play-text); }
-.hole-meta .hm-par-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.7rem; font-weight: 600; color: var(--play-text-dim); letter-spacing: 1px; text-transform: uppercase; }
-.hole-meta .hm-yds { font-size: 1rem; color: var(--play-text-dim); font-weight: 500; }
-.hole-meta .hm-hdcp { font-size: 0.75rem; color: var(--play-text-dim); }
-.hole-nav-arrows { display: flex; gap: 6px; }
-.hole-nav-arrows button {
-  width: 40px; height: 40px; border-radius: 8px;
-  background: var(--play-card); border: 1px solid var(--play-border);
-  color: var(--play-text); font-size: 1.1rem; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s; -webkit-tap-highlight-color: transparent;
-}
-.hole-nav-arrows button:active { background: var(--play-border); }
-.hole-nav-arrows button:disabled { opacity: 0.3; cursor: default; }
-
-.play-fmt-tabs { display: flex; padding: 0 16px; gap: 6px; margin-bottom: 2px; overflow-x: auto; scrollbar-width: none; }
-.play-fmt-tabs::-webkit-scrollbar { display: none; }
-.play-fmt-tab {
-  flex: 0 0 auto; padding: 7px 14px; border-radius: 20px;
-  background: var(--play-card); border: 1px solid var(--play-border);
-  color: var(--play-text-dim); font-family: 'Barlow Condensed', sans-serif;
-  font-size: 0.78rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
-  cursor: pointer; transition: all 0.15s; white-space: nowrap;
-  -webkit-tap-highlight-color: transparent;
-}
-.play-fmt-tab.active { background: var(--play-gold); color: var(--play-bg); border-color: var(--play-gold); }
-
-.play-fmt-content { padding: 12px 16px; }
-.play-fmt-pane { display: none; }
-.play-fmt-pane.active { display: block; }
-
-.stroke-player-card {
-  background: var(--play-card); border: 1px solid var(--play-border);
-  border-radius: 12px; padding: 12px 14px; margin-bottom: 10px;
-  display: flex; align-items: center; gap: 12px; transition: border-color 0.2s;
-}
-.stroke-player-card.has-score { border-color: #3A5A3A; }
-.spc-name { flex: 1; min-width: 0; }
-.spc-name .spc-full {
-  font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 700;
-  color: var(--play-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.spc-name .spc-toPar { font-size: 0.72rem; color: var(--play-text-dim); font-weight: 500; }
-.spc-name .spc-toPar.under { color: #4FC3F7; }
-.spc-name .spc-toPar.over { color: var(--play-bogey); }
-.spc-name .spc-toPar.dbl { color: var(--play-double); }
-
-.score-picker {
-  display: flex; align-items: center; gap: 0;
-  background: var(--play-surface); border: 1px solid var(--play-border);
-  border-radius: 10px; overflow: hidden; flex-shrink: 0;
-}
-.score-picker button {
-  width: 44px; height: 52px; border: none; background: transparent;
-  color: var(--play-text); font-size: 1.4rem; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.1s; -webkit-tap-highlight-color: transparent; user-select: none;
-}
-.score-picker button:active { background: var(--play-border); }
-.score-display {
-  width: 54px; height: 52px; display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; font-weight: 900;
-  color: var(--play-text); position: relative; cursor: pointer; user-select: none;
-}
-.score-display.eagle { color: var(--play-eagle); text-shadow: 0 0 12px rgba(255,215,0,0.5); }
-.score-display.birdie { color: var(--play-birdie); }
-.score-display.par { color: var(--play-text); }
-.score-display.bogey { color: var(--play-bogey); }
-.score-display.double { color: var(--play-double); }
-.score-display .score-label {
-  font-size: 0.55rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
-  color: inherit; opacity: 0.75; margin-top: -4px;
-}
-.score-display.empty { color: var(--play-text-dim); }
-.score-display.empty::after { content: '—'; font-size: 1.6rem; }
-
-.ptm-header-info {
-  background: var(--play-card); border: 1px solid var(--play-border);
-  border-radius: 10px; padding: 10px 14px; margin-bottom: 12px;
-  font-size: 0.78rem; color: var(--play-text-dim);
-  display: flex; align-items: center; gap: 8px;
-}
-.ptm-header-info strong { color: var(--play-gold); font-size: 0.82rem; }
-.ptm-money-icon { font-size: 1.2rem; }
-
-.ptm-player-card {
-  background: var(--play-card); border: 2px solid var(--play-border);
-  border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
-  display: flex; align-items: center; gap: 12px;
-  cursor: pointer; transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent; user-select: none;
-  position: relative; overflow: hidden;
-}
-/* `inset:0` → explicit sides for Safari 12 */
-.ptm-player-card::before {
-  content: ''; position: absolute; top:0; right:0; bottom:0; left:0;
-  background: var(--play-gold-glow); opacity: 0; transition: opacity 0.2s;
-}
-.ptm-player-card.holding { border-color: var(--play-gold); }
-.ptm-player-card.holding::before { opacity: 1; }
-.ptm-player-card:active { transform: scale(0.98); }
-
-.ptm-avatar {
-  width: 44px; height: 44px; border-radius: 50%;
-  background: var(--play-surface); border: 2px solid var(--play-border);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 800;
-  color: var(--play-text); flex-shrink: 0; transition: all 0.2s;
-  position: relative; z-index: 1;
-}
-.ptm-player-card.holding .ptm-avatar {
-  background: var(--play-gold); color: var(--play-bg); border-color: var(--play-gold);
-}
-.ptm-player-info { flex: 1; position: relative; z-index: 1; }
-.ptm-player-info .ptm-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.15rem; font-weight: 700; color: var(--play-text); }
-.ptm-player-info .ptm-holdings { font-size: 0.72rem; color: var(--play-text-dim); }
-.ptm-money-badge { font-size: 1.5rem; opacity: 0; transition: opacity 0.2s; position: relative; z-index: 1; }
-.ptm-player-card.holding .ptm-money-badge { opacity: 1; }
-.ptm-score-context { font-size: 0.72rem; color: var(--play-text-dim); position: relative; z-index: 1; text-align: right; }
-.ptm-score-context.bogey-plus { color: var(--play-bogey); }
-
-.wolf-hole-header {
-  background: var(--play-card); border: 1px solid var(--play-border);
-  border-radius: 10px; padding: 10px 14px; margin-bottom: 12px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.wolf-is-label { font-size: 0.72rem; color: var(--play-text-dim); text-transform: uppercase; letter-spacing: 1px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; }
-.wolf-name-badge { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 900; color: var(--accent-red); letter-spacing: 0.5px; }
-.wolf-mode-chips { display: flex; gap: 6px; }
-.wolf-chip {
-  padding: 5px 10px; border-radius: 16px;
-  border: 1px solid var(--play-border); background: var(--play-surface);
-  color: var(--play-text-dim); font-family: 'Barlow Condensed', sans-serif;
-  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.5px;
-  cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
-}
-.wolf-chip.active { background: var(--accent-red); color: var(--white); border-color: var(--accent-red); }
-.wolf-chip.lone-active { background: #8B0000; color: var(--white); border-color: #8B0000; }
-
-.wolf-player-card {
-  background: var(--play-card); border: 2px solid var(--play-border);
-  border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
-  display: flex; align-items: center; gap: 12px;
-  cursor: pointer; transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent; user-select: none; position: relative;
-}
-.wolf-player-card.is-wolf { border-color: var(--accent-red); background: rgba(192,57,43,0.08); }
-.wolf-player-card.is-partner { border-color: var(--play-birdie); background: rgba(79,195,247,0.06); }
-.wolf-player-card.lone-wolf { border-color: #8B0000; background: rgba(139,0,0,0.12); }
-.wolf-player-card:active { transform: scale(0.98); }
-
-.wolf-role-icon {
-  width: 36px; height: 36px; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.1rem; background: var(--play-surface); flex-shrink: 0; transition: all 0.2s;
-}
-.wolf-player-card.is-wolf .wolf-role-icon { background: var(--accent-red); }
-.wolf-player-card.is-partner .wolf-role-icon { background: var(--play-birdie); }
-.wolf-player-card.lone-wolf .wolf-role-icon { background: #8B0000; }
-
-.wolf-player-info { flex: 1; min-width: 0; }
-.wolf-player-info .wpi-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--play-text); }
-.wolf-player-info .wpi-role { font-size: 0.7rem; color: var(--play-text-dim); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
-.wolf-player-info .wpi-role.wolf-role { color: var(--accent-red); }
-.wolf-player-info .wpi-role.partner-role { color: var(--play-birdie); }
-.wolf-player-info .wpi-role.lone-role { color: #CC3333; }
-.wolf-pts-bubble {
-  background: var(--play-surface); border: 1px solid var(--play-border);
-  border-radius: 8px; padding: 4px 10px; text-align: center; flex-shrink: 0;
-}
-.wolf-pts-bubble .wpb-pts { font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 900; color: var(--play-gold); }
-.wolf-pts-bubble .wpb-label { font-size: 0.55rem; color: var(--play-text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
-
-.wolf-result-bar {
-  background: var(--play-card); border: 1px solid var(--play-border);
-  border-radius: 10px; padding: 10px 14px; margin-top: 12px;
-  font-size: 0.78rem; color: var(--play-text-dim); text-align: center;
-}
-.wolf-result-bar strong { color: var(--play-gold); }
-
-.par3-player-card {
-  background: var(--play-card); border: 1px solid var(--play-border);
-  border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
-  display: flex; align-items: center; gap: 12px;
-}
-.par3-name { flex: 1; font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--play-text); }
-.par3-dist-input {
-  width: 70px; background: var(--play-surface); border: 1px solid var(--play-border);
-  border-radius: 8px; padding: 8px 8px; color: var(--play-text);
-  font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 700;
-  text-align: center; flex-shrink: 0;
-}
-.par3-dist-input:focus { outline: none; border-color: var(--play-gold); }
-.par3-dist-label { font-size: 0.7rem; color: var(--play-text-dim); text-transform: uppercase; flex-shrink: 0; }
-.par3-not-applicable {
-  background: var(--play-card); border: 1px dashed var(--play-border);
-  border-radius: 10px; padding: 20px; text-align: center;
-  color: var(--play-text-dim); font-size: 0.85rem;
+/* =====================================================
+   RESPONSIVE — IPAD LANDSCAPE
+   ===================================================== */
+@media (min-width: 768px) {
+  .qf-grid { grid-template-columns: 1fr 1fr; }
+  .play-fmt-content { padding: 14px 20px 80px; }
+  .hole-header { padding: 12px 24px 8px; }
+  .play-fmt-tabs { padding: 8px 20px; gap: 8px; }
+  .play-summary-bar { padding: 10px 24px; }
+  .sp-scores-grid { gap: 8px; }
 }
 
-.play-summary-bar {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  max-width: 540px; margin: 0 auto;
-  background: var(--play-surface); border-top: 1px solid var(--play-border);
-  z-index: 90; padding: 8px 12px 12px;
-}
-.psb-title { font-family: 'Barlow Condensed', sans-serif; font-size: 0.65rem; font-weight: 700; letter-spacing: 1.5px; color: var(--play-text-dim); text-transform: uppercase; margin-bottom: 6px; text-align: center; }
-.psb-players { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
-.psb-player { flex: 1; min-width: 70px; max-width: 110px; background: var(--play-card); border: 1px solid var(--play-border); border-radius: 8px; padding: 6px 8px; text-align: center; }
-.psb-player-name { font-family: 'Barlow Condensed', sans-serif; font-size: 0.7rem; font-weight: 700; color: var(--play-text-dim); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.psb-player-score { font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 900; color: var(--play-text); }
-.psb-player-score.under { color: var(--play-birdie); }
-.psb-player-score.over { color: var(--play-bogey); }
-.psb-player-score.dbl { color: var(--play-double); }
-.psb-player-tpar { font-size: 0.65rem; color: var(--play-text-dim); }
-
-.play-start { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; text-align: center; gap: 16px; }
-.play-start h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 900; color: var(--play-gold); text-transform: uppercase; letter-spacing: 2px; }
-.play-start p { color: var(--play-text-dim); font-size: 0.9rem; line-height: 1.6; }
-.play-start .course-display { background: var(--play-card); border: 1px solid var(--play-border); border-radius: 12px; padding: 14px 20px; width: 100%; }
-.play-start .course-display .cd-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--play-text); text-transform: uppercase; }
-.play-start .course-display .cd-sub { font-size: 0.8rem; color: var(--play-text-dim); margin-top: 2px; }
-.play-start .btn-start { background: var(--play-gold); color: var(--play-bg); border: none; border-radius: 12px; padding: 16px 40px; font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 900; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; width: 100%; transition: background 0.15s; }
-.play-start .btn-start:active { background: #E8C040; }
-
-.play-active { display: none; }
-.play-active.on { display: block; }
-.play-start-wrap { display: block; }
-.play-start-wrap.off { display: none; }
-
-/* `inset:0` → explicit sides for Safari 12 */
-.score-popup-overlay {
-  position: fixed; top:0; right:0; bottom:0; left:0;
-  background: rgba(0,0,0,0.7); z-index: 300;
-  display: flex; align-items: flex-end; justify-content: center; padding: 0;
-}
-.score-popup {
-  background: var(--play-surface); border-top: 2px solid var(--play-border);
-  border-radius: 20px 20px 0 0; padding: 20px 20px 36px;
-  width: 100%; max-width: 540px;
-}
-.sp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.sp-header h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--play-gold); text-transform: uppercase; letter-spacing: 1px; }
-.sp-close { background: var(--play-card); border: 1px solid var(--play-border); border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--play-text); font-size: 1rem; }
-.sp-scores-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-.sp-score-btn {
-  height: 60px; border-radius: 10px; border: 2px solid var(--play-border);
-  background: var(--play-card); color: var(--play-text);
-  font-family: 'Barlow Condensed', sans-serif; font-size: 1.6rem; font-weight: 900;
-  cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-  transition: all 0.1s; -webkit-tap-highlight-color: transparent;
-}
-.sp-score-btn:active { transform: scale(0.94); }
-.sp-score-btn .sp-label { font-size: 0.5rem; font-weight: 700; letter-spacing: 0.3px; color: inherit; opacity: 0.7; text-transform: uppercase; }
-.sp-score-btn.eagle { border-color: var(--play-eagle); color: var(--play-eagle); }
-.sp-score-btn.birdie { border-color: var(--play-birdie); color: var(--play-birdie); }
-.sp-score-btn.double { border-color: var(--play-double); color: var(--play-double); }
-.sp-score-btn.triple { border-color: #8B3A3A; color: #CC5555; }
-.sp-score-btn.selected { background: var(--play-gold); color: var(--play-bg); border-color: var(--play-gold); }
-.sp-score-btn.selected .sp-label { color: var(--play-bg); opacity: 0.7; }
-.sp-clear-btn {
-  width: 100%; margin-top: 10px; padding: 12px;
-  background: transparent; border: 1px solid var(--play-border); border-radius: 10px;
-  color: var(--play-text-dim); font-family: 'Barlow Condensed', sans-serif;
-  font-size: 0.9rem; font-weight: 700; letter-spacing: 1px;
-  cursor: pointer; text-transform: uppercase; transition: background 0.15s;
-}
-.sp-clear-btn:active { background: var(--play-border); }
-
-.play-reset-btn {
-  margin: 8px 16px 0; padding: 10px;
-  width: calc(100% - 32px);
-  background: transparent; border: 1px dashed var(--play-border); border-radius: 8px;
-  color: var(--play-text-dim); font-family: 'Barlow Condensed', sans-serif;
-  font-size: 0.75rem; font-weight: 700; letter-spacing: 1.5px;
-  cursor: pointer; text-transform: uppercase; text-align: center;
-}
-
-/* ======================================================
-   iPAD LANDSCAPE OPTIMIZATION
-   ====================================================== */
-@media (orientation: landscape) and (min-width: 900px) {
-  #play-panel { max-width: 100%; padding-bottom: 100px; min-height: 100vh; }
-  .hole-nav { top: 48px; }
-  .hole-nav-btn { min-width: 56px; height: 50px; font-size: 1.05rem; }
-  .hole-nav-btn .hnb-par { font-size: 0.62rem; }
-  .hole-header { padding: 12px 28px 6px; gap: 18px; }
-  .hole-badge { padding: 6px 22px; }
-  .hole-badge .hb-num { font-size: 2.6rem; }
-  .hole-badge .hb-label { font-size: 0.62rem; }
-  .hole-meta .hm-par { font-size: 2rem; }
-  .hole-meta .hm-par-label { font-size: 0.78rem; }
-  .hole-meta .hm-yds { font-size: 1.15rem; }
-  .hole-meta .hm-hdcp { font-size: 0.82rem; }
-  .hole-nav-arrows button { width: 52px; height: 52px; font-size: 1.5rem; }
-  .play-fmt-tabs { padding: 4px 28px 10px; gap: 10px; }
-  .play-fmt-tab { padding: 9px 20px; font-size: 0.92rem; letter-spacing: 1.2px; }
-  .play-fmt-content { padding: 10px 28px 8px; }
-
-  #stroke-cards, #ptm-cards, #wolf-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 14px; margin-bottom: 10px;
-  }
-
-  .stroke-player-card { flex-direction: column; text-align: center; padding: 16px 12px; min-height: 190px; gap: 12px; margin-bottom: 0; }
-  .spc-name { width: 100%; }
-  .spc-name .spc-full { font-size: 1.35rem; white-space: normal; line-height: 1.1; }
-  .spc-name .spc-toPar { font-size: 0.88rem; margin-top: 2px; }
-  .score-picker { margin: 0 auto; border-radius: 14px; }
-  .score-picker button { width: 58px; height: 68px; font-size: 1.9rem; }
-  .score-display { width: 76px; height: 68px; font-size: 2.5rem; }
-  .score-display .score-label { font-size: 0.62rem; margin-top: -2px; }
-
-  .ptm-player-card { flex-direction: column; text-align: center; padding: 16px 12px; min-height: 180px; gap: 8px; margin-bottom: 0; }
-  .ptm-avatar { width: 56px; height: 56px; font-size: 1.2rem; margin: 0 auto; }
-  .ptm-player-info .ptm-name { font-size: 1.3rem; }
-  .ptm-player-info .ptm-holdings { font-size: 0.78rem; }
-  .ptm-money-badge { font-size: 2.2rem; }
-  .ptm-score-context { text-align: center; font-size: 0.82rem; }
-  .ptm-header-info { font-size: 0.88rem; padding: 12px 16px; }
-
-  .wolf-player-card { flex-direction: column; text-align: center; padding: 14px 12px; min-height: 200px; gap: 10px; margin-bottom: 0; }
-  .wolf-role-icon { width: 48px; height: 48px; font-size: 1.4rem; margin: 0 auto; }
-  .wolf-player-info .wpi-name { font-size: 1.3rem; }
-  .wolf-player-info .wpi-role { font-size: 0.8rem; letter-spacing: 1px; }
-  .wolf-pts-bubble { margin: 0 auto; padding: 6px 22px; border-radius: 12px; }
-  .wolf-pts-bubble .wpb-pts { font-size: 2.2rem; }
-  .wolf-pts-bubble .wpb-label { font-size: 0.65rem; }
-  .wolf-hole-header { padding: 12px 18px; margin-bottom: 10px; }
-  .wolf-is-label { font-size: 0.78rem; }
-  .wolf-name-badge { font-size: 1.45rem; letter-spacing: 1px; }
-  .wolf-chip { padding: 8px 16px; font-size: 0.88rem; }
-  .wolf-result-bar { padding: 14px 18px; font-size: 0.98rem; margin-top: 10px; border-width: 2px; }
-  .wolf-result-bar strong { font-size: 1.05rem; }
-
-  .par3-player-card { padding: 14px 18px; gap: 16px; }
-  .par3-name { font-size: 1.25rem; }
-  .par3-dist-input { width: 96px; padding: 12px; font-size: 1.4rem; }
-  .par3-dist-label { font-size: 0.85rem; }
-
-  .play-summary-bar { max-width: 100%; padding: 10px 28px 12px; }
-  .psb-title { font-size: 0.72rem; margin-bottom: 8px; }
-  .psb-players { gap: 10px; }
-  .psb-player { min-width: 110px; max-width: 170px; padding: 8px 14px; }
-  .psb-player-name { font-size: 0.82rem; }
-  .psb-player-score { font-size: 1.7rem; }
-  .psb-player-tpar { font-size: 0.75rem; }
-
-  .play-reset-btn { display: block; margin: 6px auto 2px; width: auto; max-width: 260px; padding: 8px 20px; }
-
-  .play-start-wrap { min-height: calc(100vh - 52px); display: flex; align-items: center; justify-content: center; }
-  .play-start { max-width: 680px; width: 100%; padding: 32px 40px; }
-  .play-start h2 { font-size: 2.2rem; }
-  .play-start .course-display .cd-name { font-size: 1.5rem; }
-  .play-start .btn-start { font-size: 1.4rem; padding: 18px 40px; }
-
-  .score-popup { max-width: 640px; border-radius: 20px 20px 0 0; }
-  .sp-scores-grid { gap: 10px; }
-  .sp-score-btn { height: 72px; font-size: 1.85rem; }
-  .sp-score-btn .sp-label { font-size: 0.58rem; }
-}
-
-@media (orientation: landscape) and (min-width: 1180px) {
-  .play-fmt-content { padding: 12px 40px 8px; }
-  .hole-header { padding: 14px 40px 6px; }
-  .play-fmt-tabs { padding: 4px 40px 10px; }
-  .play-summary-bar { padding: 12px 40px 14px; }
-  #stroke-cards, #ptm-cards, #wolf-cards {
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 16px;
-  }
+@media (orientation: landscape) and (min-width: 1024px) {
+  .play-fmt-content { padding: 14px 32px 80px; }
+  .hole-header { padding: 14px 40px 8px; }
+  .ptm-hole-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .ptm-hole-row { height: 44px; }
 }
 
 @media print {
   @page { size: 11in 8.5in; margin: 0.2in; }
   body { background: white; }
   .dashboard { display: none !important; }
-  .modal { display: none !important; }
+  .modal-overlay { display: none !important; }
   .app-tabs { display: none !important; }
   #play-panel { display: none !important; }
-  #print-panel { display: block !important; }
+  #print-panel { display: block !important; padding: 0 !important; background: white !important; }
   #scorecard-preview {
     width: 100% !important; height: 100% !important;
     padding: 0.05in 0.1in; margin: 0;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    color-adjust: exact !important;
   }
-  .sc-header, .sc-format-header {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .sc-table tr.row-header th,
-  .sc-table td.col-summary,
-  .sc-table tr.row-player:nth-child(even) td,
-  .sc-table tr.row-ptm:nth-child(even) td,
-  .sc-table tr.row-wolf-blank:nth-child(even) td {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
+  .sc-header, .sc-format-header { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .sc-table .col-summary, .sc-table tr.row-player:nth-child(even) td,
+  .sc-table tr.row-ptm:nth-child(even) td, .sc-table tr.row-wolf-blank:nth-child(even) td,
+  .sc-table tr.row-header th { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .print-controls { display: none !important; }
 }
+
+/* error overlay */
+#init-error {
+  display: none; position: fixed; inset: 0; background: #0a0a0a; z-index: 9999;
+  align-items: center; justify-content: center; padding: 20px;
+}
+#init-error.visible { display: flex; }
+#init-error .ie-box { background: #1a0000; border: 1px solid #C0392B; border-radius: 8px; padding: 24px; max-width: 500px; color: #E74C3C; font-family: monospace; }
 </style>
 </head>
 <body>
+
+<div id="init-error">
+  <div class="ie-box">
+    <strong>Init Error</strong><br><br>
+    <span id="init-error-msg"></span>
+  </div>
+</div>
 
 <!-- ========== APP TABS ========== -->
 <div class="app-tabs">
@@ -824,10 +644,9 @@ body {
 <!-- ========== SETUP TAB ========== -->
 <div id="setup-panel" class="tab-panel active">
 <div class="dashboard">
-
   <div class="dash-header">
     <h1>EGT Scorecard</h1>
-    <p>Setup your round — then switch to Play Mode</p>
+    <p>Configure your round — then switch to Play Mode</p>
   </div>
 
   <!-- QUICK FILL -->
@@ -836,21 +655,21 @@ body {
     <div class="qf-grid">
       <div class="qf-card">
         <h4>🏌️ Select NJ Course</h4>
-        <p>Pick a course to auto-fill par, yards &amp; handicap for all 18 holes.</p>
+        <p>Auto-fill par, yards &amp; handicap for all 18 holes.</p>
         <select id="nj-course-select" onchange="handleNjCourseSelect(this.value)">
           <option value="">— Select an NJ course —</option>
         </select>
         <div id="nj-status" class="qf-status"></div>
         <div id="nj-manual-load" class="hidden" style="margin-top:8px;">
           <label class="btn btn-sm btn-full" style="cursor:pointer;">
-            📁 Load nj_courses.json manually
-            <input type="file" accept=".json,application/json" style="display:none" onchange="handleManualCoursesUpload(event)">
+            📁 Load nj_courses.json
+            <input type="file" accept=".json" style="display:none" onchange="handleManualCoursesUpload(event)">
           </label>
         </div>
       </div>
       <div class="qf-card">
         <h4>📸 Upload Scorecard Photo</h4>
-        <p>OCR extracts par, yards &amp; handicap — you confirm before applying.</p>
+        <p>OCR extracts par, yards &amp; handicap — confirm before applying.</p>
         <label class="btn btn-accent btn-full" style="cursor:pointer;">
           📷 Choose Image / Take Photo
           <input type="file" id="ocr-file-input" accept="image/*" style="display:none" onchange="handleScorecardUpload(event)">
@@ -896,32 +715,32 @@ body {
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td class="label-cell">PAR</td>
+          <tr class="row-label">
+            <td>Par</td>
             <td><input id="par-1" oninput="rebuild()"></td><td><input id="par-2" oninput="rebuild()"></td><td><input id="par-3" oninput="rebuild()"></td>
             <td><input id="par-4" oninput="rebuild()"></td><td><input id="par-5" oninput="rebuild()"></td><td><input id="par-6" oninput="rebuild()"></td>
             <td><input id="par-7" oninput="rebuild()"></td><td><input id="par-8" oninput="rebuild()"></td><td><input id="par-9" oninput="rebuild()"></td>
-            <td class="summary-cell" id="par-out"></td>
+            <td class="summary-cell" id="sum-par-out"></td>
             <td><input id="par-10" oninput="rebuild()"></td><td><input id="par-11" oninput="rebuild()"></td><td><input id="par-12" oninput="rebuild()"></td>
             <td><input id="par-13" oninput="rebuild()"></td><td><input id="par-14" oninput="rebuild()"></td><td><input id="par-15" oninput="rebuild()"></td>
             <td><input id="par-16" oninput="rebuild()"></td><td><input id="par-17" oninput="rebuild()"></td><td><input id="par-18" oninput="rebuild()"></td>
-            <td class="summary-cell" id="par-in"></td>
-            <td class="summary-cell" id="par-tot"></td>
+            <td class="summary-cell" id="sum-par-in"></td>
+            <td class="summary-cell" id="sum-par-tot"></td>
           </tr>
-          <tr>
-            <td class="label-cell">YARDS</td>
+          <tr class="row-label">
+            <td>Yds</td>
             <td><input id="yds-1" oninput="rebuild()"></td><td><input id="yds-2" oninput="rebuild()"></td><td><input id="yds-3" oninput="rebuild()"></td>
             <td><input id="yds-4" oninput="rebuild()"></td><td><input id="yds-5" oninput="rebuild()"></td><td><input id="yds-6" oninput="rebuild()"></td>
             <td><input id="yds-7" oninput="rebuild()"></td><td><input id="yds-8" oninput="rebuild()"></td><td><input id="yds-9" oninput="rebuild()"></td>
-            <td class="summary-cell" id="yds-out"></td>
+            <td class="summary-cell" id="sum-yds-out"></td>
             <td><input id="yds-10" oninput="rebuild()"></td><td><input id="yds-11" oninput="rebuild()"></td><td><input id="yds-12" oninput="rebuild()"></td>
             <td><input id="yds-13" oninput="rebuild()"></td><td><input id="yds-14" oninput="rebuild()"></td><td><input id="yds-15" oninput="rebuild()"></td>
             <td><input id="yds-16" oninput="rebuild()"></td><td><input id="yds-17" oninput="rebuild()"></td><td><input id="yds-18" oninput="rebuild()"></td>
-            <td class="summary-cell" id="yds-in"></td>
-            <td class="summary-cell" id="yds-tot"></td>
+            <td class="summary-cell" id="sum-yds-in"></td>
+            <td class="summary-cell" id="sum-yds-tot"></td>
           </tr>
-          <tr>
-            <td class="label-cell">HDCP</td>
+          <tr class="row-label">
+            <td>Hcp</td>
             <td><input id="hcp-1" oninput="rebuild()"></td><td><input id="hcp-2" oninput="rebuild()"></td><td><input id="hcp-3" oninput="rebuild()"></td>
             <td><input id="hcp-4" oninput="rebuild()"></td><td><input id="hcp-5" oninput="rebuild()"></td><td><input id="hcp-6" oninput="rebuild()"></td>
             <td><input id="hcp-7" oninput="rebuild()"></td><td><input id="hcp-8" oninput="rebuild()"></td><td><input id="hcp-9" oninput="rebuild()"></td>
@@ -967,175 +786,148 @@ body {
   </div>
 
   <div class="print-bar">
-    <button class="btn btn-gold" style="font-size:1rem; padding:12px 36px;" onclick="switchTab('play')">
-      ⛳&ensp;Start Round →
-    </button>
+    <button class="btn btn-gold" style="font-size:1rem;padding:12px 36px;" onclick="switchTab('play')">⛳&ensp;Start Round →</button>
   </div>
-
-</div><!-- /dashboard -->
+</div>
 </div><!-- /setup-panel -->
 
 <!-- ========== PLAY TAB ========== -->
 <div id="play-panel" class="tab-panel">
-
   <div id="play-start-wrap" class="play-start-wrap">
     <div class="play-start">
       <h2>Ready to Play?</h2>
-      <div class="course-display" id="play-course-display">
+      <div class="course-display">
         <div class="cd-name" id="pcd-name">—</div>
         <div class="cd-sub" id="pcd-sub">—</div>
       </div>
-      <p>Scores from Play Mode sync into your printable scorecard automatically.</p>
-      <button class="btn-start" onclick="startPlay()">Tee It Up</button>
+      <button class="btn btn-gold btn-start" onclick="startPlay()">⛳&ensp;Begin Round</button>
+      <div style="margin-top:10px;">
+        <button class="btn btn-sm" style="opacity:0.6" onclick="resumePlay()">Resume In-Progress Round</button>
+      </div>
     </div>
   </div>
 
-  <div id="play-active-wrap" class="play-active">
-    <div class="hole-nav" id="hole-nav"></div>
-
-    <div class="hole-header">
-      <div class="hole-badge">
-        <div class="hb-num" id="ph-num">1</div>
-        <div class="hb-label">Hole</div>
+  <div id="play-active-wrap" class="play-active-wrap">
+    <!-- Hole Nav -->
+    <div class="hole-nav-wrap">
+      <div class="hole-nav" id="hole-nav"></div>
+    </div>
+    <!-- Hole Header -->
+    <div class="hole-header" id="hole-header">
+      <div class="hole-hdr-left">
+        <div class="hole-hdr-num" id="hh-num">H1</div>
+        <div class="hole-hdr-info" id="hh-info">Par — · — yds · Hcp —</div>
       </div>
-      <div class="hole-meta">
-        <div class="hole-meta-row">
-          <span class="hm-par" id="ph-par">4</span>
-          <span class="hm-par-label">Par</span>
-          <span class="hm-yds" id="ph-yds">400 yds</span>
-        </div>
-        <div class="hm-hdcp" id="ph-hdcp">Hdcp: —</div>
-      </div>
-      <div class="hole-nav-arrows">
-        <button id="btn-prev-hole" onclick="goHole(playState.currentHole - 1)">‹</button>
-        <button id="btn-next-hole" onclick="goHole(playState.currentHole + 1)">›</button>
+      <div class="hole-hdr-nav">
+        <button class="hole-nav-arrow" onclick="goHole(playState.currentHole-1)">◀</button>
+        <button class="hole-nav-arrow" onclick="goHole(playState.currentHole+1)">▶</button>
+        <button class="btn btn-sm btn-danger" onclick="confirmResetPlay()" style="margin-left:4px;">↺ Reset</button>
       </div>
     </div>
-
+    <!-- Format Tabs -->
     <div class="play-fmt-tabs" id="play-fmt-tabs"></div>
+    <!-- Format Content -->
+    <div class="play-fmt-content" id="play-fmt-content">
+      <div id="stroke-pane"></div>
+      <div id="ptm-pane" class="hidden"></div>
+      <div id="wolf-pane" class="hidden"></div>
+      <div id="par3-pane" class="hidden"></div>
+    </div>
+    <!-- Summary Bar -->
+    <div class="play-summary-bar" id="play-summary-bar">
+      <div id="psb-players"></div>
+    </div>
+  </div>
+</div>
 
-    <div class="play-fmt-content">
-      <div class="play-fmt-pane active" id="fmt-pane-stroke" data-fmt="stroke">
-        <div id="stroke-cards"></div>
-      </div>
-      <div class="play-fmt-pane" id="fmt-pane-ptm" data-fmt="ptm">
-        <div id="ptm-cards"></div>
-      </div>
-      <div class="play-fmt-pane" id="fmt-pane-wolf" data-fmt="wolf">
-        <div id="wolf-cards"></div>
-      </div>
-      <div class="play-fmt-pane" id="fmt-pane-par3" data-fmt="par3">
-        <div id="par3-cards"></div>
+<!-- Score Popup -->
+<div id="score-popup-overlay" class="score-popup-overlay hidden" onclick="handleOverlayClick(event)">
+  <div class="score-popup">
+    <div class="sp-title">
+      <span id="sp-title-text">Score</span>
+      <span class="sp-close" onclick="closeScorePopup()">✕</span>
+    </div>
+    <div class="sp-scores-grid" id="sp-scores-grid"></div>
+    <button class="sp-clear" onclick="clearScorePopup()">Clear Score</button>
+  </div>
+</div>
+
+<!-- OCR Review Modal -->
+<div id="ocr-modal" class="modal-overlay hidden" onclick="handleOcrOverlayClick(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>📷 OCR Review — Confirm Before Applying</h3>
+      <span class="modal-close" onclick="closeOcrModal()">✕</span>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.78rem;color:var(--ui-text-muted);margin-bottom:12px;">Review the extracted values below. Edit any errors before applying.</p>
+      <div id="ocr-review-grid" style="overflow-x:auto;"></div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn btn-accent" onclick="applyOcrData()">✓ Apply to Course Setup</button>
+        <button class="btn" onclick="closeOcrModal()">Cancel</button>
       </div>
     </div>
-
-    <button class="play-reset-btn" onclick="confirmResetPlay()">↺ Reset Round Scores</button>
   </div>
-
-  <div class="play-summary-bar" id="play-summary-bar" style="display:none">
-    <div class="psb-title">Round — Stroke vs Par</div>
-    <div class="psb-players" id="psb-players"></div>
-  </div>
-
-</div><!-- /play-panel -->
+</div>
 
 <!-- ========== PRINT TAB ========== -->
 <div id="print-panel" class="tab-panel">
-  <div class="dashboard">
-    <div class="print-bar">
-      <button class="btn btn-gold" style="font-size:1rem; padding:12px 36px;" onclick="window.print()">
-        🖨️&ensp;Print Scorecard
-      </button>
-    </div>
-    <div class="preview-wrapper">
-      <div class="preview-label">Live Preview (exact print output)</div>
-      <div id="scorecard-preview"></div>
-    </div>
+  <div class="print-controls">
+    <button class="btn btn-gold" onclick="window.print()">🖨 Print Scorecard</button>
+    <button class="btn" onclick="rebuild()">↺ Refresh Preview</button>
   </div>
+  <div id="scorecard-preview"></div>
 </div>
 
-<!-- ========== OCR MODAL ========== -->
-<div id="ocr-modal" class="modal hidden">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2>Confirm Extracted Scorecard Data</h2>
-      <button class="modal-close" onclick="closeOcrModal()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <p class="help">Review the extracted values. Red cells weren't detected — fill them in manually.</p>
-      <div id="ocr-preview-grid"></div>
-      <div class="ocr-raw-toggle" onclick="toggleRawOcr()">▸ Show raw OCR text</div>
-      <div id="ocr-raw" class="ocr-raw hidden"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeOcrModal()">Cancel</button>
-      <button class="btn btn-gold" onclick="applyOcrData()">Apply to Hole Data</button>
-    </div>
-  </div>
-</div>
-
-<!-- ========== SCORE POPUP OVERLAY ========== -->
-<div id="score-popup-overlay" class="score-popup-overlay hidden" onclick="handleOverlayClick(event)">
-  <div class="score-popup" onclick="event.stopPropagation()">
-    <div class="sp-header">
-      <h3 id="sp-title">Enter Score</h3>
-      <button class="sp-close" onclick="closeScorePopup()">✕</button>
-    </div>
-    <div class="sp-scores-grid" id="sp-scores-grid"></div>
-    <button class="sp-clear-btn" onclick="clearScorePopup()">Clear Score</button>
-  </div>
-</div>
-
-<!-- ========== JAVASCRIPT ========== -->
 <script>
-/* ==============================================================
-   iOS 12 COMPATIBILITY NOTES
-   --------------------------------------------------------------
-   This iPad runs iOS 12.5.7 / Safari 12 / WebKit 606.
-   Chrome on iOS 12 is WKWebView using the same engine.
-   Features that must be AVOIDED in this script:
-     - Nullish coalescing (??)       — Safari 13.1+
-     - Optional chaining (?.)        — Safari 13.4+
-     - Logical-assign (??= ||= &&=)  — Safari 14+
-     - String.prototype.replaceAll   — Safari 13.1+
-     - Promise.allSettled            — Safari 13+
-     - Array.prototype.at            — Safari 15.4+
-     - Private class fields (#foo)   — Safari 14.1+
-   Tesseract.js v5 uses wasm+workers not supported on Safari 12.
-   Loaded with async + onerror so its failure cannot kill the page.
-   ============================================================== */
-
-/* --------------------------------------------------------------
-   GLOBAL ERROR SURFACING (works on iPad where no console exists)
-   -------------------------------------------------------------- */
+/* =====================================================
+   ERROR HANDLING
+   ===================================================== */
 function showInitError(msg) {
-  try {
-    var banner = document.getElementById('__init_error');
-    if (!banner) {
-      banner = document.createElement('div');
-      banner.id = '__init_error';
-      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#C0392B;color:#fff;padding:10px 14px;text-align:center;z-index:9999;font-family:-apple-system,sans-serif;font-size:13px;line-height:1.4;white-space:pre-wrap;';
-      banner.onclick = function(){ banner.parentNode && banner.parentNode.removeChild(banner); };
-      document.body.appendChild(banner);
-    }
-    banner.textContent = 'Startup error (tap to dismiss): ' + String(msg);
-  } catch (_) { /* last-resort: nothing we can do */ }
+  var el = document.getElementById('init-error');
+  var em = document.getElementById('init-error-msg');
+  if (el && em) { em.textContent = msg; el.classList.add('visible'); }
+  console.error('Init error:', msg);
 }
 
-window.addEventListener('error', function (e) {
-  var file = (e.filename || '').split('/').pop() || '';
-  showInitError((e.message || 'Unknown error') + ' @ ' + file + ':' + (e.lineno || '?'));
+window.addEventListener('error', function(e) {
+  showInitError((e.message || 'Unknown error') + ' @ ' + (e.filename||'?') + ':' + e.lineno);
+});
+window.addEventListener('unhandledrejection', function(e) {
+  var r = e.reason;
+  showInitError('Async: ' + ((r && (r.message || r.toString())) || 'Unknown'));
 });
 
-window.addEventListener('unhandledrejection', function (e) {
-  var reason = e.reason;
-  var msg = (reason && (reason.message || reason.toString())) || 'Unknown async error';
-  showInitError('Async: ' + msg);
-});
+/* =====================================================
+   HELPERS
+   ===================================================== */
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-/* ==============================================================
+function scoreLabel(score, par) {
+  var d = score - par;
+  if (d <= -2) return score === 1 ? 'HOLE IN ONE' : 'EAGLE';
+  if (d === -1) return 'BIRDIE';
+  if (d ===  0) return 'PAR';
+  if (d ===  1) return 'BOGEY';
+  if (d ===  2) return 'DOUBLE';
+  return '+' + d;
+}
+
+function scoreCls(score, par) {
+  var d = score - par;
+  if (d <= -2) return 'eagle';
+  if (d === -1) return 'birdie';
+  if (d ===  0) return 'par';
+  if (d ===  1) return 'bogey';
+  return 'double';
+}
+
+/* =====================================================
    STATE
-   ============================================================== */
+   ===================================================== */
 var BEAVER_BROOK = {
   course_name: "BEAVER BROOK COUNTRY CLUB",
   tee_color: "Black Tees",
@@ -1155,10 +947,10 @@ var BEAVER_BROOK = {
     { par:4, yards:414, hdcp:8 },  { par:5, yards:504, hdcp:12 }, { par:5, yards:476, hdcp:14 }
   ],
   formats: [
-    { id:"stroke", label:"Stroke Play", enabled:true },
+    { id:"stroke", label:"Stroke Play",         enabled:true },
     { id:"ptm",    label:"PTM (Pass The Money)", enabled:true },
-    { id:"wolf",   label:"Wolf", enabled:true },
-    { id:"par3",   label:"Par 3 Challenge", enabled:true }
+    { id:"wolf",   label:"Wolf",                 enabled:true },
+    { id:"par3",   label:"Par 3 Challenge",      enabled:true }
   ]
 };
 
@@ -1169,39 +961,113 @@ function makePlayState() {
   return {
     currentHole: 0,
     activeFmt: 'stroke',
-    scores: Array.from({ length: n }, function(){ return new Array(18).fill(null); }),
+    // scores[playerIdx][holeIdx]
+    scores: Array.from({ length: n }, function() { return new Array(18).fill(null); }),
+    // threePutt[playerIdx][holeIdx]
+    threePutt: Array.from({ length: n }, function() { return new Array(18).fill(false); }),
+    // ptmHolder[holeIdx] — computed automatically, may be overridden
     ptmHolder: new Array(18).fill(null),
+    // ptmOverride[holeIdx] — if set (not null), locks that hole's holder regardless of auto
+    ptmOverride: new Array(18).fill(null),
+    // wolfPartner[holeIdx]: null=undecided, -1=lone wolf, pi=partner index
     wolfPartner: new Array(18).fill(null),
     wolfBlind: new Array(18).fill(false),
-    par3Dist: Array.from({ length: n }, function(){ return new Array(18).fill(null); })
+    par3Dist: Array.from({ length: n }, function() { return new Array(18).fill(null); })
   };
 }
-var playState = makePlayState();
 
+var playState = makePlayState();
 var scorePopupCtx = null;
 var njCourses = [];
 var lastOcrData = null;
-var lastOcrRawText = '';
 
-/* ==============================================================
+/* =====================================================
+   PTM AUTO-LOGIC
+   ===================================================== */
+/*
+  Rules:
+    - Hole 0 holder = override if set, else player 0
+    - For hole h > 0:
+        prevHolder = ptmHolder[h-1]
+        prevScore  = scores[prevHolder][h-1]
+        threePutted = threePutt[prevHolder][h-1]
+        PASS if: prevScore >= prevPar + 2  (double bogey+)  OR  threePutted
+        RETAIN otherwise
+        if PASS: nextHolder = (prevHolder + 1) % n
+        if RETAIN: nextHolder = prevHolder
+    - If ptmOverride[h] !== null, use override instead and resume chain from h+1
+*/
+function computePtmHolder(h) {
+  var n = state.players.length;
+  if (n === 0) return null;
+  if (h === 0) {
+    return playState.ptmOverride[0] !== null ? playState.ptmOverride[0] : 0;
+  }
+  var prevHolder = computePtmHolder(h - 1);
+  // If this hole is manually overridden, just return that
+  if (playState.ptmOverride[h] !== null) return playState.ptmOverride[h];
+
+  // Check pass conditions on prevHolder at hole h-1
+  var prevScore = playState.scores[prevHolder] ? playState.scores[prevHolder][h - 1] : null;
+  var prevPar   = state.holes[h - 1].par;
+  var tp        = playState.threePutt[prevHolder] ? playState.threePutt[prevHolder][h - 1] : false;
+
+  var passes = false;
+  if (tp) passes = true;
+  if (prevScore !== null && prevScore >= prevPar + 2) passes = true;
+
+  if (passes) {
+    return (prevHolder + 1) % n;
+  } else {
+    return prevHolder;
+  }
+}
+
+/* Recompute ptmHolder from hole startH to 17 */
+function recomputePtmChain(startH) {
+  if (startH === undefined) startH = 0;
+  for (var h = startH; h < 18; h++) {
+    playState.ptmHolder[h] = computePtmHolder(h);
+  }
+}
+
+/* Returns true if money passed at hole h (i.e. holder changed from h-1 to h) */
+function ptmPassedAt(h) {
+  if (h === 0) return false;
+  return playState.ptmHolder[h] !== playState.ptmHolder[h - 1];
+}
+
+/* Returns trigger description for a hole */
+function ptmPassTrigger(h) {
+  if (h === 0 || !ptmPassedAt(h)) return null;
+  var prevH   = h - 1;
+  var ph      = playState.ptmHolder[prevH]; // previous holder index
+  var score   = playState.scores[ph] ? playState.scores[ph][prevH] : null;
+  var par     = state.holes[prevH].par;
+  var tp      = playState.threePutt[ph] ? playState.threePutt[ph][prevH] : false;
+  var reasons = [];
+  if (tp) reasons.push('3P');
+  if (score !== null && score >= par + 2) reasons.push('DBL+');
+  return reasons.length ? reasons.join('/') : 'PASS';
+}
+
+/* =====================================================
    TAB SWITCHING
-   ============================================================== */
+   ===================================================== */
 function switchTab(tab) {
-  document.querySelectorAll('.app-tab').forEach(function (t, i) {
-    var ids = ['setup','play','print'];
-    t.classList.toggle('active', ids[i] === tab);
+  document.querySelectorAll('.app-tab').forEach(function(t, i) {
+    t.classList.toggle('active', ['setup','play','print'][i] === tab);
   });
-  document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+  document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
   var panel = document.getElementById(tab + '-panel');
   if (panel) panel.classList.add('active');
-
   if (tab === 'play')  renderPlayStart();
   if (tab === 'print') rebuild();
 }
 
-/* ==============================================================
+/* =====================================================
    DASHBOARD RENDERING
-   ============================================================== */
+   ===================================================== */
 function loadStateToUI() {
   document.getElementById('inp-course').value = state.course_name;
   document.getElementById('inp-tee').value    = state.tee_color;
@@ -1212,9 +1078,30 @@ function loadStateToUI() {
     document.getElementById('yds-' + (i+1)).value = h.yards;
     document.getElementById('hcp-' + (i+1)).value = h.hdcp;
   }
+  updateHoleSums();
   renderPlayers();
   renderFormats();
   rebuild();
+}
+
+function updateHoleSums() {
+  var po=0,pi=0,yo=0,yi=0;
+  for (var i=1;i<=9;i++) {
+    var p=parseInt(document.getElementById('par-'+i).value)||0;
+    var y=parseInt(document.getElementById('yds-'+i).value)||0;
+    po+=p; yo+=y;
+  }
+  for (var i=10;i<=18;i++) {
+    var p=parseInt(document.getElementById('par-'+i).value)||0;
+    var y=parseInt(document.getElementById('yds-'+i).value)||0;
+    pi+=p; yi+=y;
+  }
+  document.getElementById('sum-par-out').textContent  = po||'';
+  document.getElementById('sum-par-in').textContent   = pi||'';
+  document.getElementById('sum-par-tot').textContent  = (po+pi)||'';
+  document.getElementById('sum-yds-out').textContent  = yo||'';
+  document.getElementById('sum-yds-in').textContent   = yi||'';
+  document.getElementById('sum-yds-tot').textContent  = (yo+yi)||'';
 }
 
 function readUIToState() {
@@ -1222,134 +1109,54 @@ function readUIToState() {
   state.tee_color   = document.getElementById('inp-tee').value    || 'Tees';
   state.group_name  = document.getElementById('inp-group').value  || '';
   for (var i = 0; i < 18; i++) {
-    state.holes[i].par   = parseInt(document.getElementById('par-' + (i+1)).value) || 4;
-    state.holes[i].yards = parseInt(document.getElementById('yds-' + (i+1)).value) || 0;
-    state.holes[i].hdcp  = parseInt(document.getElementById('hcp-' + (i+1)).value) || 0;
+    var p = parseInt(document.getElementById('par-' + (i+1)).value);
+    var y = parseInt(document.getElementById('yds-' + (i+1)).value);
+    var h = parseInt(document.getElementById('hcp-' + (i+1)).value);
+    state.holes[i] = {
+      par:   isFinite(p) ? p : (state.holes[i]||{}).par   || 4,
+      yards: isFinite(y) ? y : (state.holes[i]||{}).yards || 0,
+      hdcp:  isFinite(h) ? h : (state.holes[i]||{}).hdcp  || i+1
+    };
   }
-}
-
-function renderPlayers() {
-  var c = document.getElementById('players-list');
-  c.innerHTML = '';
-  state.players.forEach(function (p, i) {
-    var d = document.createElement('div');
-    d.className = 'player-row';
-    d.innerHTML =
-      '<span class="player-num">' + (i+1) + '</span>' +
-      '<input class="name-input" value="' + esc(p.full_name) + '" placeholder="Display Name" oninput="state.players[' + i + '].full_name=this.value;rebuild()">' +
-      '<input class="abbr-input" value="' + esc(p.abbreviation) + '" placeholder="ABR" maxlength="3" oninput="state.players[' + i + '].abbreviation=this.value.toUpperCase();rebuild()">' +
-      '<div class="move-btns">' +
-        '<button title="Move up" onclick="movePlayer(' + i + ',-1)">▲</button>' +
-        '<button title="Move down" onclick="movePlayer(' + i + ',1)">▼</button>' +
-      '</div>';
-    c.appendChild(d);
-  });
-}
-
-function addPlayer() {
-  if (state.players.length >= 6) return;
-  state.players.push({ full_name: '', abbreviation: '' });
-  renderPlayers(); rebuild();
-}
-function removePlayer() {
-  if (state.players.length <= 2) return;
-  state.players.pop();
-  renderPlayers(); rebuild();
-}
-function movePlayer(i, dir) {
-  var j = i + dir;
-  if (j < 0 || j >= state.players.length) return;
-  var tmp = state.players[i];
-  state.players[i] = state.players[j];
-  state.players[j] = tmp;
-  renderPlayers(); rebuild();
-}
-
-function renderFormats() {
-  var c = document.getElementById('formats-list');
-  c.innerHTML = '';
-  state.formats.forEach(function (f, i) {
-    var d = document.createElement('div');
-    d.className = 'format-toggle' + (f.enabled ? ' active' : '');
-    d.innerHTML =
-      '<input type="checkbox" class="ft-check" ' + (f.enabled ? 'checked' : '') + ' onchange="state.formats[' + i + '].enabled=this.checked;renderFormats();rebuild()">' +
-      '<span class="ft-label">' + esc(f.label) + '</span>' +
-      '<div class="ft-arrows">' +
-        '<button title="Move up" onclick="moveFmt(' + i + ',-1)">▲</button>' +
-        '<button title="Move down" onclick="moveFmt(' + i + ',1)">▼</button>' +
-      '</div>';
-    c.appendChild(d);
-  });
-}
-function moveFmt(i, dir) {
-  var j = i + dir;
-  if (j < 0 || j >= state.formats.length) return;
-  var tmp = state.formats[i];
-  state.formats[i] = state.formats[j];
-  state.formats[j] = tmp;
-  renderFormats(); rebuild();
-}
-
-function esc(s) {
-  return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-/* ==============================================================
-   SUMMARIES + PRINT REBUILD
-   ============================================================== */
-function calcSummaries() {
-  var po=0, pi=0, yo=0, yi=0;
-  for (var i=0; i<9;  i++) { po += state.holes[i].par; yo += state.holes[i].yards; }
-  for (var i=9; i<18; i++) { pi += state.holes[i].par; yi += state.holes[i].yards; }
-  document.getElementById('par-out').textContent = po;
-  document.getElementById('par-in').textContent  = pi;
-  document.getElementById('par-tot').textContent = po + pi;
-  document.getElementById('yds-out').textContent = yo;
-  document.getElementById('yds-in').textContent  = yi;
-  document.getElementById('yds-tot').textContent = yo + yi;
-  return { po: po, pi: pi, yo: yo, yi: yi };
 }
 
 function rebuild() {
   readUIToState();
-  var s = calcSummaries();
-  var el = document.getElementById('scorecard-preview');
-  if (!el) return;
-  var enabledFmts = state.formats.filter(function (f) { return f.enabled; });
-  var fmtList = enabledFmts.map(function (f) { return f.label; }).join(' | ');
-  var totalPar = s.po + s.pi;
-  var totalYds = s.yo + s.yi;
-
+  updateHoleSums();
+  var preview = document.getElementById('scorecard-preview');
+  if (!preview) return;
+  var enabledFmts = state.formats.filter(function(f){ return f.enabled; });
+  if (enabledFmts.length === 0) { preview.innerHTML = '<div style="color:#999;padding:20px">No formats enabled.</div>'; return; }
+  var fmtList = enabledFmts.map(function(f){ return f.label; }).join(' | ');
+  var s = { po:0,pi:0,yo:0,yi:0 };
+  for (var i=0;i<9;i++)  { s.po+=state.holes[i].par; s.yo+=state.holes[i].yards; }
+  for (var i=9;i<18;i++) { s.pi+=state.holes[i].par; s.yi+=state.holes[i].yards; }
   var html = '';
   html += '<div class="sc-header">' +
-            '<span class="sc-header-left">' + esc(state.tee_color) + ' &middot; Par ' + totalPar + ' &middot; ' + totalYds.toLocaleString() + ' yds</span>' +
-            '<span class="sc-header-center">' + esc(state.course_name) + ' &middot; OFFICIAL SCORECARD</span>' +
-            '<span class="sc-header-right">Formats: ' + esc(fmtList) + '</span>' +
-          '</div>';
-
+    '<span class="sc-header-left">' + esc(state.tee_color) + ' · Par ' + (s.po+s.pi) + ' · ' + (s.yo+s.yi).toLocaleString() + ' yds</span>' +
+    '<span class="sc-header-center">' + esc(state.course_name) + ' · OFFICIAL SCORECARD</span>' +
+    '<span class="sc-header-right">Formats: ' + esc(fmtList) + '</span>' +
+  '</div>';
   var fmtNum = 0;
-  enabledFmts.forEach(function (f) {
+  enabledFmts.forEach(function(f) {
     fmtNum++;
     if      (f.id === 'stroke') html += buildStroke(fmtNum);
     else if (f.id === 'ptm')    html += buildPTM(fmtNum);
     else if (f.id === 'wolf')   html += buildWolf(fmtNum);
     else if (f.id === 'par3')   html += buildPar3(fmtNum);
   });
-
   html += '<div class="sc-spacer"></div>';
   html += '<div class="sc-footer">' +
-            '<div class="sc-footer-left">' +
-              '<span>Date: ______________</span>' +
-              '<span>Weather: ______________</span>' +
-              '<span>Attested by: ______________</span>' +
-            '</div>' +
-            '<div class="sc-footer-right">PTM: OB=Out of Bounds &ensp;HAZ=Hazard &ensp;3P=3-Putt &ensp;DBL+=Double Bogey or Worse &ensp;BIRD=Birdie by non-holder</div>' +
-          '</div>';
-
-  el.innerHTML = html;
+    '<div class="sc-footer-left"><span>Date: ______________</span><span>Weather: ______________</span><span>Attested by: ______________</span></div>' +
+    '<div class="sc-footer-right">PTM: 3P=3-Putt · DBL+=Double Bogey or Worse · OB=Out of Bounds · HAZ=Hazard · BIRD=Birdie by non-holder</div>' +
+  '</div>';
+  preview.innerHTML = html;
   adjustRowHeights(enabledFmts);
 }
 
+/* =====================================================
+   SCORECARD BUILDERS
+   ===================================================== */
 function buildStroke(num) {
   var h = state.holes;
   var t = '<div class="sc-format" data-fmt="stroke">';
@@ -1358,54 +1165,49 @@ function buildStroke(num) {
   for (var i=0;i<9;i++) t += '<col>';
   t += '<col style="width:30px">';
   for (var i=0;i<9;i++) t += '<col>';
-  t += '<col style="width:30px"><col style="width:30px"></colgroup>';
+  t += '<col style="width:30px"><col style="width:34px"></colgroup>';
   t += '<tr class="row-header"><th class="col-label">HOLE</th>';
   for (var i=1;i<=9;i++)   t += '<th>' + i + '</th>';
   t += '<th class="col-summary">OUT</th>';
   for (var i=10;i<=18;i++) t += '<th>' + i + '</th>';
   t += '<th class="col-summary">IN</th><th class="col-summary">TOT</th></tr>';
-
-  var po=0, pi=0;
-  for (var i=0; i<9;  i++) po += h[i].par;
-  for (var i=9; i<18; i++) pi += h[i].par;
+  var po=0,pi=0;
+  for (var i=0;i<9;i++)  po+=h[i].par;
+  for (var i=9;i<18;i++) pi+=h[i].par;
   t += '<tr class="row-par"><td class="col-label">PAR</td>';
   for (var i=0;i<9;i++)    t += '<td>' + h[i].par + '</td>';
   t += '<td class="col-summary">' + po + '</td>';
   for (var i=9;i<18;i++)   t += '<td>' + h[i].par + '</td>';
   t += '<td class="col-summary">' + pi + '</td><td class="col-summary">' + (po+pi) + '</td></tr>';
-
-  var yo=0, yi=0;
-  for (var i=0; i<9;  i++) yo += h[i].yards;
-  for (var i=9; i<18; i++) yi += h[i].yards;
+  var yo=0,yi=0;
+  for (var i=0;i<9;i++)  yo+=h[i].yards;
+  for (var i=9;i<18;i++) yi+=h[i].yards;
   t += '<tr class="row-yards"><td class="col-label">YARDS</td>';
   for (var i=0;i<9;i++)    t += '<td>' + h[i].yards + '</td>';
   t += '<td class="col-summary">' + yo + '</td>';
   for (var i=9;i<18;i++)   t += '<td>' + h[i].yards + '</td>';
   t += '<td class="col-summary">' + yi + '</td><td class="col-summary">' + (yo+yi) + '</td></tr>';
-
   t += '<tr class="row-hdcp"><td class="col-label">HDCP</td>';
   for (var i=0;i<9;i++)    t += '<td>' + h[i].hdcp + '</td>';
   t += '<td class="col-summary"></td>';
   for (var i=9;i<18;i++)   t += '<td>' + h[i].hdcp + '</td>';
   t += '<td class="col-summary"></td><td class="col-summary"></td></tr>';
-
-  state.players.forEach(function (p) {
-    var pi2 = state.players.indexOf(p);
+  state.players.forEach(function(p, pi2) {
+    var out=0, outOk=true, inVal=0, inOk=true;
     t += '<tr class="row-player"><td class="col-label">' + esc(p.full_name) + '</td>';
-    var out=0, outFilled=true, inVal=0, inFilled=true;
     for (var i=0;i<9;i++) {
-      var sc = (playState && playState.scores[pi2]) ? playState.scores[pi2][i] : null;
+      var sc = playState.scores[pi2] ? playState.scores[pi2][i] : null;
       t += '<td>' + (sc !== null ? sc : '') + '</td>';
-      if (sc === null) outFilled = false; else out += sc;
+      if (sc === null) outOk = false; else out += sc;
     }
-    t += '<td class="col-summary">' + (outFilled ? out : '') + '</td>';
+    t += '<td class="col-summary">' + (outOk ? out : '') + '</td>';
     for (var i=9;i<18;i++) {
-      var sc = (playState && playState.scores[pi2]) ? playState.scores[pi2][i] : null;
+      var sc = playState.scores[pi2] ? playState.scores[pi2][i] : null;
       t += '<td>' + (sc !== null ? sc : '') + '</td>';
-      if (sc === null) inFilled = false; else inVal += sc;
+      if (sc === null) inOk = false; else inVal += sc;
     }
-    t += '<td class="col-summary">' + (inFilled ? inVal : '') + '</td>';
-    t += '<td class="col-summary">' + ((outFilled && inFilled) ? (out + inVal) : '') + '</td></tr>';
+    t += '<td class="col-summary">' + (inOk ? inVal : '') + '</td>';
+    t += '<td class="col-summary">' + ((outOk && inOk) ? (out+inVal) : '') + '</td></tr>';
   });
   t += '</table></div>';
   return t;
@@ -1414,8 +1216,8 @@ function buildStroke(num) {
 function buildPTM(num) {
   var t = '<div class="sc-format" data-fmt="ptm">';
   t += '<div class="sc-format-header">' +
-         '<span>FORMAT ' + num + ' — PTM (PASS THE MONEY)</span>' +
-         '<span class="sc-rule">Circle the money holder each hole &middot; Holder at 9 keeps half &middot; Holder at 18 keeps half</span>' +
+       '<span>FORMAT ' + num + ' — PTM (PASS THE MONEY)</span>' +
+       '<span class="sc-rule">Auto-passes on Double Bogey+ or 3-Putt · Circle holder each hole · Half-pot at 9 &amp; 18</span>' +
        '</div>';
   t += '<table class="sc-table"><colgroup><col style="width:62px">';
   for (var i=0;i<9;i++) t += '<col>';
@@ -1427,28 +1229,28 @@ function buildPTM(num) {
   t += '<th class="col-summary">9★</th>';
   for (var i=10;i<=18;i++) t += '<th>' + i + '</th>';
   t += '<th class="col-summary">18★</th><th class="col-summary">WIN$</th></tr>';
-  state.players.forEach(function (p, pi2) {
+  state.players.forEach(function(p, pi2) {
     var ab = esc(p.abbreviation || '?');
     t += '<tr class="row-ptm"><td class="col-label">' + esc(p.full_name) + '</td>';
     for (var i=0;i<9;i++) {
-      var isHolder = playState && playState.ptmHolder[i] === pi2;
-      t += '<td style="' + (isHolder ? 'font-weight:900;text-decoration:underline;' : '') + '">' + ab + '</td>';
+      var isH = playState.ptmHolder[i] === pi2;
+      t += '<td style="' + (isH ? 'font-weight:900;text-decoration:underline;' : '') + '">' + ab + '</td>';
     }
-    var h9 = playState && playState.ptmHolder[8] === pi2;
+    var h9 = playState.ptmHolder[8] === pi2;
     t += '<td class="col-summary" style="' + (h9 ? 'font-weight:900;' : '') + '">' + (h9 ? '★' : ab) + '</td>';
     for (var i=9;i<18;i++) {
-      var isHolder = playState && playState.ptmHolder[i] === pi2;
-      t += '<td style="' + (isHolder ? 'font-weight:900;text-decoration:underline;' : '') + '">' + ab + '</td>';
+      var isH = playState.ptmHolder[i] === pi2;
+      t += '<td style="' + (isH ? 'font-weight:900;text-decoration:underline;' : '') + '">' + ab + '</td>';
     }
-    var h18 = playState && playState.ptmHolder[17] === pi2;
+    var h18 = playState.ptmHolder[17] === pi2;
     t += '<td class="col-summary" style="' + (h18 ? 'font-weight:900;' : '') + '">' + (h18 ? '★' : ab) + '</td>';
     t += '<td class="col-summary"></td></tr>';
   });
   t += '</table>';
   t += '<div class="sc-ptm-footer">' +
-         '<span>BUNDLE HOLDER AT HOLE 9: ________________</span>' +
-         '<span>BUNDLE HOLDER AT HOLE 18: ________________</span>' +
-         '<span>TRANSFERS THIS ROUND: _____</span>' +
+       '<span>BUNDLE HOLDER AT HOLE 9: ________________</span>' +
+       '<span>BUNDLE HOLDER AT HOLE 18: ________________</span>' +
+       '<span>TRANSFERS: _____</span>' +
        '</div></div>';
   return t;
 }
@@ -1459,11 +1261,11 @@ function buildWolf(num) {
   if (n < 2) return '';
   var wolfOrder = [];
   for (var i=0;i<18;i++) wolfOrder.push(i % n);
-  var rotation = players.map(function (p) { return esc(p.full_name); }).join(' &middot; ');
+  var rotation = players.map(function(p){ return esc(p.full_name); }).join(' · ');
   var t = '<div class="sc-format" data-fmt="wolf">';
   t += '<div class="sc-format-header">' +
-         '<span>FORMAT ' + num + ' — WOLF</span>' +
-         '<span class="sc-rule">Rotation: ' + rotation + ' (repeat) | Circle partner | Underline Lone Wolf</span>' +
+       '<span>FORMAT ' + num + ' — WOLF</span>' +
+       '<span class="sc-rule">Rotation: ' + rotation + ' (repeat) | Circle partner | Underline Lone Wolf</span>' +
        '</div>';
   t += '<table class="sc-table"><colgroup><col style="width:62px">';
   for (var i=0;i<9;i++) t += '<col>';
@@ -1476,50 +1278,40 @@ function buildWolf(num) {
   for (var i=10;i<=18;i++) t += '<th>' + i + '</th>';
   t += '<th class="col-summary">IN</th><th class="col-summary">PTS</th></tr>';
   t += '<tr class="row-wolf-is"><td class="col-label" style="font-size:6pt">IS WOLF</td>';
-  for (var i=0;i<9;i++)    t += '<td style="color:#C0392B;font-weight:700">' + esc(players[wolfOrder[i]].abbreviation) + '</td>';
+  for (var i=0;i<9;i++)  t += '<td style="color:#C0392B;font-weight:700">' + esc(players[wolfOrder[i]].abbreviation) + '</td>';
   t += '<td class="col-summary"></td>';
-  for (var i=9;i<18;i++)   t += '<td style="color:#C0392B;font-weight:700">' + esc(players[wolfOrder[i]].abbreviation) + '</td>';
+  for (var i=9;i<18;i++) t += '<td style="color:#C0392B;font-weight:700">' + esc(players[wolfOrder[i]].abbreviation) + '</td>';
   t += '<td class="col-summary"></td><td class="col-summary"></td></tr>';
   t += '<tr class="row-wolf-partners"><td class="col-label">PARTNERS (circle)</td>';
   for (var i=0;i<9;i++) {
-    var wp = playState && playState.wolfPartner[i];
+    var wp = playState.wolfPartner[i];
     var cell;
-    if (wp === -1) {
-      cell = '<span style="text-decoration:underline;color:#C0392B">LONE</span>';
-    } else if (wp !== null && wp !== undefined && players[wp]) {
-      cell = '<span style="text-decoration:underline">' + esc(players[wp].abbreviation) + '</span>';
-    } else {
-      cell = players.filter(function(_,idx){ return idx !== wolfOrder[i]; }).map(function(p){ return esc(p.abbreviation); }).join(' ');
-    }
+    if (wp === -1) cell = '<span style="text-decoration:underline;color:#C0392B">LONE</span>';
+    else if (wp !== null && wp !== undefined && players[wp]) cell = '<span style="text-decoration:underline">' + esc(players[wp].abbreviation) + '</span>';
+    else cell = players.filter(function(_,idx){ return idx !== wolfOrder[i]; }).map(function(p){ return esc(p.abbreviation); }).join(' ');
     t += '<td>' + cell + '</td>';
   }
   t += '<td class="col-summary"></td>';
   for (var i=9;i<18;i++) {
-    var wp = playState && playState.wolfPartner[i];
+    var wp = playState.wolfPartner[i];
     var cell;
-    if (wp === -1) {
-      cell = '<span style="text-decoration:underline;color:#C0392B">LONE</span>';
-    } else if (wp !== null && wp !== undefined && players[wp]) {
-      cell = '<span style="text-decoration:underline">' + esc(players[wp].abbreviation) + '</span>';
-    } else {
-      cell = players.filter(function(_,idx){ return idx !== wolfOrder[i]; }).map(function(p){ return esc(p.abbreviation); }).join(' ');
-    }
+    if (wp === -1) cell = '<span style="text-decoration:underline;color:#C0392B">LONE</span>';
+    else if (wp !== null && wp !== undefined && players[wp]) cell = '<span style="text-decoration:underline">' + esc(players[wp].abbreviation) + '</span>';
+    else cell = players.filter(function(_,idx){ return idx !== wolfOrder[i]; }).map(function(p){ return esc(p.abbreviation); }).join(' ');
     t += '<td>' + cell + '</td>';
   }
   t += '<td class="col-summary"></td><td class="col-summary"></td></tr>';
   t += '<tr class="row-wolf-blank"><td class="col-label">HOLE WIN</td>';
-  for (var c=0;c<21;c++) t += '<td' + (c===9 || c>=19 ? ' class="col-summary"' : '') + '></td>';
+  for (var c=0;c<21;c++) t += '<td' + (c===9||c>=19?' class="col-summary"':'') + '></td>';
   t += '</tr>';
-  players.forEach(function (p) {
+  players.forEach(function(p) {
     var pts = calcWolfTotalPts(state.players.indexOf(p));
     t += '<tr class="row-wolf-blank"><td class="col-label" style="font-size:6pt">' + esc(p.full_name) + ' PTS</td>';
-    for (var c=0;c<21;c++) {
-      t += '<td' + (c===9 || c>=19 ? ' class="col-summary"' : '') + '>' + (c===20 && pts ? pts : '') + '</td>';
-    }
+    for (var c=0;c<21;c++) t += '<td' + (c===9||c>=19?' class="col-summary"':'') + '>' + (c===20&&pts?pts:'') + '</td>';
     t += '</tr>';
   });
   t += '</table>';
-  t += '<div class="sc-wolf-legend">Lone Wolf Wins Outright: 2 pts &ensp;|&ensp; Wolf Team Wins (2v2): 1 pt each &ensp;|&ensp; Opponents Beat Wolf Team: 1 pt each &ensp;|&ensp; Non-Wolf Low Score(s) Beat Lone Wolf: 1 pt each</div>';
+  t += '<div class="sc-wolf-legend">Lone Wolf wins outright: 2 pts | Wolf team wins (2v2): 1 pt each | Opponents beat wolf: 1 pt each | Non-wolf low beats lone wolf: 1 pt each</div>';
   t += '</div>';
   return t;
 }
@@ -1527,40 +1319,37 @@ function buildWolf(num) {
 function buildPar3(num) {
   var h = state.holes;
   var par3s = [];
-  h.forEach(function (hole, i) { if (hole.par === 3) par3s.push(i); });
+  h.forEach(function(hole, i){ if (hole.par === 3) par3s.push(i); });
   if (par3s.length === 0) {
-    return '<div class="sc-format" data-fmt="par3">' +
-             '<div class="sc-format-header"><span>FORMAT ' + num + ' — PAR 3 CHALLENGE</span>' +
-             '<span class="sc-rule">No par-3 holes detected</span></div></div>';
+    return '<div class="sc-format" data-fmt="par3"><div class="sc-format-header"><span>FORMAT ' + num + ' — PAR 3 CHALLENGE</span><span class="sc-rule">No par-3 holes detected</span></div></div>';
   }
-  var holeNums = par3s.map(function (i) { return i+1; }).join(', ');
+  var holeNums = par3s.map(function(i){ return i+1; }).join(', ');
   var t = '<div class="sc-format" data-fmt="par3">';
   t += '<div class="sc-format-header">' +
-         '<span>FORMAT ' + num + ' — PAR 3 CHALLENGE &middot; Holes: ' + holeNums + '</span>' +
-         '<span class="sc-rule">Score vs. Par | Tiebreaker: Distance to Pin (ft)</span>' +
+       '<span>FORMAT ' + num + ' — PAR 3 CHALLENGE · Holes: ' + holeNums + '</span>' +
+       '<span class="sc-rule">Score vs. Par + Pin Distance (closest wins) · Hole-in-one: jackpot</span>' +
        '</div>';
-  t += '<table class="sc-table par3-table">';
+  t += '<table class="sc-table"><colgroup><col style="width:62px">';
+  par3s.forEach(function(){ t += '<col><col>'; });
+  t += '<col style="width:36px"><col style="width:40px"></colgroup>';
   t += '<tr class="row-header"><th class="col-label">PLAYER</th>';
-  par3s.forEach(function (i) { t += '<th>H' + (i+1) + ' (' + h[i].yards + 'y)</th><th>PIN DIST</th>'; });
-  t += '<th class="col-summary">vs PAR</th><th class="col-summary">TOT DIST</th></tr>';
-  t += '<tr class="row-par"><td class="col-label">PAR</td>';
-  par3s.forEach(function () { t += '<td>3</td><td>—</td>'; });
-  t += '<td class="col-summary">E</td><td class="col-summary">—</td></tr>';
-  state.players.forEach(function (p, pi2) {
+  par3s.forEach(function(i){ t += '<th>H'+(i+1)+'</th><th>ft</th>'; });
+  t += '<th class="col-summary">+/-</th><th class="col-summary">DIST</th></tr>';
+  state.players.forEach(function(p, pi2) {
+    var vsPar=0, vsParOk=true, totDist=0, totDistOk=true;
     t += '<tr class="row-player"><td class="col-label">' + esc(p.full_name) + '</td>';
-    var vsPar = 0, vsParFilled = true, totDist = 0, totDistFilled = true;
-    par3s.forEach(function (i) {
-      var sc   = playState && playState.scores[pi2]   ? playState.scores[pi2][i]   : null;
-      var dist = playState && playState.par3Dist[pi2] ? playState.par3Dist[pi2][i] : null;
-      t += '<td>' + (sc !== null ? sc : '') + '</td><td>' + (dist !== null ? dist + '"' : '') + '</td>';
-      if (sc === null)   vsParFilled   = false; else vsPar   += (sc - 3);
-      if (dist === null) totDistFilled = false; else totDist += dist;
+    par3s.forEach(function(i) {
+      var sc = playState.scores[pi2] ? playState.scores[pi2][i] : null;
+      var dist = playState.par3Dist[pi2] ? playState.par3Dist[pi2][i] : null;
+      t += '<td>' + (sc!==null?sc:'') + '</td><td>' + (dist!==null?dist+'"':'') + '</td>';
+      if (sc===null) vsParOk=false; else vsPar+=(sc-3);
+      if (dist===null) totDistOk=false; else totDist+=dist;
     });
-    var vsParStr = vsParFilled ? (vsPar === 0 ? 'E' : (vsPar > 0 ? '+' + vsPar : vsPar)) : '';
-    t += '<td class="col-summary">' + vsParStr + '</td><td class="col-summary">' + (totDistFilled ? (totDist + '"') : '') + '</td></tr>';
+    var vsParStr = vsParOk ? (vsPar===0?'E':(vsPar>0?'+'+vsPar:vsPar)) : '';
+    t += '<td class="col-summary">' + vsParStr + '</td><td class="col-summary">' + (totDistOk?totDist+'"':'') + '</td></tr>';
   });
   t += '<tr class="row-player"><td class="col-label" style="font-weight:800">GROUP TOTAL</td>';
-  par3s.forEach(function () { t += '<td></td><td></td>'; });
+  par3s.forEach(function(){ t += '<td></td><td></td>'; });
   t += '<td class="col-summary"></td><td class="col-summary"></td></tr>';
   t += '</table></div>';
   return t;
@@ -1569,32 +1358,86 @@ function buildPar3(num) {
 function adjustRowHeights(enabledFmts) {
   var preview = document.getElementById('scorecard-preview');
   if (!preview) return;
-  var fmtCount = enabledFmts.length;
-  if (fmtCount === 0) return;
-  var missingFormats = 4 - fmtCount;
-  var bonusPad = missingFormats * 1.5;
-  preview.querySelectorAll('.row-player td, .row-wolf-blank td, .row-ptm td').forEach(function (td) {
-    var basePad = 1.5;
-    td.style.paddingTop    = (basePad + bonusPad) + 'px';
-    td.style.paddingBottom = (basePad + bonusPad) + 'px';
+  var missing = 4 - enabledFmts.length;
+  var bonusPad = missing * 1.5;
+  var baseH = 14;
+  preview.querySelectorAll('.row-player td,.row-wolf-blank td,.row-ptm td').forEach(function(td){
+    td.style.paddingTop    = (1.5 + bonusPad) + 'px';
+    td.style.paddingBottom = (1.5 + bonusPad) + 'px';
   });
-  preview.querySelectorAll('.sc-format-header').forEach(function (fh) {
-    fh.style.marginTop     = (3 + missingFormats * 2) + 'px';
-    fh.style.paddingTop    = (2 + missingFormats * 1) + 'px';
-    fh.style.paddingBottom = (2 + missingFormats * 1) + 'px';
+  preview.querySelectorAll('.sc-format-header').forEach(function(fh){
+    fh.style.marginTop     = (3 + missing*2) + 'px';
+    fh.style.paddingTop    = (2 + missing) + 'px';
+    fh.style.paddingBottom = (2 + missing) + 'px';
   });
-  preview.querySelectorAll('tr.row-player, tr.row-wolf-blank, tr.row-ptm').forEach(function (tr) {
-    var baseH = 14;
-    tr.style.height = (baseH + missingFormats * 3) + 'px';
-    tr.querySelectorAll('td').forEach(function (td) {
-      td.style.height = (baseH + missingFormats * 3) + 'px';
-    });
+  preview.querySelectorAll('tr.row-player,tr.row-wolf-blank,tr.row-ptm').forEach(function(tr){
+    var h = (baseH + missing*3) + 'px';
+    tr.style.height = h;
+    tr.querySelectorAll('td').forEach(function(td){ td.style.height = h; });
   });
 }
 
-/* ==============================================================
+/* =====================================================
+   PLAYER / FORMAT RENDERING (SETUP)
+   ===================================================== */
+function renderPlayers() {
+  var list = document.getElementById('players-list');
+  list.innerHTML = '';
+  state.players.forEach(function(p, i) {
+    var row = document.createElement('div');
+    row.className = 'player-row';
+    row.innerHTML =
+      '<span class="player-num">' + (i+1) + '</span>' +
+      '<input class="form-group input" style="flex:1;background:var(--ui-surface2);border:1px solid var(--ui-border);color:var(--ui-text);border-radius:4px;padding:8px 10px;font-size:0.9rem;font-family:inherit;outline:none;" value="' + esc(p.full_name) + '" placeholder="Full Name" oninput="state.players[' + i + '].full_name=this.value;rebuild();">' +
+      '<input class="abbr-input" style="width:70px;background:var(--ui-surface2);border:1px solid var(--ui-border);color:var(--ui-text);border-radius:4px;padding:8px 10px;font-size:0.9rem;font-family:inherit;outline:none;" value="' + esc(p.abbreviation) + '" placeholder="Abbr" oninput="state.players[' + i + '].abbreviation=this.value;rebuild();">';
+    list.appendChild(row);
+  });
+}
+
+function renderFormats() {
+  var list = document.getElementById('formats-list');
+  list.innerHTML = '';
+  state.formats.forEach(function(f, i) {
+    var row = document.createElement('div');
+    row.className = 'format-row';
+    var sw = document.createElement('div');
+    sw.className = 'toggle-switch' + (f.enabled ? ' on' : '');
+    sw.onclick = (function(idx, swEl) {
+      return function() {
+        state.formats[idx].enabled = !state.formats[idx].enabled;
+        swEl.classList.toggle('on', state.formats[idx].enabled);
+        rebuild();
+      };
+    })(i, sw);
+    var lbl = document.createElement('div');
+    lbl.className = 'fmt-toggle';
+    lbl.appendChild(sw);
+    var span = document.createElement('span');
+    span.className = 'fmt-label';
+    span.textContent = f.label;
+    lbl.appendChild(span);
+    row.appendChild(lbl);
+    list.appendChild(row);
+  });
+}
+
+function addPlayer() {
+  if (state.players.length >= 6) return;
+  state.players.push({ full_name: 'Player ' + (state.players.length + 1), abbreviation: 'P' + (state.players.length + 1) });
+  renderPlayers();
+  rebuild();
+}
+
+function removePlayer() {
+  if (state.players.length <= 2) return;
+  state.players.pop();
+  renderPlayers();
+  rebuild();
+}
+
+/* =====================================================
    PRESETS
-   ============================================================== */
+   ===================================================== */
 function loadBeaverBrook() {
   state = JSON.parse(JSON.stringify(BEAVER_BROOK));
   loadStateToUI();
@@ -1604,11 +1447,7 @@ function exportPreset() {
   readUIToState();
   var json = JSON.stringify(state, null, 2);
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(json).then(function () {
-      alert('Preset copied to clipboard!');
-    }, function () {
-      document.getElementById('preset-json').value = json;
-    });
+    navigator.clipboard.writeText(json).then(function(){ alert('Preset copied to clipboard!'); }, function(){ document.getElementById('preset-json').value = json; });
   } else {
     document.getElementById('preset-json').value = json;
   }
@@ -1618,389 +1457,209 @@ function importPreset() {
   var raw = document.getElementById('preset-json').value.trim();
   if (!raw) { alert('Paste a JSON preset first.'); return; }
   try {
-    var p = JSON.parse(raw);
-    if (!p.holes || !p.players || !p.formats) throw new Error('Missing required fields');
-    state = p;
+    var parsed = JSON.parse(raw);
+    if (!parsed.players || !parsed.holes) throw new Error('Invalid preset format.');
+    state = parsed;
     loadStateToUI();
-    document.getElementById('preset-json').value = '';
-  } catch (e) {
-    alert('Invalid preset JSON: ' + e.message);
+    alert('Preset imported!');
+  } catch(e) {
+    alert('Import failed: ' + e.message);
   }
 }
 
-/* ==============================================================
-   NJ COURSES — iPad-safe loader
-   --------------------------------------------------------------
-   Defensive: no { cache: 'no-store' }, absolute URL via baseURI,
-   cache-bust via query string, XHR fallback for WebKit fetch bugs.
-   ============================================================== */
+/* =====================================================
+   NJ COURSES
+   ===================================================== */
 function loadNjCourses() {
-  var url = resolveCoursesUrl();
-
-  // Strategy 1: fetch + text() (avoid res.json() stream bugs)
-  tryFetch(url).then(function (data) {
-    ingestCourses(data);
-  }, function (err1) {
-    console.warn('[courses] fetch failed:', err1 && err1.message);
-    // Strategy 2: XMLHttpRequest
-    tryXhr(url).then(function (data) {
-      ingestCourses(data);
-    }, function (err2) {
-      console.warn('[courses] XHR failed:', err2 && err2.message);
-      setNjStatus('Online course list unavailable on this device. Beaver Brook default is loaded — tap Play to start, or load a course file below.', true);
-      var m = document.getElementById('nj-manual-load');
-      if (m) m.classList.remove('hidden');
-    });
-  });
+  fetch('nj_courses.json')
+    .then(function(r){ if (!r.ok) throw new Error('Not found'); return r.json(); })
+    .then(function(data){ njCourses = data; populateCourseSelect(); })
+    .catch(function(){ document.getElementById('nj-manual-load').classList.remove('hidden'); });
 }
 
-function resolveCoursesUrl() {
-  var base = document.baseURI || window.location.href;
-  var absolute;
-  try {
-    absolute = new URL('nj_courses.json', base).href;
-  } catch (_) {
-    // Last-resort fallback if URL constructor is missing
-    absolute = base.replace(/[^/]*$/, '') + 'nj_courses.json';
-  }
-  return absolute + (absolute.indexOf('?') === -1 ? '?' : '&') + 'v=' + Date.now();
-}
-
-function tryFetch(url) {
-  return new Promise(function (resolve, reject) {
-    if (typeof fetch !== 'function') { reject(new Error('no fetch')); return; }
-    fetch(url, { credentials: 'same-origin' }).then(function (res) {
-      if (!res.ok) { reject(new Error('HTTP ' + res.status)); return; }
-      res.text().then(function (text) {
-        try { resolve(JSON.parse(text)); }
-        catch (e) { reject(new Error('JSON parse: ' + e.message)); }
-      }, function (e) { reject(e); });
-    }, function (e) { reject(e); });
-  });
-}
-
-function tryXhr(url) {
-  return new Promise(function (resolve, reject) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.responseType = 'text';
-    xhr.timeout = 10000;
-    xhr.onload = function () {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try { resolve(JSON.parse(xhr.responseText)); }
-        catch (e) { reject(new Error('JSON parse: ' + e.message)); }
-      } else {
-        reject(new Error('HTTP ' + xhr.status));
-      }
-    };
-    xhr.onerror   = function () { reject(new Error('Network error')); };
-    xhr.ontimeout = function () { reject(new Error('Timeout')); };
-    xhr.send();
-  });
-}
-
-function ingestCourses(data) {
-  njCourses = Array.isArray(data) ? data : (data && data.courses) || [];
-  populateCourseDropdown();
-  setNjStatus(njCourses.length + ' NJ courses loaded.', false);
-  var m = document.getElementById('nj-manual-load');
-  if (m) m.classList.add('hidden');
-}
-
-function populateCourseDropdown() {
-  var select = document.getElementById('nj-course-select');
-  if (!select) return;
-  select.innerHTML = '<option value="">— Select an NJ course —</option>';
-  njCourses.forEach(function (c, i) {
+function populateCourseSelect() {
+  var sel = document.getElementById('nj-course-select');
+  njCourses.forEach(function(c) {
     var opt = document.createElement('option');
-    opt.value = String(i);
-    opt.textContent = c.course_name;
-    select.appendChild(opt);
+    opt.value = c.name; opt.textContent = c.name;
+    sel.appendChild(opt);
   });
 }
 
-function handleNjCourseSelect(idxStr) {
-  if (!idxStr) return;
-  var idx = parseInt(idxStr, 10);
-  if (!isFinite(idx) || idx < 0 || idx >= njCourses.length) return;
-  var match = njCourses[idx];
-  if (match) {
-    applyCourse(match);
-    setNjStatus('✓ Loaded "' + match.course_name + '"', false);
+function handleNjCourseSelect(val) {
+  if (!val) return;
+  var course = njCourses.find(function(c){ return c.name === val; });
+  if (!course) { document.getElementById('nj-status').textContent = 'Course not found.'; return; }
+  if (course.holes && course.holes.length === 18) {
+    document.getElementById('inp-course').value = course.name;
+    course.holes.forEach(function(h, i) {
+      if (document.getElementById('par-'+(i+1)))   document.getElementById('par-'+(i+1)).value = h.par||'';
+      if (document.getElementById('yds-'+(i+1)))   document.getElementById('yds-'+(i+1)).value = h.yards||'';
+      if (document.getElementById('hcp-'+(i+1)))   document.getElementById('hcp-'+(i+1)).value = h.hdcp||'';
+    });
+    rebuild();
+    document.getElementById('nj-status').textContent = '✓ Loaded ' + course.name;
+  } else {
+    document.getElementById('nj-status').textContent = 'Course data missing holes.';
   }
 }
 
-function applyCourse(course) {
-  if (!course || !Array.isArray(course.holes)) return;
-  state.course_name = course.course_name || state.course_name;
-  var mapped = course.holes.map(function (h) {
-    var hdcpRaw = (h.hcp !== undefined) ? h.hcp : h.hdcp;
-    return {
-      par:   parseInt(h.par)   || 4,
-      yards: parseInt(h.yards) || 0,
-      hdcp:  parseInt(hdcpRaw) || 0
-    };
-  });
-  while (mapped.length < 18) mapped.push({ par: 4, yards: 0, hdcp: 0 });
-  state.holes = mapped.slice(0, 18);
-  loadStateToUI();
-}
-
-function handleManualCoursesUpload(event) {
-  var file = event.target.files[0];
+function handleManualCoursesUpload(evt) {
+  var file = evt.target.files[0];
   if (!file) return;
   var reader = new FileReader();
-  reader.onload = function (e) {
+  reader.onload = function(e) {
     try {
-      var data = JSON.parse(e.target.result);
-      njCourses = Array.isArray(data) ? data : (data.courses || []);
-      populateCourseDropdown();
-      setNjStatus(njCourses.length + ' NJ courses loaded from file.', false);
-      document.getElementById('nj-manual-load').classList.add('hidden');
-    } catch (err) {
-      setNjStatus('Invalid JSON: ' + err.message, true);
+      njCourses = JSON.parse(e.target.result);
+      populateCourseSelect();
+      document.getElementById('nj-status').textContent = '✓ Loaded ' + njCourses.length + ' courses';
+    } catch(err) {
+      document.getElementById('nj-status').textContent = 'Parse error: ' + err.message;
     }
   };
   reader.readAsText(file);
-  event.target.value = '';
 }
 
-function setNjStatus(msg, isErr) {
-  var el = document.getElementById('nj-status');
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.toggle('err', !!isErr);
-}
-
-/* ==============================================================
-   OCR (optional — Tesseract.js may fail to load on iOS 12; that's ok)
-   ============================================================== */
-function handleScorecardUpload(event) {
-  var file = event.target.files[0];
+/* =====================================================
+   OCR
+   ===================================================== */
+function handleScorecardUpload(evt) {
+  var file = evt.target.files[0];
   if (!file) return;
-  event.target.value = '';
-  runOcrPipeline(file).catch(function (err) {
-    console.error('OCR error:', err);
-    setOcrStatus('Error: ' + err.message, 0, true);
-  });
-}
-
-function runOcrPipeline(file) {
-  return new Promise(function (resolve, reject) {
-    if (typeof Tesseract === 'undefined' || window.__tesseractFailed) {
-      reject(new Error('Tesseract.js is not available on this device (iOS 12 / Safari 12 do not support it).'));
-      return;
-    }
-    setOcrStatus('Loading image...', 10, false);
-    loadImage(file).then(function (img) {
-      setOcrStatus('Preprocessing image...', 25, false);
-      var canvas = preprocessImage(img);
-      setOcrStatus('Running OCR — this takes 10–30 seconds...', 40, false);
-      return runOcr(canvas, function (p) {
-        setOcrStatus('Running OCR — ' + Math.round(p * 100) + '%', 40 + p * 45, false);
-      });
-    }).then(function (text) {
-      lastOcrRawText = text;
-      setOcrStatus('Parsing scorecard rows...', 90, false);
-      var data = parseScorecardText(text);
-      setOcrStatus('Extraction complete — review below.', 100, false);
-      setTimeout(function () { setOcrStatus('', 0, false); }, 2500);
-      openOcrModal(data);
-      resolve();
-    }).catch(reject);
-  });
-}
-
-function loadImage(file) {
-  return new Promise(function (resolve, reject) {
-    var reader = new FileReader();
-    reader.onload = function (e) {
-      var img = new Image();
-      img.onload  = function () { resolve(img); };
-      img.onerror = function () { reject(new Error('Could not decode image.')); };
-      img.src = e.target.result;
-    };
-    reader.onerror = function () { reject(new Error('Could not read file.')); };
-    reader.readAsDataURL(file);
-  });
-}
-
-function preprocessImage(img) {
-  var maxDim = 1800;
-  var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
-  var canvas = document.createElement('canvas');
-  canvas.width  = Math.round(img.width  * scale);
-  canvas.height = Math.round(img.height * scale);
-  var ctx = canvas.getContext('2d');
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  var d = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  var data = d.data;
-  for (var i = 0; i < data.length; i += 4) {
-    var gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-    var v;
-    if (gray < 110)      v = Math.max(0, gray - 30);
-    else if (gray > 170) v = Math.min(255, gray + 30);
-    else                 v = gray;
-    data[i] = data[i+1] = data[i+2] = v;
+  if (window.__tesseractFailed || typeof Tesseract === 'undefined') {
+    setOcrStatus('Tesseract.js not available. Try manual entry.', 0, true); return;
   }
-  ctx.putImageData(d, 0, 0);
-  return canvas;
+  setOcrStatus('Loading image…', 5, false);
+  Tesseract.recognize(file, 'eng', {
+    logger: function(m){ if (m.status === 'recognizing text') setOcrStatus('OCR in progress…', Math.round(m.progress * 80) + 10, false); }
+  }).then(function(result){
+    setOcrStatus('Parsing…', 95, false);
+    var text = result.data.text;
+    var parsed = parseOcrText(text);
+    if (!parsed) { setOcrStatus('Could not parse scorecard. Try manual entry.', 0, true); return; }
+    lastOcrData = parsed;
+    showOcrModal(parsed);
+    setOcrStatus('Review and confirm below ↓', 100, false);
+  }).catch(function(err){ setOcrStatus('OCR error: ' + err.message, 0, true); });
 }
 
-function runOcr(canvas, onProgress) {
-  return Tesseract.recognize(canvas, 'eng', {
-    logger: function (m) {
-      if (m.status === 'recognizing text' && typeof onProgress === 'function') {
-        onProgress(m.progress || 0);
-      }
-    }
-  }).then(function (result) {
-    return (result && result.data && result.data.text) || '';
+function parseOcrText(text) {
+  var lines = text.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+  var parLine = null, ydsLine = null, hcpLine = null;
+  var parKw = /par/i, ydsKw = /yard|yds|distance/i, hcpKw = /hcp|hdcp|handicap/i;
+  lines.forEach(function(l){
+    if (!parLine && parKw.test(l) && /\d/.test(l)) parLine = l;
+    if (!ydsLine && ydsKw.test(l) && /\d/.test(l)) ydsLine = l;
+    if (!hcpLine && hcpKw.test(l) && /\d/.test(l)) hcpLine = l;
   });
-}
-
-function parseScorecardText(text) {
-  var lines = text.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
-  var result = { par: [], yards: [], hdcp: [], _raw: text };
-  for (var li = 0; li < lines.length; li++) {
-    var line = lines[li];
-    var m = line.match(/\d+/g) || [];
-    var allNums = m.map(Number);
-    if (allNums.length < 9) continue;
-    var nums18 = extract18Numbers(allNums);
-    if (!nums18) continue;
-    if (!result.par.length   && isLikelyParRow(nums18))   { result.par   = nums18; continue; }
-    if (!result.hdcp.length  && isLikelyHdcpRow(nums18))  { result.hdcp  = nums18; continue; }
-    if (!result.yards.length && isLikelyYardsRow(nums18)) { result.yards = nums18; continue; }
+  function extractNums(line) {
+    if (!line) return [];
+    return (line.match(/\d+/g)||[]).map(Number).filter(function(n){ return n>0&&n<700; });
   }
+  var pars  = extractNums(parLine);
+  var yards = extractNums(ydsLine);
+  var hdcps = extractNums(hcpLine);
+  if (pars.length < 9) return null;
+  var result = [];
+  for (var i=0;i<18;i++) result.push({ par:pars[i]||4, yards:yards[i]||0, hdcp:hdcps[i]||(i+1) });
   return result;
 }
 
-function extract18Numbers(nums) {
-  if (nums.length === 18) return nums.slice();
-  if (nums.length < 18)   return null;
-  var attempts = [];
-  if (nums.length === 19) attempts.push(nums.slice(0, 18));
-  if (nums.length === 20) attempts.push(nums.slice(0, 9).concat(nums.slice(10, 19)));
-  if (nums.length === 21) attempts.push(nums.slice(0, 9).concat(nums.slice(10, 19)));
-  if (nums.length === 22) {
-    attempts.push(nums.slice(1, 10).concat(nums.slice(11, 20)));
-    attempts.push(nums.slice(0, 9).concat(nums.slice(10, 19)));
-  }
-  if (nums.length === 23) attempts.push(nums.slice(1, 10).concat(nums.slice(11, 20)));
-  attempts.push(nums.slice(0, 18));
-  for (var i = 0; i < attempts.length; i++) if (attempts[i].length === 18) return attempts[i];
-  return null;
-}
-function isLikelyParRow(nums) {
-  if (nums.length !== 18) return false;
-  if (!nums.every(function (n) { return n >= 3 && n <= 6; })) return false;
-  var sum = nums.reduce(function (a, b) { return a + b; }, 0);
-  return sum >= 66 && sum <= 78;
-}
-function isLikelyYardsRow(nums) {
-  if (nums.length !== 18) return false;
-  if (!nums.every(function (n) { return n >= 50 && n <= 750; })) return false;
-  if (!nums.some(function (n)  { return n >= 260; })) return false;
-  var sum = nums.reduce(function (a, b) { return a + b; }, 0);
-  return sum >= 3500 && sum <= 9000;
-}
-function isLikelyHdcpRow(nums) {
-  if (nums.length !== 18) return false;
-  if (!nums.every(function (n) { return n >= 1 && n <= 18; })) return false;
-  return new Set(nums).size === 18;
-}
-
-function openOcrModal(data) {
-  lastOcrData = data;
-  renderOcrPreviewGrid(data);
-  document.getElementById('ocr-raw').textContent = data._raw || '';
-  document.getElementById('ocr-raw').classList.add('hidden');
+function showOcrModal(data) {
+  var grid = document.getElementById('ocr-review-grid');
+  var html = '<table style="border-collapse:collapse;font-size:0.8rem;width:100%;">' +
+    '<tr style="background:var(--ui-surface2);"><th style="padding:4px 6px;border:1px solid var(--ui-border)"></th>';
+  for (var i=1;i<=18;i++) html += '<th style="padding:4px 3px;border:1px solid var(--ui-border);min-width:38px;">' + i + '</th>';
+  html += '</tr>';
+  ['Par','Yards','Hdcp'].forEach(function(label, ri) {
+    var key = ['par','yards','hdcp'][ri];
+    html += '<tr><td style="padding:4px 6px;border:1px solid var(--ui-border);font-weight:700;color:var(--ui-text-muted)">' + label + '</td>';
+    for (var i=0;i<18;i++) {
+      html += '<td style="padding:2px;border:1px solid var(--ui-border);">' +
+        '<input id="ocr-' + key + '-' + i + '" type="number" value="' + (data[i]?data[i][key]:'') + '" ' +
+        'style="width:38px;background:none;border:none;color:var(--ui-text);text-align:center;font-size:0.78rem;outline:none;" ' +
+        '>' + '</td>';
+    }
+    html += '</tr>';
+  });
+  html += '</table>';
+  grid.innerHTML = html;
   document.getElementById('ocr-modal').classList.remove('hidden');
-}
-function closeOcrModal() { document.getElementById('ocr-modal').classList.add('hidden'); }
-function toggleRawOcr()  { document.getElementById('ocr-raw').classList.toggle('hidden'); }
-
-/* CRITICAL iOS 12 FIX: `??` replaced with ternary. The original used
-   `${pv??''}` which is a parse-time SyntaxError on Safari 12 and kills
-   the entire inline <script>. That was the root cause of the iPad failure. */
-function renderOcrPreviewGrid(data) {
-  var html = '<table class="ocr-table"><thead><tr><th>Hole</th><th>PAR</th><th>YARDS</th><th>HDCP</th></tr></thead><tbody>';
-  for (var i = 0; i < 18; i++) {
-    var pv = data.par[i];
-    var yv = data.yards[i];
-    var hv = data.hdcp[i];
-    var pvStr = (pv === undefined || pv === null) ? '' : pv;
-    var yvStr = (yv === undefined || yv === null) ? '' : yv;
-    var hvStr = (hv === undefined || hv === null) ? '' : hv;
-    html += '<tr>' +
-              '<td class="hole-num">' + (i+1) + '</td>' +
-              '<td><input class="' + (pv === undefined ? 'missing' : '') + '" id="ocr-par-'   + i + '" type="number" min="3"  max="6"   value="' + pvStr + '"></td>' +
-              '<td><input class="' + (yv === undefined ? 'missing' : '') + '" id="ocr-yards-' + i + '" type="number" min="50" max="800" value="' + yvStr + '"></td>' +
-              '<td><input class="' + (hv === undefined ? 'missing' : '') + '" id="ocr-hdcp-'  + i + '" type="number" min="1"  max="18"  value="' + hvStr + '"></td>' +
-            '</tr>';
-  }
-  html += '</tbody></table>';
-  document.getElementById('ocr-preview-grid').innerHTML = html;
 }
 
 function applyOcrData() {
-  for (var i = 0; i < 18; i++) {
-    var p = parseInt(document.getElementById('ocr-par-'   + i).value);
-    var y = parseInt(document.getElementById('ocr-yards-' + i).value);
-    var h = parseInt(document.getElementById('ocr-hdcp-'  + i).value);
+  for (var i=0;i<18;i++) {
+    var p = parseInt(document.getElementById('ocr-par-'+i).value);
+    var y = parseInt(document.getElementById('ocr-yards-'+i).value);
+    var h = parseInt(document.getElementById('ocr-hdcp-'+i).value);
     state.holes[i] = {
-      par:   isFinite(p) ? p : state.holes[i].par,
-      yards: isFinite(y) ? y : state.holes[i].yards,
-      hdcp:  isFinite(h) ? h : state.holes[i].hdcp
+      par:   isFinite(p)?p:state.holes[i].par,
+      yards: isFinite(y)?y:state.holes[i].yards,
+      hdcp:  isFinite(h)?h:state.holes[i].hdcp
     };
   }
   loadStateToUI();
   closeOcrModal();
 }
 
+function closeOcrModal() { document.getElementById('ocr-modal').classList.add('hidden'); }
+function handleOcrOverlayClick(e) { if (e.target === document.getElementById('ocr-modal')) closeOcrModal(); }
 function setOcrStatus(msg, pct, isErr) {
   var s = document.getElementById('ocr-status');
-  if (!s) return;
-  s.textContent = msg;
-  s.classList.toggle('err', !!isErr);
+  if (s) { s.textContent = msg; s.classList.toggle('err', !!isErr); }
   var fill = document.getElementById('ocr-progress-fill');
   if (fill) fill.style.width = Math.min(100, Math.max(0, pct)) + '%';
 }
 
-/* ==============================================================
+/* =====================================================
    PLAY MODE
-   ============================================================== */
+   ===================================================== */
 function renderPlayStart() {
   var pcd = document.getElementById('pcd-name');
   var sub = document.getElementById('pcd-sub');
   if (pcd) pcd.textContent = state.course_name || '—';
   if (sub) {
-    var enabledFmts = state.formats.filter(function (f) { return f.enabled; })
-                                   .map(function (f) { return f.label; }).join(' · ');
-    sub.textContent = state.tee_color + ' · ' + state.players.length + ' players · ' + enabledFmts;
+    var fmts = state.formats.filter(function(f){ return f.enabled; }).map(function(f){ return f.label; }).join(' · ');
+    sub.textContent = state.tee_color + ' · ' + state.players.length + ' players · ' + fmts;
   }
 }
 
 function startPlay() {
   playState = makePlayState();
+  recomputePtmChain(0);
+  _activatePlay();
+}
+
+function resumePlay() {
+  if (playState.scores.every(function(ps){ return ps.every(function(s){ return s===null; }); })) {
+    startPlay(); return;
+  }
+  _activatePlay();
+}
+
+function _activatePlay() {
   document.getElementById('play-start-wrap').classList.add('off');
   document.getElementById('play-active-wrap').classList.add('on');
   document.getElementById('play-summary-bar').style.display = 'block';
   buildHoleNav();
   renderPlayFmtTabs();
-  goHole(0);
+  goHole(playState.currentHole || 0);
 }
 
 function confirmResetPlay() {
-  if (confirm('Reset all round scores? This cannot be undone.')) {
+  if (confirm('Reset all round scores? Cannot be undone.')) {
     playState = makePlayState();
+    recomputePtmChain(0);
     buildHoleNav();
+    renderPlayFmtTabs();
     goHole(0);
     renderSummaryBar();
   }
 }
 
+/* =====================================================
+   HOLE NAV
+   ===================================================== */
 function buildHoleNav() {
   var nav = document.getElementById('hole-nav');
   nav.innerHTML = '';
@@ -2009,12 +1668,10 @@ function buildHoleNav() {
     var btn = document.createElement('button');
     btn.className = 'hole-nav-btn' + (i === playState.currentHole ? ' active' : '');
     btn.id = 'hnb-' + i;
-    var anyScored = playState.scores.some(function (ps) { return ps[i] !== null; });
+    var anyScored = playState.scores.some(function(ps){ return ps[i] !== null; });
     if (anyScored) btn.classList.add('scored');
     btn.innerHTML = (i+1) + '<div class="hole-dot"></div><span class="hnb-par">P' + par + '</span>';
-    (function (idx) {
-      btn.addEventListener('click', function () { goHole(idx); });
-    })(i);
+    (function(idx){ btn.addEventListener('click', function(){ goHole(idx); }); })(i);
     nav.appendChild(btn);
   }
 }
@@ -2022,206 +1679,149 @@ function buildHoleNav() {
 function goHole(idx) {
   if (idx < 0 || idx > 17) return;
   playState.currentHole = idx;
-  document.querySelectorAll('.hole-nav-btn').forEach(function (b, i) {
+  document.querySelectorAll('.hole-nav-btn').forEach(function(b, i) {
     b.classList.toggle('active', i === idx);
-    var anyScored = playState.scores.some(function (ps) { return ps[i] !== null; });
+    var anyScored = playState.scores.some(function(ps){ return ps[i] !== null; });
     b.classList.toggle('scored', anyScored);
   });
   var btn = document.getElementById('hnb-' + idx);
-  if (btn) {
-    /* Safari 12 ignores scrollIntoView options silently; we wrap anyway
-       in case a future WebKit update throws. */
-    try { btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); }
-    catch (_) { try { btn.scrollIntoView(false); } catch (__) {} }
-  }
-  var h = state.holes[idx];
-  document.getElementById('ph-num').textContent  = idx + 1;
-  document.getElementById('ph-par').textContent  = h.par;
-  document.getElementById('ph-yds').textContent  = h.yards + ' yds';
-  document.getElementById('ph-hdcp').textContent = 'Hdcp: ' + h.hdcp;
-  document.getElementById('btn-prev-hole').disabled = idx === 0;
-  document.getElementById('btn-next-hole').disabled = idx === 17;
-  renderStrokePaneForHole(idx);
-  renderPtmPaneForHole(idx);
-  renderWolfPaneForHole(idx);
-  renderPar3PaneForHole(idx);
+  if (btn) { try { btn.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' }); } catch(e){} }
+  renderHoleHeader(idx);
+  renderCurrentFmt(idx);
   renderSummaryBar();
 }
 
+function renderHoleHeader(idx) {
+  document.getElementById('hh-num').textContent  = 'H' + (idx+1);
+  document.getElementById('hh-info').innerHTML   = 'Par <strong>' + state.holes[idx].par + '</strong> · ' + state.holes[idx].yards + ' yds · Hcp ' + state.holes[idx].hdcp;
+}
+
+/* =====================================================
+   FORMAT TABS (PLAY)
+   ===================================================== */
 function renderPlayFmtTabs() {
-  var container = document.getElementById('play-fmt-tabs');
-  container.innerHTML = '';
-  var enabledFmts = state.formats.filter(function (f) { return f.enabled; });
-  if (enabledFmts.length === 0) return;
-  enabledFmts.forEach(function (f, i) {
+  var tabsEl = document.getElementById('play-fmt-tabs');
+  tabsEl.innerHTML = '';
+  var enabledFmts = state.formats.filter(function(f){ return f.enabled; });
+  enabledFmts.forEach(function(f) {
     var btn = document.createElement('button');
-    btn.className = 'play-fmt-tab' + (i === 0 ? ' active' : '');
-    btn.textContent = shortFmtLabel(f.id);
-    (function (id) {
-      btn.addEventListener('click', function () { switchPlayFmt(id); });
-    })(f.id);
-    container.appendChild(btn);
+    btn.className = 'play-fmt-tab' + (playState.activeFmt === f.id ? ' active' : '');
+    btn.textContent = f.id === 'ptm' ? 'PTM' : f.id === 'par3' ? 'Par 3' : f.label;
+    btn.addEventListener('click', function() {
+      playState.activeFmt = f.id;
+      document.querySelectorAll('.play-fmt-tab').forEach(function(t){ t.classList.remove('active'); });
+      btn.classList.add('active');
+      renderCurrentFmt(playState.currentHole);
+    });
+    tabsEl.appendChild(btn);
   });
-  playState.activeFmt = enabledFmts[0].id;
-  showFmtPane(enabledFmts[0].id);
+  // Ensure activeFmt is valid
+  if (!enabledFmts.find(function(f){ return f.id === playState.activeFmt; })) {
+    playState.activeFmt = enabledFmts.length ? enabledFmts[0].id : 'stroke';
+  }
 }
 
-function shortFmtLabel(id) {
-  var map = { stroke: 'Stroke', ptm: 'PTM $', wolf: 'Wolf 🐺', par3: 'Par 3' };
-  return map[id] || id;
-}
-
-function switchPlayFmt(fmtId) {
-  playState.activeFmt = fmtId;
-  document.querySelectorAll('.play-fmt-tab').forEach(function (b) {
-    b.classList.toggle('active', b.textContent === shortFmtLabel(fmtId));
+function renderCurrentFmt(holeIdx) {
+  ['stroke','ptm','wolf','par3'].forEach(function(id) {
+    var el = document.getElementById(id + '-pane');
+    if (el) el.classList.add('hidden');
   });
-  showFmtPane(fmtId);
+  var el = document.getElementById(playState.activeFmt + '-pane');
+  if (el) el.classList.remove('hidden');
+  if      (playState.activeFmt === 'stroke') renderStrokePaneForHole(holeIdx);
+  else if (playState.activeFmt === 'ptm')    renderPtmPaneForHole(holeIdx);
+  else if (playState.activeFmt === 'wolf')   renderWolfPaneForHole(holeIdx);
+  else if (playState.activeFmt === 'par3')   renderPar3PaneForHole(holeIdx);
 }
 
-function showFmtPane(fmtId) {
-  document.querySelectorAll('.play-fmt-pane').forEach(function (p) {
-    p.classList.toggle('active', p.dataset.fmt === fmtId);
-  });
-}
-
-/* -- STROKE PLAY -- */
+/* =====================================================
+   STROKE PANE
+   ===================================================== */
 function renderStrokePaneForHole(holeIdx) {
-  var container = document.getElementById('stroke-cards');
-  container.innerHTML = '';
+  var pane = document.getElementById('stroke-pane');
+  pane.innerHTML = '';
   var par = state.holes[holeIdx].par;
-  state.players.forEach(function (p, pi) {
-    var score = playState.scores[pi] ? playState.scores[pi][holeIdx] : null;
-    var card = document.createElement('div');
-    card.className = 'stroke-player-card' + (score !== null ? ' has-score' : '');
-    card.id = 'spc-' + pi;
-    var toParText = buildToParText(pi);
-    var sdClass = scoreDisplayClass(score, par);
-    var sdLabel = scoreLabel(score, par);
-    card.innerHTML =
-      '<div class="spc-name">' +
-        '<div class="spc-full">' + esc(p.full_name) + '</div>' +
-        '<div class="spc-toPar ' + toParCssClass(pi) + '">' + toParText + '</div>' +
-      '</div>' +
-      '<div class="score-picker">' +
-        '<button onclick="adjustScore(' + pi + ',' + holeIdx + ',-1)" aria-label="Decrease">−</button>' +
-        '<div class="score-display ' + sdClass + '" id="sd-' + pi + '-' + holeIdx + '" onclick="openScorePopup(' + pi + ',' + holeIdx + ')">' +
-          (score !== null ? (score + '<div class="score-label">' + sdLabel + '</div>') : '') +
-        '</div>' +
-        '<button onclick="adjustScore(' + pi + ',' + holeIdx + ',+1)" aria-label="Increase">+</button>' +
-      '</div>';
-    container.appendChild(card);
+  state.players.forEach(function(p, pi) {
+    var score = playState.scores[pi][holeIdx];
+    var tp    = playState.threePutt[pi][holeIdx];
+    var row = document.createElement('div');
+    row.className = 'stroke-player-row';
+    // Score col
+    var scoreDiv = document.createElement('div');
+    scoreDiv.className = 'stroke-score-col';
+    var scoreBtn = document.createElement('button');
+    scoreBtn.className = 'stroke-score-btn';
+    if (score !== null) {
+      scoreBtn.classList.add(scoreCls(score, par));
+      scoreBtn.innerHTML = score + '<div class="stroke-score-label">' + scoreLabel(score, par) + '</div>';
+    } else {
+      scoreBtn.innerHTML = '<span class="stroke-score-empty">—</span>';
+    }
+    (function(playerIdx, hIdx) {
+      scoreBtn.addEventListener('click', function() { openScorePopup(playerIdx, hIdx); });
+    })(pi, holeIdx);
+    scoreDiv.appendChild(scoreBtn);
+    // 3-putt toggle
+    var tpToggle = document.createElement('div');
+    tpToggle.className = 'three-putt-toggle' + (tp ? ' active' : '');
+    tpToggle.innerHTML = '<div class="three-putt-dot"></div><span class="tp-label">3P</span>';
+    (function(playerIdx, hIdx, toggleEl) {
+      toggleEl.addEventListener('click', function() {
+        playState.threePutt[playerIdx][hIdx] = !playState.threePutt[playerIdx][hIdx];
+        toggleEl.classList.toggle('active', playState.threePutt[playerIdx][hIdx]);
+        recomputePtmChain(hIdx);
+        renderSummaryBar();
+        // If PTM tab open, refresh it
+        if (playState.activeFmt === 'ptm') renderPtmPaneForHole(hIdx);
+      });
+    })(pi, holeIdx, tpToggle);
+    row.appendChild(scoreDiv);
+    var spacer = document.createElement('div'); spacer.style.cssText = 'flex:1';
+    row.appendChild(spacer);
+    // Player name
+    var nameDiv = document.createElement('div');
+    nameDiv.className = 'stroke-player-name';
+    nameDiv.textContent = p.full_name;
+    row.insertBefore(nameDiv, spacer);
+    row.appendChild(tpToggle);
+    pane.appendChild(row);
   });
 }
 
-function adjustScore(pi, holeIdx, delta) {
-  var cur = playState.scores[pi][holeIdx];
-  if (cur === null) {
-    playState.scores[pi][holeIdx] = state.holes[holeIdx].par + delta;
-  } else {
-    playState.scores[pi][holeIdx] = Math.max(1, Math.min(12, cur + delta));
-  }
-  refreshHoleDisplay(holeIdx);
-}
-
-function refreshHoleDisplay(holeIdx) {
-  renderStrokePaneForHole(holeIdx);
-  renderPtmPaneForHole(holeIdx);
-  renderWolfPaneForHole(holeIdx);
-  renderPar3PaneForHole(holeIdx);
-  renderSummaryBar();
-  var btn = document.getElementById('hnb-' + holeIdx);
-  if (btn) {
-    var anyScored = playState.scores.some(function (ps) { return ps[holeIdx] !== null; });
-    btn.classList.toggle('scored', anyScored);
-  }
-}
-
-function scoreDisplayClass(score, par) {
-  if (score === null) return 'empty';
-  var diff = score - par;
-  if (diff <= -2)   return 'eagle';
-  if (diff === -1)  return 'birdie';
-  if (diff === 0)   return 'par';
-  if (diff === 1)   return 'bogey';
-  return 'double';
-}
-
-function scoreLabel(score, par) {
-  if (score === null) return '';
-  var diff = score - par;
-  if (diff <= -2)  return score === 1 ? 'ACE' : 'EAGLE';
-  if (diff === -1) return 'BIRDIE';
-  if (diff === 0)  return 'PAR';
-  if (diff === 1)  return 'BOGEY';
-  if (diff === 2)  return 'DBL';
-  return '+' + diff;
-}
-
-function buildToParText(pi) {
-  var scores = playState.scores[pi];
-  if (!scores) return 'thru —';
-  var total = 0, parTotal = 0, played = 0;
-  for (var i = 0; i < 18; i++) {
-    if (scores[i] !== null) {
-      total    += scores[i];
-      parTotal += state.holes[i].par;
-      played++;
-    }
-  }
-  if (played === 0) return 'thru —';
-  var diff = total - parTotal;
-  var diffStr = diff === 0 ? 'E' : (diff > 0 ? '+' + diff : String(diff));
-  return diffStr + ' · thru ' + played;
-}
-
-function toParCssClass(pi) {
-  var scores = playState.scores[pi];
-  if (!scores) return '';
-  var total = 0, parTotal = 0, played = 0;
-  for (var i = 0; i < 18; i++) {
-    if (scores[i] !== null) { total += scores[i]; parTotal += state.holes[i].par; played++; }
-  }
-  if (played === 0) return '';
-  var diff = total - parTotal;
-  if (diff < 0) return 'under';
-  if (diff > 3) return 'dbl';
-  if (diff > 0) return 'over';
-  return '';
-}
-
-/* -- SCORE POPUP -- */
+/* =====================================================
+   SCORE POPUP
+   ===================================================== */
 function openScorePopup(pi, holeIdx) {
   scorePopupCtx = { pi: pi, holeIdx: holeIdx };
+  var p   = state.players[pi];
   var par = state.holes[holeIdx].par;
-  var cur = playState.scores[pi][holeIdx];
-  var playerName = state.players[pi].full_name;
-
-  document.getElementById('sp-title').textContent = playerName + ' — Hole ' + (holeIdx+1);
+  document.getElementById('sp-title-text').textContent = (p.full_name) + ' · H' + (holeIdx+1) + ' · Par ' + par;
   var grid = document.getElementById('sp-scores-grid');
   grid.innerHTML = '';
-
-  for (var s = 1; s <= 10; s++) {
+  var cur = playState.scores[pi][holeIdx];
+  var min = Math.max(1, par - 3);
+  var max = par + 5;
+  for (var s = min; s <= max; s++) {
     var btn = document.createElement('button');
     btn.className = 'sp-score-btn';
-    var diff = s - par;
-    if      (diff <= -2) btn.classList.add(s === 1 ? 'ace' : 'eagle');
-    else if (diff === -1) btn.classList.add('birdie');
-    else if (diff === 2)  btn.classList.add('double');
-    else if (diff >= 3)   btn.classList.add('triple');
+    var d = s - par;
+    if (d <= -2) btn.classList.add('eagle');
+    else if (d === -1) btn.classList.add('birdie');
+    else if (d === 0)  btn.classList.add('par');
+    else if (d === 1)  btn.classList.add('bogey');
+    else if (d >= 2)   btn.classList.add('double');
     if (cur === s) btn.classList.add('selected');
-    var lbl = scoreLabel(s, par);
-    btn.innerHTML = s + '<div class="sp-label">' + lbl + '</div>';
-    (function (sc) {
-      btn.addEventListener('click', function () {
+    btn.innerHTML = s + '<div class="sp-label">' + scoreLabel(s, par) + '</div>';
+    (function(sc) {
+      btn.addEventListener('click', function() {
         playState.scores[pi][holeIdx] = sc;
+        recomputePtmChain(holeIdx);
         closeScorePopup();
         refreshHoleDisplay(holeIdx);
       });
     })(s);
     grid.appendChild(btn);
   }
-
   document.getElementById('score-popup-overlay').classList.remove('hidden');
 }
 
@@ -2234,6 +1834,7 @@ function clearScorePopup() {
   if (!scorePopupCtx) return;
   var ctx = scorePopupCtx;
   playState.scores[ctx.pi][ctx.holeIdx] = null;
+  recomputePtmChain(ctx.holeIdx);
   closeScorePopup();
   refreshHoleDisplay(ctx.holeIdx);
 }
@@ -2242,98 +1843,132 @@ function handleOverlayClick(e) {
   if (e.target === document.getElementById('score-popup-overlay')) closeScorePopup();
 }
 
-/* -- PTM -- */
-function renderPtmPaneForHole(holeIdx) {
-  var container = document.getElementById('ptm-cards');
-  container.innerHTML = '';
-  var curHolder = playState.ptmHolder[holeIdx];
-
-  var prevHolder = holeIdx > 0 ? playState.ptmHolder[holeIdx - 1] : null;
-  var infoText = '';
-  if (holeIdx === 0) {
-    infoText = 'Hole 1 — tap to assign money holder for this hole.';
-  } else if (prevHolder !== null && state.players[prevHolder]) {
-    var ps = state.players[prevHolder];
-    var prevScore = playState.scores[prevHolder] ? playState.scores[prevHolder][holeIdx-1] : null;
-    var prevPar   = state.holes[holeIdx-1].par;
-    var reason = '';
-    if      (prevScore !== null && prevScore > prevPar) reason = ' — made bogey or worse (money passes)';
-    else if (prevScore !== null)                        reason = ' — held (par or better)';
-    infoText = 'Coming in: ' + ps.full_name + reason;
-  }
-
-  var infoEl = document.createElement('div');
-  infoEl.className = 'ptm-header-info';
-  infoEl.innerHTML = '<span class="ptm-money-icon">💰</span><span>' + (infoText || 'Tap player holding the money this hole.') + '</span>';
-  container.appendChild(infoEl);
-
-  state.players.forEach(function (p, pi) {
-    var isHolder = curHolder === pi;
-    var card = document.createElement('div');
-    card.className = 'ptm-player-card' + (isHolder ? ' holding' : '');
-    var score = playState.scores[pi] ? playState.scores[pi][holeIdx] : null;
-    var par   = state.holes[holeIdx].par;
-    var scoreCtx = score !== null ? (score + ' (' + scoreLabel(score, par) + ')') : '—';
-    var isBogeyPlus = score !== null && score > par;
-    var holdings = 0;
-    for (var i = 0; i < 18; i++) { if (playState.ptmHolder[i] === pi) holdings++; }
-    card.innerHTML =
-      '<div class="ptm-avatar">' + esc(p.abbreviation || p.full_name.charAt(0)) + '</div>' +
-      '<div class="ptm-player-info">' +
-        '<div class="ptm-name">' + esc(p.full_name) + '</div>' +
-        '<div class="ptm-holdings">Held ' + holdings + ' hole' + (holdings !== 1 ? 's' : '') + ' this round</div>' +
-      '</div>' +
-      '<div class="ptm-score-context ' + (isBogeyPlus ? 'bogey-plus' : '') + '">' + scoreCtx + '</div>' +
-      '<div class="ptm-money-badge">💰</div>';
-    card.addEventListener('click', function () {
-      playState.ptmHolder[holeIdx] = isHolder ? null : pi;
-      renderPtmPaneForHole(holeIdx);
-    });
-    container.appendChild(card);
-  });
-
-  if (holeIdx === 8 || holeIdx === 17) {
-    var note = document.createElement('div');
-    note.className = 'ptm-header-info';
-    note.style.marginTop = '8px';
-    note.style.borderColor = 'var(--play-gold)';
-    note.innerHTML = '<span>⭐</span><strong>Hole ' + (holeIdx+1) + ' — Money holder keeps half the pot!</strong>';
-    container.appendChild(note);
-  }
+function refreshHoleDisplay(holeIdx) {
+  buildHoleNav();
+  renderCurrentFmt(holeIdx);
+  renderSummaryBar();
 }
 
-/* -- WOLF -- */
+/* =====================================================
+   PTM PANE — COMPACT GRID
+   ===================================================== */
+function renderPtmPaneForHole(activeHoleIdx) {
+  var pane = document.getElementById('ptm-pane');
+  pane.innerHTML = '';
+
+  // Status banner for current hole
+  var curHolder = playState.ptmHolder[activeHoleIdx];
+  var holderName = (curHolder !== null && state.players[curHolder]) ? state.players[curHolder].full_name : '—';
+  var passed = ptmPassedAt(activeHoleIdx);
+  var trigger = ptmPassTrigger(activeHoleIdx);
+  var banner = document.createElement('div');
+  banner.className = 'ptm-status-banner';
+  var bannerText = '💰 <strong>' + esc(holderName) + '</strong> holds money on H' + (activeHoleIdx+1);
+  if (passed && trigger) bannerText += ' <span style="color:var(--play-double);font-size:0.72rem;">(passed: ' + trigger + ')</span>';
+  banner.innerHTML = bannerText;
+  pane.appendChild(banner);
+
+  // Grid of all 18 holes
+  var grid = document.createElement('div');
+  grid.className = 'ptm-hole-grid';
+
+  for (var h = 0; h < 18; h++) {
+    var holder   = playState.ptmHolder[h];
+    var isActive = h === activeHoleIdx;
+    var row = document.createElement('div');
+    row.className = 'ptm-hole-row' + (isActive ? ' current-hole' : '');
+    // Hole label
+    var lbl = document.createElement('div');
+    lbl.className = 'ptm-hole-label';
+    lbl.textContent = 'H' + (h+1);
+    row.appendChild(lbl);
+    // Player chips
+    var strip = document.createElement('div');
+    strip.className = 'ptm-players-strip';
+    state.players.forEach(function(p, pi) {
+      var chip = document.createElement('div');
+      var isHolder = holder === pi;
+      var isOverride = playState.ptmOverride[h] !== null;
+      chip.className = 'ptm-player-chip' + (isHolder ? ' holding' : '') + (isOverride ? ' override' : ' auto');
+      chip.textContent = p.abbreviation || p.full_name.charAt(0);
+      chip.title = p.full_name;
+      (function(hIdx, playerIdx) {
+        chip.addEventListener('click', function() {
+          // Tap on current holder clears override; tap on other sets override
+          if (playState.ptmOverride[hIdx] === playerIdx) {
+            playState.ptmOverride[hIdx] = null;
+          } else {
+            playState.ptmOverride[hIdx] = playerIdx;
+          }
+          recomputePtmChain(hIdx);
+          renderPtmPaneForHole(activeHoleIdx);
+          renderSummaryBar();
+        });
+      })(h, pi);
+      strip.appendChild(chip);
+    });
+    row.appendChild(strip);
+    // Pass indicator
+    var passedHere = ptmPassedAt(h);
+    var trig = ptmPassTrigger(h);
+    if (passedHere && trig) {
+      var badge = document.createElement('div');
+      badge.className = 'ptm-trigger-badge';
+      badge.textContent = trig;
+      row.appendChild(badge);
+    }
+    // Special markers for H9 and H18
+    if (h === 8 || h === 17) {
+      var star = document.createElement('div');
+      star.style.cssText = 'font-size:0.85rem;flex-shrink:0;';
+      star.textContent = '★';
+      row.appendChild(star);
+    }
+    grid.appendChild(row);
+  }
+  pane.appendChild(grid);
+
+  // Legend
+  var legend = document.createElement('div');
+  legend.className = 'ptm-legend';
+  legend.innerHTML =
+    '<span><span style="display:inline-block;width:10px;height:10px;background:var(--play-gold);border-radius:2px;"></span> Holds money</span>' +
+    '<span style="color:var(--play-birdie);">◻ Override (tap to set/clear)</span>' +
+    '<span style="color:var(--play-double);">DBL+ = double bogey or worse</span>' +
+    '<span>3P = 3-putt (toggle on Stroke tab)</span>' +
+    '<span>★ = half-pot hole</span>';
+  pane.appendChild(legend);
+}
+
+/* =====================================================
+   WOLF PANE
+   ===================================================== */
 function getWolfIndex(holeIdx) { return holeIdx % state.players.length; }
 
 function calcWolfHolePoints(holeIdx) {
   var n = state.players.length;
   var pts = new Array(n).fill(0);
   if (n < 2) return pts;
-
   var wolfIdx = getWolfIndex(holeIdx);
   var wp = playState.wolfPartner[holeIdx];
-  var scores = state.players.map(function (_, i) {
+  var scores = state.players.map(function(_, i){
     return playState.scores[i] ? playState.scores[i][holeIdx] : null;
   });
-  if (scores.some(function (s) { return s === null; })) return pts;
-
+  if (scores.some(function(s){ return s === null; })) return pts;
   var wolfScore = scores[wolfIdx];
   var isLone = wp === -1 || wp === null;
-
   if (isLone) {
-    var oppIdxs = state.players.map(function (_, i) { return i; }).filter(function (i) { return i !== wolfIdx; });
-    var minOpp  = Math.min.apply(null, oppIdxs.map(function (i) { return scores[i]; }));
-    if      (wolfScore < minOpp) pts[wolfIdx] = 2;
-    else if (wolfScore > minOpp) {
-      oppIdxs.filter(function (i) { return scores[i] === minOpp; }).forEach(function (i) { pts[i] = 1; });
-    }
+    var oppIdxs = state.players.map(function(_,i){ return i; }).filter(function(i){ return i !== wolfIdx; });
+    var minOpp  = Math.min.apply(null, oppIdxs.map(function(i){ return scores[i]; }));
+    if (wolfScore < minOpp) pts[wolfIdx] = 2;
+    else if (wolfScore > minOpp) oppIdxs.filter(function(i){ return scores[i]===minOpp; }).forEach(function(i){ pts[i]=1; });
   } else {
     var wolfTeam = [wolfIdx, wp];
-    var oppIdxs2 = state.players.map(function (_, i) { return i; }).filter(function (i) { return wolfTeam.indexOf(i) === -1; });
-    var wolfBest = Math.min.apply(null, wolfTeam.map(function (i) { return scores[i]; }));
-    var oppBest  = Math.min.apply(null, oppIdxs2.map(function (i) { return scores[i]; }));
-    if      (oppBest < wolfBest) oppIdxs2.forEach(function (i) { pts[i] = 1; });
-    else if (wolfBest < oppBest) wolfTeam.forEach(function (i) { pts[i] = 1; });
+    var oppIdxs2 = state.players.map(function(_,i){ return i; }).filter(function(i){ return wolfTeam.indexOf(i)===-1; });
+    var wolfBest = Math.min.apply(null, wolfTeam.map(function(i){ return scores[i]; }));
+    var oppBest  = Math.min.apply(null, oppIdxs2.map(function(i){ return scores[i]; }));
+    if (oppBest < wolfBest) oppIdxs2.forEach(function(i){ pts[i]=1; });
+    else if (wolfBest < oppBest) wolfTeam.forEach(function(i){ pts[i]=1; });
   }
   return pts;
 }
@@ -2345,92 +1980,177 @@ function calcWolfTotalPts(pi) {
 }
 
 function renderWolfPaneForHole(holeIdx) {
-  var container = document.getElementById('wolf-cards');
-  container.innerHTML = '';
+  var pane = document.getElementById('wolf-pane');
+  pane.innerHTML = '';
   var wolfIdx    = getWolfIndex(holeIdx);
   var wolfPlayer = state.players[wolfIdx];
   var curPartner = playState.wolfPartner[holeIdx];
   var isLone     = curPartner === -1;
   var isBlind    = playState.wolfBlind[holeIdx];
 
-  var header = document.createElement('div');
-  header.className = 'wolf-hole-header';
-  header.innerHTML =
-    '<div>' +
-      '<div class="wolf-is-label">Wolf This Hole</div>' +
-      '<div class="wolf-name-badge">' + esc(wolfPlayer ? wolfPlayer.full_name : '—') + '</div>' +
-    '</div>' +
-    '<div class="wolf-mode-chips">' +
-      '<div class="wolf-chip ' + (isLone && !isBlind ? 'lone-active' : '') + '" onclick="setLoneWolf(' + holeIdx + ', false)">Lone Wolf</div>' +
-      '<div class="wolf-chip ' + (isBlind ? 'lone-active' : '') + '" onclick="setLoneWolf(' + holeIdx + ', true)">Blind Wolf</div>' +
-    '</div>';
-  container.appendChild(header);
-
-  state.players.forEach(function (p, pi) {
-    var isWolf     = pi === wolfIdx;
-    var isPartner  = !isLone && curPartner === pi && !isWolf;
-    var isThisLone = isWolf && isLone;
-
-    var card = document.createElement('div');
-    card.className = 'wolf-player-card';
-    if (isWolf && !isLone) card.classList.add('is-wolf');
-    if (isPartner)         card.classList.add('is-partner');
-    if (isThisLone)        card.classList.add('lone-wolf');
-
-    var roleText = '', roleClass = '', icon = '👤';
-    if      (isWolf && !isLone)            { roleText = 'Wolf';        roleClass = 'wolf-role';    icon = '🐺'; }
-    else if (isWolf &&  isLone && !isBlind){ roleText = 'Lone Wolf';   roleClass = 'lone-role';    icon = '🐺'; }
-    else if (isWolf &&  isBlind)           { roleText = 'Blind Wolf';  roleClass = 'lone-role';    icon = '🐺'; }
-    else if (isPartner)                    { roleText = 'Partner';     roleClass = 'partner-role'; icon = '🤝'; }
-    else                                   { roleText = 'Opponent';    roleClass = '';             icon = '⛳'; }
-
-    var pts = calcWolfTotalPts(pi);
-    card.innerHTML =
-      '<div class="wolf-role-icon">' + icon + '</div>' +
-      '<div class="wolf-player-info">' +
-        '<div class="wpi-name">' + esc(p.full_name) + '</div>' +
-        '<div class="wpi-role ' + roleClass + '">' + roleText + '</div>' +
-      '</div>' +
-      '<div class="wolf-pts-bubble">' +
-        '<div class="wpb-pts">' + pts + '</div>' +
-        '<div class="wpb-label">pts</div>' +
-      '</div>';
-
-    if (!isWolf && !isLone) {
-      card.style.cursor = 'pointer';
-      card.addEventListener('click', function () {
-        playState.wolfPartner[holeIdx] = isPartner ? wolfIdx : pi;
-        playState.wolfBlind[holeIdx]   = false;
-        renderWolfPaneForHole(holeIdx);
-      });
+  // Status banner
+  var banner = document.createElement('div');
+  var scores = state.players.map(function(_, i){ return playState.scores[i] ? playState.scores[i][holeIdx] : null; });
+  var allScored = scores.every(function(s){ return s !== null; });
+  var bannerCls = 'wolf-status-banner';
+  var bannerHtml = '';
+  if (allScored) {
+    var result = buildWolfResultText(holeIdx);
+    bannerHtml = '🐺 ' + result;
+    var pts = calcWolfHolePoints(holeIdx);
+    var wolfGot = pts[wolfIdx] > 0;
+    if (wolfGot) bannerCls += ' wolf-win';
+    else {
+      var oppGot = pts.some(function(p,i){ return i!==wolfIdx && p>0; });
+      if (oppGot) bannerCls += ' opp-win';
     }
-    container.appendChild(card);
-  });
-
-  var scores = state.players.map(function (_, i) {
-    return playState.scores[i] ? playState.scores[i][holeIdx] : null;
-  });
-  var resultEl = document.createElement('div');
-  resultEl.className = 'wolf-result-bar';
-  if (scores.every(function (s) { return s !== null; })) {
-    resultEl.innerHTML = buildWolfResultText(holeIdx);
   } else {
     var missing = [];
-    scores.forEach(function (s, i) { if (s === null) missing.push(esc(state.players[i].full_name)); });
-    resultEl.innerHTML = '<span style="color:var(--play-text-dim)">Awaiting scores: ' + missing.join(', ') + '</span>';
+    scores.forEach(function(s, i){ if (s===null) missing.push(state.players[i].abbreviation||state.players[i].full_name); });
+    bannerHtml = 'Waiting on: ' + missing.join(', ');
   }
-  container.appendChild(resultEl);
-}
+  banner.className = bannerCls;
+  banner.innerHTML = bannerHtml;
+  pane.appendChild(banner);
 
-function setLoneWolf(holeIdx, blind) {
-  var cur = playState.wolfPartner[holeIdx];
-  var alreadySet = cur === -1 && playState.wolfBlind[holeIdx] === blind;
-  if (alreadySet) {
+  // Wolf strip: who is wolf + mode controls
+  var strip = document.createElement('div');
+  strip.className = 'wolf-hole-strip';
+  var isSection = document.createElement('div');
+  isSection.className = 'wolf-is-section';
+  isSection.innerHTML = '<span class="wolf-is-label">WOLF</span><span class="wolf-name-badge">' + esc(wolfPlayer ? wolfPlayer.full_name : '—') + '</span>';
+  strip.appendChild(isSection);
+  var divider = document.createElement('div');
+  divider.className = 'wolf-divider';
+  strip.appendChild(divider);
+  var modeBtns = document.createElement('div');
+  modeBtns.className = 'wolf-mode-btns';
+  // Lone Wolf button
+  var loneBtn = document.createElement('button');
+  loneBtn.className = 'wolf-mode-btn' + (isLone && !isBlind ? ' lone-active' : '');
+  loneBtn.textContent = 'Lone Wolf';
+  loneBtn.addEventListener('click', function(){ setWolfMode(holeIdx, 'lone'); });
+  modeBtns.appendChild(loneBtn);
+  // Blind Wolf button
+  var blindBtn = document.createElement('button');
+  blindBtn.className = 'wolf-mode-btn' + (isBlind ? ' blind-active' : '');
+  blindBtn.textContent = 'Blind Wolf';
+  blindBtn.addEventListener('click', function(){ setWolfMode(holeIdx, 'blind'); });
+  modeBtns.appendChild(blindBtn);
+  // Clear button
+  var clearBtn = document.createElement('button');
+  clearBtn.className = 'wolf-mode-btn' + (!isLone && curPartner === null ? ' active' : '');
+  clearBtn.textContent = 'Pick Partner';
+  clearBtn.style.color = 'var(--play-text-dim)';
+  clearBtn.addEventListener('click', function(){
     playState.wolfPartner[holeIdx] = null;
     playState.wolfBlind[holeIdx]   = false;
-  } else {
-    playState.wolfPartner[holeIdx] = -1;
-    playState.wolfBlind[holeIdx]   = blind;
+    renderWolfPaneForHole(holeIdx);
+  });
+  modeBtns.appendChild(clearBtn);
+  strip.appendChild(modeBtns);
+  pane.appendChild(strip);
+
+  // Player chips — single horizontal row (non-wolf players are selectable)
+  var playersRow = document.createElement('div');
+  playersRow.className = 'wolf-players-row';
+  state.players.forEach(function(p, pi) {
+    var chip = document.createElement('div');
+    var isWolf    = pi === wolfIdx;
+    var isPartner = curPartner === pi;
+    chip.className = 'wolf-player-chip' + (isWolf ? ' is-wolf' : '') + (isPartner ? ' is-partner' : '');
+    var roleLabel = isWolf ? 'WOLF' : (isPartner ? 'PARTNER' : 'TAP TO PICK');
+    chip.innerHTML = '<div class="wpc-abbr">' + esc(p.abbreviation || p.full_name.charAt(0)) + '</div>' +
+                     '<div class="wpc-role">' + roleLabel + '</div>';
+    if (!isWolf && !isLone) {
+      (function(playerIdx) {
+        chip.addEventListener('click', function() {
+          // Toggle partner
+          if (playState.wolfPartner[holeIdx] === playerIdx) {
+            playState.wolfPartner[holeIdx] = null;
+          } else {
+            playState.wolfPartner[holeIdx] = playerIdx;
+            playState.wolfBlind[holeIdx]   = false;
+          }
+          renderWolfPaneForHole(holeIdx);
+        });
+      })(pi);
+    }
+    playersRow.appendChild(chip);
+  });
+  pane.appendChild(playersRow);
+
+  // Wolf scoreboard
+  var sb = document.createElement('div');
+  sb.className = 'wolf-scoreboard';
+  var maxPts = Math.max.apply(null, state.players.map(function(_,i){ return calcWolfTotalPts(i); }));
+  state.players.forEach(function(p, pi) {
+    var pts = calcWolfTotalPts(pi);
+    var chip = document.createElement('div');
+    chip.className = 'wolf-score-chip';
+    chip.innerHTML = '<div class="wsc-name">' + esc(p.abbreviation||p.full_name) + '</div>' +
+                     '<div class="wsc-pts' + (pts === maxPts && pts > 0 ? ' leading' : '') + '">' + pts + '</div>';
+    sb.appendChild(chip);
+  });
+  pane.appendChild(sb);
+
+  // Compact hole log (shows recent 9 holes)
+  var log = document.createElement('div');
+  log.className = 'wolf-hole-log';
+  var logTitle = document.createElement('div');
+  logTitle.className = 'wolf-log-title';
+  logTitle.textContent = 'Hole Log';
+  log.appendChild(logTitle);
+  var logRows = document.createElement('div');
+  logRows.className = 'wolf-log-rows';
+  var start = Math.max(0, holeIdx - 4);
+  var end   = Math.min(17, holeIdx + 4);
+  for (var h = start; h <= end; h++) {
+    var wi = getWolfIndex(h);
+    var wr = document.createElement('div');
+    wr.className = 'wolf-log-row' + (h === holeIdx ? ' current' : '');
+    var wp2 = playState.wolfPartner[h];
+    var modeStr = wp2 === -1 ? (playState.wolfBlind[h] ? 'BLIND' : 'LONE') : (wp2 !== null && state.players[wp2] ? (state.players[wp2].abbreviation||'?') : '—');
+    var hPts = calcWolfHolePoints(h);
+    var winIdx = -1;
+    hPts.forEach(function(p,i){ if (p>0) winIdx=i; });
+    var resultStr = '';
+    var allS = state.players.map(function(_,i){ return playState.scores[i] ? playState.scores[i][h] : null; });
+    if (allS.every(function(s){ return s!==null; })) {
+      if (winIdx === -1) resultStr = 'TIE';
+      else if (winIdx === wi) resultStr = '🐺 +' + hPts[wi];
+      else resultStr = '⚔ opp';
+    }
+    wr.innerHTML =
+      '<span class="wlr-hole">H' + (h+1) + '</span>' +
+      '<span class="wlr-wolf" style="color:var(--red)">' + esc(state.players[wi]?state.players[wi].abbreviation:'?') + '</span>' +
+      '<span class="wlr-mode">' + modeStr + '</span>' +
+      '<span class="wlr-result">' + resultStr + '</span>';
+    logRows.appendChild(wr);
+  }
+  log.appendChild(logRows);
+  pane.appendChild(log);
+}
+
+function setWolfMode(holeIdx, mode) {
+  var cur = playState.wolfPartner[holeIdx];
+  var curBlind = playState.wolfBlind[holeIdx];
+  if (mode === 'lone') {
+    if (cur === -1 && !curBlind) {
+      playState.wolfPartner[holeIdx] = null;
+      playState.wolfBlind[holeIdx]   = false;
+    } else {
+      playState.wolfPartner[holeIdx] = -1;
+      playState.wolfBlind[holeIdx]   = false;
+    }
+  } else if (mode === 'blind') {
+    if (cur === -1 && curBlind) {
+      playState.wolfPartner[holeIdx] = null;
+      playState.wolfBlind[holeIdx]   = false;
+    } else {
+      playState.wolfPartner[holeIdx] = -1;
+      playState.wolfBlind[holeIdx]   = true;
+    }
   }
   renderWolfPaneForHole(holeIdx);
 }
@@ -2438,106 +2158,101 @@ function setLoneWolf(holeIdx, blind) {
 function buildWolfResultText(holeIdx) {
   var holePts = calcWolfHolePoints(holeIdx);
   var winners = [];
-  holePts.forEach(function (p, i) { if (p > 0) winners.push({ p: p, i: i }); });
+  holePts.forEach(function(p, i){ if (p>0) winners.push({ p:p, i:i }); });
   if (winners.length === 0) return '<strong>Tied</strong> — no points awarded';
-
   var wolfIdx = getWolfIndex(holeIdx);
-  var wp      = playState.wolfPartner[holeIdx];
-  var isLone  = wp === -1 || wp === null;
-  function nm(i) { return esc(state.players[i].full_name); }
-
-  if (winners.length === 1 && winners[0].i === wolfIdx) {
-    return '🐺 <strong>Lone Wolf wins!</strong> ' + nm(wolfIdx) + ' gets <strong>2 pts</strong>';
+  var wp = playState.wolfPartner[holeIdx];
+  function nm(i){ return esc(state.players[i].full_name); }
+  if (winners.length === 1 && winners[0].i === wolfIdx && holePts[wolfIdx] === 2) {
+    return '🐺 <strong>Lone Wolf wins!</strong> ' + nm(wolfIdx) + ' +<strong>2 pts</strong>';
   }
-  if (!isLone && winners.length === 2 &&
-      winners.some(function (w) { return w.i === wolfIdx; }) &&
-      winners.some(function (w) { return w.i === wp; })) {
-    return '🤝 <strong>Wolf team wins!</strong> ' + nm(wolfIdx) + ' &amp; ' + nm(wp) + ' each get <strong>1 pt</strong>';
+  var wolfInWinners = winners.some(function(w){ return w.i===wolfIdx; });
+  var partnerInWinners = wp !== null && wp !== -1 && winners.some(function(w){ return w.i===wp; });
+  if (wolfInWinners && partnerInWinners) {
+    return '🤝 <strong>Wolf team wins!</strong> ' + nm(wolfIdx) + ' &amp; ' + nm(wp) + ' +<strong>1 pt each</strong>';
   }
-  var names = winners.map(function (w) { return nm(w.i); }).join(' &amp; ');
-  var label = winners.length === 3 ? 'All three tied for low'
-            : winners.length === 2 ? 'Two tied for low'
-            : 'Lowest score';
-  return '<strong>' + label + '!</strong> ' + names + ' each get <strong>1 pt</strong>';
+  var names = winners.map(function(w){ return nm(w.i); }).join(' &amp; ');
+  return '<strong>Opponents win!</strong> ' + names + ' +<strong>1 pt each</strong>';
 }
 
-/* -- PAR 3 -- */
+/* =====================================================
+   PAR 3 PANE
+   ===================================================== */
 function renderPar3PaneForHole(holeIdx) {
-  var container = document.getElementById('par3-cards');
-  container.innerHTML = '';
+  var pane = document.getElementById('par3-pane');
+  pane.innerHTML = '';
   var h = state.holes[holeIdx];
   if (h.par !== 3) {
-    var msg = document.createElement('div');
-    msg.className = 'par3-not-applicable';
-    msg.textContent = 'Hole ' + (holeIdx+1) + ' is a Par ' + h.par + ' — Par 3 Challenge only applies on par-3 holes.';
-    container.appendChild(msg);
+    pane.innerHTML = '<div class="par3-not-applicable">Hole ' + (holeIdx+1) + ' is a Par ' + h.par + ' — Par 3 Challenge only applies on par-3 holes.</div>';
     return;
   }
-  state.players.forEach(function (p, pi) {
-    var score = playState.scores[pi]   ? playState.scores[pi][holeIdx]   : null;
-    var dist  = playState.par3Dist[pi] ? playState.par3Dist[pi][holeIdx] : null;
+  state.players.forEach(function(p, pi) {
+    var score = playState.scores[pi][holeIdx];
+    var dist  = playState.par3Dist[pi][holeIdx];
     var card = document.createElement('div');
     card.className = 'par3-player-card';
-    card.innerHTML =
-      '<div class="par3-name">' + esc(p.full_name) + '</div>' +
-      '<input class="par3-dist-input" type="number" min="0" max="9999" placeholder="—" value="' + (dist !== null ? dist : '') + '" id="p3dist-' + pi + '-' + holeIdx + '" aria-label="Pin distance feet">' +
-      '<div class="par3-dist-label">ft</div>';
+    var nameDiv = document.createElement('div');
+    nameDiv.className = 'par3-name';
+    nameDiv.textContent = p.full_name;
+    card.appendChild(nameDiv);
     if (score !== null) {
-      var sdiv = document.createElement('div');
-      sdiv.style.cssText = 'font-family:var(--play-text);font-size:1.1rem;font-weight:700;color:var(--play-text-dim);min-width:28px;text-align:center;';
-      sdiv.textContent = score;
-      card.insertBefore(sdiv, card.querySelector('input'));
+      var sv = document.createElement('div');
+      sv.className = 'par3-score-val';
+      sv.textContent = score;
+      card.appendChild(sv);
     }
-    var input = card.querySelector('.par3-dist-input');
-    input.addEventListener('change', function () {
-      var val = parseInt(input.value);
-      playState.par3Dist[pi][holeIdx] = isFinite(val) ? val : null;
-    });
-    container.appendChild(card);
+    var inp = document.createElement('input');
+    inp.className = 'par3-dist-input';
+    inp.type = 'number'; inp.min = '0'; inp.max = '9999';
+    inp.placeholder = '—';
+    if (dist !== null) inp.value = dist;
+    (function(playerIdx, hIdx, input) {
+      input.addEventListener('change', function(){
+        var val = parseInt(input.value);
+        playState.par3Dist[playerIdx][hIdx] = isFinite(val) ? val : null;
+      });
+    })(pi, holeIdx, inp);
+    card.appendChild(inp);
+    var lbl = document.createElement('div');
+    lbl.className = 'par3-dist-label';
+    lbl.textContent = 'ft';
+    card.appendChild(lbl);
+    pane.appendChild(card);
   });
 }
 
-/* -- SUMMARY BAR -- */
+/* =====================================================
+   SUMMARY BAR
+   ===================================================== */
 function renderSummaryBar() {
   var bar = document.getElementById('psb-players');
   if (!bar) return;
   bar.innerHTML = '';
-  state.players.forEach(function (p, pi) {
+  state.players.forEach(function(p, pi) {
     var scores = playState.scores[pi];
-    var total = 0, parTotal = 0, played = 0;
-    for (var i = 0; i < 18; i++) {
-      if (scores[i] !== null) {
-        total    += scores[i];
-        parTotal += state.holes[i].par;
-        played++;
-      }
+    var total=0, parTotal=0, played=0;
+    for (var i=0;i<18;i++) {
+      if (scores[i]!==null) { total+=scores[i]; parTotal+=state.holes[i].par; played++; }
     }
     var diff = total - parTotal;
-    var diffStr = played === 0 ? '—' : (diff === 0 ? 'E' : (diff > 0 ? '+' + diff : String(diff)));
-    var cls = played === 0 ? '' : diff < 0 ? 'under' : diff > 3 ? 'dbl' : diff > 0 ? 'over' : '';
+    var diffStr = played===0 ? '—' : (diff===0?'E':(diff>0?'+'+diff:String(diff)));
+    var cls = played===0?'':(diff<0?'under':(diff>3?'dbl':(diff>0?'over':'')));
     var el = document.createElement('div');
     el.className = 'psb-player';
     el.innerHTML =
-      '<div class="psb-player-name">' + esc(p.abbreviation || p.full_name) + '</div>' +
+      '<div class="psb-player-name">' + esc(p.abbreviation||p.full_name) + '</div>' +
       '<div class="psb-player-score ' + cls + '">' + diffStr + '</div>' +
-      '<div class="psb-player-tpar">' + (played > 0 ? 'thru ' + played : '—') + '</div>';
+      '<div class="psb-player-tpar">' + (played>0?'thru '+played:'—') + '</div>';
     bar.appendChild(el);
   });
 }
 
-/* ==============================================================
+/* =====================================================
    INIT
-   ============================================================== */
-window.addEventListener('DOMContentLoaded', function () {
-  try {
-    loadBeaverBrook();
-  } catch (err) {
-    console.error('loadBeaverBrook failed:', err);
-    showInitError('Could not load default course data: ' + err.message);
-    return;
-  }
-  try { loadNjCourses(); }
-  catch (err) { console.warn('loadNjCourses failed:', err); }
+   ===================================================== */
+window.addEventListener('DOMContentLoaded', function() {
+  try { loadBeaverBrook(); } catch(err) { showInitError('loadBeaverBrook: ' + err.message); return; }
+  try { loadNjCourses(); }   catch(err) { console.warn('loadNjCourses:', err); }
 });
 </script>
 </body>
