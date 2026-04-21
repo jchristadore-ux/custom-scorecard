@@ -125,6 +125,18 @@ body{
   padding:10px 0;border-bottom:1px solid var(--border);
 }
 .player-row:last-child{border-bottom:none;}
+.player-order{
+  flex:0 0 24px;
+  height:24px;
+  border:1px solid var(--border2);
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--gold);
+  font-size:0.72rem;
+  font-weight:700;
+}
 .player-inputs{flex:1;display:flex;gap:8px;}
 .player-inputs input{
   flex:1;background:var(--surface);border:1px solid var(--border);
@@ -750,6 +762,7 @@ body{
     <div class="section-title">Players</div>
     <div id="players-list"></div>
     <div class="btn-row">
+      <button class="btn" onclick="randomizePlayerOrder()">🔀 Randomize Order</button>
       <button class="btn" onclick="addPlayer()">+ Add Player</button>
       <button class="btn btn-danger" onclick="removeLastPlayer()">− Remove Last</button>
     </div>
@@ -1018,6 +1031,7 @@ function renderPlayers(){
     var row=document.createElement('div');
     row.className='player-row';
     row.innerHTML=
+      '<span class="player-order">'+(i+1)+'</span>'+
       '<span class="drag-handle">☰</span>'+
       '<div class="player-inputs">'+
         '<input type="text" placeholder="Full Name" value="'+esc(p.full_name)+'" oninput="state.players['+i+'].full_name=this.value;rebuild()">'+
@@ -1025,6 +1039,43 @@ function renderPlayers(){
       '</div>';
     list.appendChild(row);
   });
+}
+
+function fisherYatesShuffle(arr){
+  for(var i=arr.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var tmp=arr[i];
+    arr[i]=arr[j];
+    arr[j]=tmp;
+  }
+  return arr;
+}
+
+function reorderPlayState(oldPlayers,newPlayers){
+  if(!playState) return;
+  var indexMap=newPlayers.map(function(player){
+    return oldPlayers.indexOf(player);
+  });
+  function reorderRows(matrix){
+    return indexMap.map(function(oldIdx){ return matrix[oldIdx]; });
+  }
+  playState.scores=reorderRows(playState.scores);
+  playState.threePutt=reorderRows(playState.threePutt);
+  playState.par3Dist=reorderRows(playState.par3Dist);
+}
+
+function randomizePlayerOrder(){
+  if(state.players.length<2) return;
+  var oldPlayers=state.players.slice();
+  var shuffled=fisherYatesShuffle(state.players.slice());
+  state.players=shuffled;
+  reorderPlayState(oldPlayers,shuffled);
+  renderPlayers();
+  rebuild();
+  if(playState){
+    buildFmtTabs();
+    refreshHole(playState.currentHole);
+  }
 }
 
 function renderFormats(){
@@ -1398,7 +1449,11 @@ function renderPtm(holeIdx){
 /* ============================================================
    WOLF RENDER
    ============================================================ */
-function getWolfIdx(holeIdx){ return holeIdx % state.players.length; }
+function getWolfIdx(holeIdx){
+  var n=state.players.length;
+  if(!n) return 0;
+  return (n-1+holeIdx)%n;
+}
 
 function calcWolfPts(holeIdx){
   var n=state.players.length;
