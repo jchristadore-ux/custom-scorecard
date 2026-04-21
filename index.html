@@ -330,24 +330,35 @@ body{
 .stroke-meta-btn.active-partner{border-color:var(--gold);color:var(--gold);}
 .stroke-meta-btn.active-lone{border-color:var(--red);color:var(--red);}
 
-.wolf-points-banner{
-  background:var(--surface);border:1px solid var(--border);border-radius:10px;
-  display:flex;padding:8px 10px;gap:8px;overflow-x:auto;margin-bottom:10px;
-}
-.counter-banner-title{
+.status-panel-wrap{margin-bottom:12px;}
+.status-panel-title{
   font-family:'Barlow Condensed',sans-serif;
-  font-size:0.78rem;
+  font-size:0.95rem;
   font-weight:800;
-  letter-spacing:1.5px;
+  letter-spacing:1.2px;
   text-transform:uppercase;
   color:var(--gold-dim);
-  margin:2px 0 6px;
+  margin:0 0 8px;
 }
-.wolf-points-pill{
-  min-width:72px;background:var(--card);border-radius:8px;padding:6px 8px;text-align:center;
+.status-panel{
+  background:var(--surface);border:1px solid var(--border);
+  display:flex;padding:8px 12px;gap:8px;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  border-radius:12px;
 }
-.wolf-points-name{font-size:0.65rem;color:var(--text-dim);}
-.wolf-points-val{font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;color:var(--gold);}
+.status-panel::-webkit-scrollbar{display:none;}
+.status-panel-item{
+  flex:1;min-width:70px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;background:var(--card);border-radius:8px;padding:6px 8px;
+}
+.status-panel-name{font-size:0.65rem;color:var(--text-dim);letter-spacing:0.5px;}
+.status-panel-value{
+  font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;color:var(--text);
+}
+.status-panel-meta{font-size:0.6rem;color:var(--text-muted);}
+.status-panel-value.under{color:var(--birdie);}
+.status-panel-value.over{color:var(--bogey);}
+.status-panel-value.dbl{color:var(--double);}
 
 /* The big score controls */
 .score-ctrl{
@@ -599,23 +610,10 @@ body{
    SUMMARY BAR
    ============================================================ */
 .summary-bar{
-  background:var(--surface);border-top:1px solid var(--border);
-  display:flex;padding:8px 12px;gap:8px;overflow-x:auto;
-  -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  border-top:1px solid var(--border);
+  padding:8px 0 0;
+  margin-top:12px;
 }
-.summary-bar::-webkit-scrollbar{display:none;}
-.sum-player{
-  flex:1;min-width:70px;display:flex;flex-direction:column;align-items:center;
-  background:var(--card);border-radius:8px;padding:6px 8px;
-}
-.sum-name{font-size:0.65rem;color:var(--text-dim);letter-spacing:0.5px;}
-.sum-score{
-  font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;color:var(--text);
-}
-.sum-score.under{color:var(--birdie);}
-.sum-score.over{color:var(--bogey);}
-.sum-score.dbl{color:var(--double);}
-.sum-thru{font-size:0.6rem;color:var(--text-muted);}
 
 /* ============================================================
    PRINT TAB
@@ -881,10 +879,14 @@ body{
 
     <!-- Format panes -->
     <div id="pane-stroke" class="fmt-pane active">
-      <div class="counter-banner-title">Score</div>
-      <div class="wolf-points-banner" id="score-banner"></div>
-      <div class="counter-banner-title">Wolf Points</div>
-      <div class="wolf-points-banner" id="wolf-points-banner"></div>
+      <div class="status-panel-wrap">
+        <div class="status-panel-title">Score</div>
+        <div class="status-panel" id="score-banner"></div>
+      </div>
+      <div class="status-panel-wrap">
+        <div class="status-panel-title">Wolf Points</div>
+        <div class="status-panel" id="wolf-points-banner"></div>
+      </div>
       <div class="stroke-grid" id="stroke-cards"></div>
       <div class="three-putt-row" id="three-putt-row"></div>
     </div>
@@ -914,7 +916,9 @@ body{
     <button class="reset-btn" onclick="confirmReset()">↺ Reset Scores</button>
 
     <!-- Summary -->
-    <div class="summary-bar" id="summary-bar"></div>
+    <div class="summary-bar">
+      <div class="status-panel" id="summary-bar"></div>
+    </div>
 
   </div>
 </div><!-- /play-panel -->
@@ -1682,31 +1686,39 @@ function calcStrokeTotal(pi){
   return hasAny?tot:'—';
 }
 
-function renderScoreBanner(){
-  var banner=document.getElementById('score-banner');
-  if(!banner) return;
-  banner.innerHTML='';
+function renderStatusPanel(containerId, itemBuilder){
+  var panel=document.getElementById(containerId);
+  if(!panel) return;
+  panel.innerHTML='';
   state.players.forEach(function(p,pi){
+    var data=itemBuilder(p,pi)||{};
     var item=document.createElement('div');
-    item.className='wolf-points-pill';
+    item.className='status-panel-item';
     item.innerHTML=
-      '<div class="wolf-points-name">'+esc(p.abbreviation||p.full_name.charAt(0))+'</div>'+
-      '<div class="wolf-points-val">'+calcStrokeTotal(pi)+'</div>';
-    banner.appendChild(item);
+      '<div class="status-panel-name">'+esc(data.name||'')+'</div>'+
+      '<div class="status-panel-value '+(data.valueClass||'')+'">'+esc(String(data.value||''))+'</div>'+
+      '<div class="status-panel-meta">'+esc(data.meta||'')+'</div>';
+    panel.appendChild(item);
+  });
+}
+
+function renderScoreBanner(){
+  renderStatusPanel('score-banner',function(p,pi){
+    return {
+      name:p.abbreviation||p.full_name.charAt(0),
+      value:calcStrokeTotal(pi),
+      valueClass:''
+    };
   });
 }
 
 function renderWolfPointsBanner(){
-  var banner=document.getElementById('wolf-points-banner');
-  if(!banner) return;
-  banner.innerHTML='';
-  state.players.forEach(function(p,pi){
-    var item=document.createElement('div');
-    item.className='wolf-points-pill';
-    item.innerHTML=
-      '<div class="wolf-points-name">'+esc(p.abbreviation||p.full_name.charAt(0))+'</div>'+
-      '<div class="wolf-points-val">'+calcWolfTotalPts(pi)+'</div>';
-    banner.appendChild(item);
+  renderStatusPanel('wolf-points-banner',function(p,pi){
+    return {
+      name:p.abbreviation||p.full_name.charAt(0),
+      value:calcWolfTotalPts(pi),
+      valueClass:''
+    };
   });
 }
 
@@ -1821,9 +1833,7 @@ function renderPar3(holeIdx){
    SUMMARY BAR
    ============================================================ */
 function renderSummary(){
-  var bar=document.getElementById('summary-bar');
-  bar.innerHTML='';
-  state.players.forEach(function(p,pi){
+  renderStatusPanel('summary-bar',function(p,pi){
     var tot=0,parTot=0,played=0;
     for(var i=0;i<18;i++){
       var score=getScore(pi,i);
@@ -1832,13 +1842,12 @@ function renderSummary(){
     var diff=tot-parTot;
     var diffStr=played===0?'—':diff===0?'E':diff>0?'+'+diff:String(diff);
     var cls=played===0?'':diff<0?'under':diff>3?'dbl':diff>0?'over':'';
-    var el=document.createElement('div');
-    el.className='sum-player';
-    el.innerHTML=
-      '<div class="sum-name">'+esc(p.abbreviation||p.full_name.charAt(0))+'</div>'+
-      '<div class="sum-score '+cls+'">'+diffStr+'</div>'+
-      '<div class="sum-thru">'+(played?'thru '+played:'—')+'</div>';
-    bar.appendChild(el);
+    return {
+      name:p.abbreviation||p.full_name.charAt(0),
+      value:diffStr,
+      valueClass:cls,
+      meta:played?'thru '+played:'—'
+    };
   });
 }
 
