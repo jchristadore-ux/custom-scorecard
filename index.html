@@ -1276,7 +1276,7 @@ function renderStroke(holeIdx){
     (function(playerIdx){
       btn.addEventListener('click',function(){
         playState.threePutt[playerIdx][holeIdx]=!playState.threePutt[playerIdx][holeIdx];
-        renderStroke(holeIdx);
+        refreshHole(holeIdx);
       });
     })(pi);
     row.appendChild(btn);
@@ -1341,59 +1341,44 @@ function closePopupIfOutside(e){
 /* ============================================================
    PTM RENDER
    ============================================================ */
-function calcPtmHolder(holeIdx){
-  /* PTM logic: bogey or worse passes the money.
-     Start: holder from previous hole (or player 0 on hole 0).
-     If current hole holder makes bogey+, money passes to lowest scorer
-     among the other players. Ties = no pass. */
-  var holder=playState.ptmHolder[holeIdx];
-  if(holder!==null) return holder; // already manually set
-  /* auto-resolve based on previous holder + scores */
-  var prev = holeIdx===0 ? 0 : resolvePtmAuto(holeIdx-1);
-  var scores=state.players.map(function(_,i){
-    return playState.scores[i][holeIdx];
-  });
-  var holderScore=scores[prev];
+function nextPtmPlayer(playerIdx){
+  var n=state.players.length||1;
+  return (playerIdx+1)%n;
+}
+
+function didPtmHolderLoseHole(playerIdx,holeIdx){
+  var holderScore=playState.scores[playerIdx][holeIdx];
+  if(holderScore===null) return false;
   var par=state.holes[holeIdx].par;
-  if(holderScore===null || holderScore<=par) return prev; // holder holds or not scored yet
-  /* holder made bogey+, find lowest other score */
-  var min=null;
-  scores.forEach(function(s,i){
-    if(i!==prev && s!==null && (min===null||s<min)) min=s;
-  });
-  if(min===null) return prev;
-  var candidates=[];
-  scores.forEach(function(s,i){ if(i!==prev&&s===min) candidates.push(i); });
-  if(candidates.length===1) return candidates[0];
-  return prev; // tie = no pass
+  var isThreePutt=!!playState.threePutt[playerIdx][holeIdx];
+  var isDoubleOrWorse=holderScore>=par+2;
+  return isThreePutt||isDoubleOrWorse;
 }
 
 function resolvePtmAuto(holeIdx){
-  /* walk back recursively to build auto chain — cap at 18 */
-  if(playState.ptmHolder[holeIdx]!==null) return playState.ptmHolder[holeIdx];
-  var holder=holeIdx===0?0:resolvePtmAuto(holeIdx-1);
-  var scores=state.players.map(function(_,i){
-    return playState.scores[i][holeIdx];
-  });
-  var holderScore=scores[holder];
-  var par=state.holes[holeIdx].par;
-  if(holderScore===null||holderScore<=par) return holder;
-  var min=null;
-  scores.forEach(function(s,i){
-    if(i!==holder&&s!==null&&(min===null||s<min)) min=s;
-  });
-  if(min===null) return holder;
-  var cands=[];
-  scores.forEach(function(s,i){ if(i!==holder&&s===min) cands.push(i); });
-  return cands.length===1?cands[0]:holder;
+  if(holeIdx<=0) return 0;
+  var holder=0;
+  for(var i=0;i<holeIdx;i++){
+    if(didPtmHolderLoseHole(holder,i)) holder=nextPtmPlayer(holder);
+  }
+  return holder;
+}
+
+function resolvePtmFinalHole18(){
+  var startHolder=resolvePtmAuto(17);
+  var holder=startHolder;
+  var checks=state.players.length;
+  for(var i=0;i<checks;i++){
+    if(!didPtmHolderLoseHole(holder,17)) return holder;
+    holder=nextPtmPlayer(holder);
+  }
+  return startHolder;
 }
 
 function renderPtm(holeIdx){
   var container=document.getElementById('ptm-cards');
   container.innerHTML='';
-  var autoHolder=resolvePtmAuto(holeIdx);
-  var manualHolder=playState.ptmHolder[holeIdx];
-  var curHolder=manualHolder!==null?manualHolder:autoHolder;
+  var curHolder=holeIdx===17?resolvePtmFinalHole18():resolvePtmAuto(holeIdx);
 
   state.players.forEach(function(p,pi){
     var isHolder=curHolder===pi;
@@ -1403,29 +1388,11 @@ function renderPtm(holeIdx){
       '<div class="ptm-money-icon">💰</div>'+
       '<div class="ptm-abbr">'+esc(p.abbreviation||p.full_name.charAt(0))+'</div>'+
       '<div class="ptm-full-name">'+esc(p.full_name)+'</div>';
-    (function(playerIdx,wasHolder){
-      btn.addEventListener('click',function(){
-        /* clicking current holder clears manual override, clicking other sets manual */
-        if(wasHolder && manualHolder===playerIdx){
-          playState.ptmHolder[holeIdx]=null;
-        } else if(wasHolder){
-          playState.ptmHolder[holeIdx]=null;
-        } else {
-          playState.ptmHolder[holeIdx]=playerIdx;
-        }
-        renderPtm(holeIdx);
-        buildScorecard();
-      });
-    })(pi, isHolder);
     container.appendChild(btn);
   });
 
   var status=document.getElementById('ptm-status');
-  if(holeIdx===8||holeIdx===17){
-    status.innerHTML='<div class="ptm-no-holder">⭐ Hole '+(holeIdx+1)+' — Money holder keeps half the pot</div>';
-  } else {
-    status.innerHTML='';
-  }
+  status.innerHTML='<div class="ptm-no-holder">Hole '+(holeIdx+1)+' — '+esc(state.players[curHolder].full_name)+' has the money</div>';
 }
 
 /* ============================================================
@@ -1711,7 +1678,7 @@ function buildStrokeTable(){
 function buildPTMTable(num){
   var players=state.players;
   var t='<div class="sc-fmt-hdr"><span>FORMAT '+num+' — PTM (PASS THE MONEY)</span>'+
-        '<span class="sc-fmt-rule">Bogey or worse passes to lowest scorer · Holder at 9 &amp; 18 keeps half</span></div>';
+        '<span class="sc-fmt-rule">3-putt or double+ passes to next player · Bogey or better with no 3-putt keeps</span></div>';
   t+=colGroupHTML();
   t+='<table class="sc-table">';
   t+=holeHeaderRow('PLAYER');
@@ -1744,8 +1711,8 @@ function buildPTMTable(num){
 }
 
 function resolvePtmAutoForPrint(holeIdx){
-  if(!playState) return holeIdx===0?0:resolvePtmAutoForPrint(holeIdx-1);
-  return resolvePtmAuto(holeIdx);
+  if(!playState) return 0;
+  return holeIdx===17 ? resolvePtmFinalHole18() : resolvePtmAuto(holeIdx);
 }
 
 function buildWolfTable(num){
