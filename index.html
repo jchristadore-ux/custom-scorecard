@@ -334,6 +334,15 @@ body{
   background:var(--surface);border:1px solid var(--border);border-radius:10px;
   display:flex;padding:8px 10px;gap:8px;overflow-x:auto;margin-bottom:10px;
 }
+.counter-banner-title{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:0.78rem;
+  font-weight:800;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:var(--gold-dim);
+  margin:2px 0 6px;
+}
 .wolf-points-pill{
   min-width:72px;background:var(--card);border-radius:8px;padding:6px 8px;text-align:center;
 }
@@ -505,6 +514,21 @@ body{
 
 .wolf-scores-row{
   display:grid;gap:6px;margin-top:12px;
+}
+.wolf-adjust-row{
+  margin-top:6px;width:100%;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  position:relative;z-index:1;
+}
+.wolf-adjust-btn{
+  width:28px;height:28px;border:1px solid var(--border);border-radius:7px;
+  background:var(--surface);color:var(--text);
+  font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;
+  cursor:pointer;
+}
+.wolf-adjust-btn:active{background:var(--border);}
+.wolf-adjust-lbl{
+  font-size:0.62rem;color:var(--text-dim);letter-spacing:0.6px;text-transform:uppercase;
 }
 
 /* ============================================================
@@ -857,6 +881,9 @@ body{
 
     <!-- Format panes -->
     <div id="pane-stroke" class="fmt-pane active">
+      <div class="counter-banner-title">Score</div>
+      <div class="wolf-points-banner" id="score-banner"></div>
+      <div class="counter-banner-title">Wolf Points</div>
       <div class="wolf-points-banner" id="wolf-points-banner"></div>
       <div class="stroke-grid" id="stroke-cards"></div>
       <div class="three-putt-row" id="three-putt-row"></div>
@@ -973,7 +1000,8 @@ function makePlayState(){
   return {
     currentHole:0,
     activeFmt:firstEnabledFmt(),
-    holes:holes
+    holes:holes,
+    wolfAdjust:new Array(n).fill(0)
   };
 }
 
@@ -1100,6 +1128,9 @@ function reorderPlayState(oldPlayers,newPlayers){
     if(h.wolf>=newPlayers.length) h.wolf=0;
     if(h.wolfPartner!==null&&h.wolfPartner>=newPlayers.length) h.wolfPartner=null;
     if(h.moneyHolder!==null&&h.moneyHolder>=newPlayers.length) h.moneyHolder=0;
+  });
+  playState.wolfAdjust=indexMap.map(function(oldIdx){
+    return playState.wolfAdjust[oldIdx]||0;
   });
 }
 
@@ -1323,6 +1354,7 @@ function renderAllPanes(idx){
 function renderStroke(holeIdx){
   var container=document.getElementById('stroke-cards');
   container.innerHTML='';
+  renderScoreBanner();
   renderWolfPointsBanner();
   var par=state.holes[holeIdx].par;
   var hole=getHoleState(holeIdx);
@@ -1588,16 +1620,17 @@ function calcWolfPts(holeIdx){
     }
   } else if(wp!==null&&wp!==wolfIdx){
     /* team wolf */
-    var teamMin=Math.min(scores[wolfIdx],scores[wp]);
-    var oppMin=Infinity;
-    scores.forEach(function(s,i){
-      if(i!==wolfIdx&&i!==wp&&s<oppMin) oppMin=s;
-    });
-    if(teamMin<oppMin){ pts[wolfIdx]=1; pts[wp]=1; }
-    else {
-      scores.forEach(function(s,i){
-        if(i!==wolfIdx&&i!==wp&&s===oppMin) pts[i]=1;
-      });
+    var teamA=scores[wolfIdx]+scores[wp];
+    var opponents=scores
+      .map(function(s,i){ return {score:s,idx:i}; })
+      .filter(function(entry){ return entry.idx!==wolfIdx&&entry.idx!==wp; });
+    var teamB=opponents[0].score+opponents[1].score;
+    if(teamA<teamB){
+      pts[wolfIdx]=1;
+      pts[wp]=1;
+    } else if(teamA>teamB){
+      pts[opponents[0].idx]=1;
+      pts[opponents[1].idx]=1;
     }
   } else {
     /* no partner selected — wolf solo by default vs all */
@@ -1613,12 +1646,54 @@ function calcWolfPts(holeIdx){
   return pts;
 }
 
-function calcWolfTotalPts(pi){
+function calcWolfBasePts(pi){
   var tot=0;
   for(var h=0;h<18;h++){
     tot+=calcWolfPts(h)[pi];
   }
   return tot;
+}
+
+function calcWolfTotalPts(pi){
+  var base=calcWolfBasePts(pi);
+  var adj=playState&&playState.wolfAdjust?playState.wolfAdjust[pi]||0:0;
+  return Math.max(0,base+adj);
+}
+
+function adjustWolfPoints(pi,delta){
+  if(!playState||!playState.wolfAdjust) return;
+  var base=calcWolfBasePts(pi);
+  var curAdj=playState.wolfAdjust[pi]||0;
+  var nextTotal=Math.max(0,base+curAdj+delta);
+  playState.wolfAdjust[pi]=nextTotal-base;
+  refreshHole(playState.currentHole);
+}
+
+function calcStrokeTotal(pi){
+  var tot=0;
+  var hasAny=false;
+  for(var h=0;h<18;h++){
+    var s=getScore(pi,h);
+    if(s!==null){
+      hasAny=true;
+      tot+=s;
+    }
+  }
+  return hasAny?tot:'—';
+}
+
+function renderScoreBanner(){
+  var banner=document.getElementById('score-banner');
+  if(!banner) return;
+  banner.innerHTML='';
+  state.players.forEach(function(p,pi){
+    var item=document.createElement('div');
+    item.className='wolf-points-pill';
+    item.innerHTML=
+      '<div class="wolf-points-name">'+esc(p.abbreviation||p.full_name.charAt(0))+'</div>'+
+      '<div class="wolf-points-val">'+calcStrokeTotal(pi)+'</div>';
+    banner.appendChild(item);
+  });
 }
 
 function renderWolfPointsBanner(){
@@ -1671,7 +1746,12 @@ function renderWolf(holeIdx){
       '<div class="wpb-abbr">'+esc(p.abbreviation||p.full_name.charAt(0))+'</div>'+
       '<div class="wpb-name">'+esc(p.full_name)+'</div>'+
       '<div class="wpb-role">'+roleText+'</div>'+
-      '<div class="wpb-pts">'+totalPts+' pts</div>';
+      '<div class="wpb-pts">'+totalPts+' pts</div>'+
+      '<div class="wolf-adjust-row">'+
+        '<button class="wolf-adjust-btn" onclick="event.stopPropagation();adjustWolfPoints('+pi+',-1)">−</button>'+
+        '<span class="wolf-adjust-lbl">Wolf Points</span>'+
+        '<button class="wolf-adjust-btn" onclick="event.stopPropagation();adjustWolfPoints('+pi+',1)">+</button>'+
+      '</div>';
 
     if(!isWolf&&!isLone){
       btn.style.cursor='pointer';
