@@ -309,6 +309,8 @@ body{
   transition:border-color 0.2s;
 }
 .stroke-card.has-score{border-color:#2a5a2a;}
+.stroke-card.is-wolf{border-color:var(--red);}
+.stroke-card.has-money{box-shadow:0 0 0 1px var(--gold) inset;}
 .sc-player-name{
   font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;
   color:var(--text);text-align:center;line-height:1;
@@ -317,6 +319,26 @@ body{
 .sc-to-par.under{color:var(--birdie);}
 .sc-to-par.over{color:var(--bogey);}
 .sc-to-par.dbl{color:var(--double);}
+.stroke-meta-row{display:flex;gap:8px;width:100%;}
+.stroke-meta-btn{
+  flex:1;padding:6px 4px;border:1px solid var(--border);background:var(--surface);
+  color:var(--text-dim);border-radius:8px;cursor:pointer;text-align:center;
+  font-family:'Barlow Condensed',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.5px;
+}
+.stroke-meta-btn.active-wolf{border-color:var(--red);color:var(--red);}
+.stroke-meta-btn.active-money{border-color:var(--gold);color:var(--gold);}
+.stroke-meta-btn.active-partner{border-color:var(--gold);color:var(--gold);}
+.stroke-meta-btn.active-lone{border-color:var(--red);color:var(--red);}
+
+.wolf-points-banner{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  display:flex;padding:8px 10px;gap:8px;overflow-x:auto;margin-bottom:10px;
+}
+.wolf-points-pill{
+  min-width:72px;background:var(--card);border-radius:8px;padding:6px 8px;text-align:center;
+}
+.wolf-points-name{font-size:0.65rem;color:var(--text-dim);}
+.wolf-points-val{font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;color:var(--gold);}
 
 /* The big score controls */
 .score-ctrl{
@@ -835,6 +857,7 @@ body{
 
     <!-- Format panes -->
     <div id="pane-stroke" class="fmt-pane active">
+      <div class="wolf-points-banner" id="wolf-points-banner"></div>
       <div class="stroke-grid" id="stroke-cards"></div>
       <div class="three-putt-row" id="three-putt-row"></div>
     </div>
@@ -934,16 +957,23 @@ var playState = null;
 
 function makePlayState(){
   var n = state.players.length;
+  var holes = Array.from({length:18}, function(_, holeIdx){
+    return {
+      scores:new Array(n).fill(null),
+      threePutt:new Array(n).fill(false),
+      wolf:(n?(n-1+holeIdx)%n:0),
+      wolfPartner:null,
+      loneWolf:false,
+      wolfBlind:false,
+      moneyHolder:holeIdx===0?0:null,
+      moneyManual:holeIdx===0,
+      par3Dist:new Array(n).fill(null)
+    };
+  });
   return {
     currentHole:0,
     activeFmt:firstEnabledFmt(),
-    scores:     Array.from({length:n}, function(){ return new Array(18).fill(null); }),
-    threePutt:  Array.from({length:n}, function(){ return new Array(18).fill(false); }),
-    ptmHolder:  new Array(18).fill(null),
-    wolfPartner:new Array(18).fill(null), // null=unset, -1=lone/blind
-    wolfBlind:  new Array(18).fill(false),
-    wolfPoints: new Array(n).fill(0),
-    par3Dist:   Array.from({length:n}, function(){ return new Array(18).fill(null); })
+    holes:holes
   };
 }
 
@@ -959,6 +989,13 @@ function firstEnabledFmt(){
    ============================================================ */
 function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function getHoleState(holeIdx){ return playState.holes[holeIdx]; }
+function getScore(pi,holeIdx){ return getHoleState(holeIdx).scores[pi]; }
+function setScore(pi,holeIdx,val){ getHoleState(holeIdx).scores[pi]=val; }
+function getThreePutt(pi,holeIdx){ return !!getHoleState(holeIdx).threePutt[pi]; }
+function setThreePutt(pi,holeIdx,val){ getHoleState(holeIdx).threePutt[pi]=!!val; }
+function getPar3Dist(pi,holeIdx){ return getHoleState(holeIdx).par3Dist[pi]; }
+function setPar3Dist(pi,holeIdx,val){ getHoleState(holeIdx).par3Dist[pi]=val; }
 
 function scoreClass(score,par){
   if(score===null) return 'empty';
@@ -981,20 +1018,20 @@ function scoreLbl(score,par){
 }
 
 function toParStr(pi){
-  var s=playState.scores[pi];
   var tot=0,parTot=0,played=0;
   for(var i=0;i<18;i++){
-    if(s[i]!==null){ tot+=s[i]; parTot+=state.holes[i].par; played++; }
+    var score=getScore(pi,i);
+    if(score!==null){ tot+=score; parTot+=state.holes[i].par; played++; }
   }
   if(!played) return '—';
   var d=tot-parTot;
   return (d===0?'E':d>0?'+'+d:String(d))+' · thru '+played;
 }
 function toParClass(pi){
-  var s=playState.scores[pi];
   var tot=0,parTot=0,played=0;
   for(var i=0;i<18;i++){
-    if(s[i]!==null){ tot+=s[i]; parTot+=state.holes[i].par; played++; }
+    var score=getScore(pi,i);
+    if(score!==null){ tot+=score; parTot+=state.holes[i].par; played++; }
   }
   if(!played) return '';
   var d=tot-parTot;
@@ -1056,12 +1093,14 @@ function reorderPlayState(oldPlayers,newPlayers){
   var indexMap=newPlayers.map(function(player){
     return oldPlayers.indexOf(player);
   });
-  function reorderRows(matrix){
-    return indexMap.map(function(oldIdx){ return matrix[oldIdx]; });
-  }
-  playState.scores=reorderRows(playState.scores);
-  playState.threePutt=reorderRows(playState.threePutt);
-  playState.par3Dist=reorderRows(playState.par3Dist);
+  playState.holes.forEach(function(h){
+    h.scores=indexMap.map(function(oldIdx){ return h.scores[oldIdx]; });
+    h.threePutt=indexMap.map(function(oldIdx){ return h.threePutt[oldIdx]; });
+    h.par3Dist=indexMap.map(function(oldIdx){ return h.par3Dist[oldIdx]; });
+    if(h.wolf>=newPlayers.length) h.wolf=0;
+    if(h.wolfPartner!==null&&h.wolfPartner>=newPlayers.length) h.wolfPartner=null;
+    if(h.moneyHolder!==null&&h.moneyHolder>=newPlayers.length) h.moneyHolder=0;
+  });
 }
 
 function randomizePlayerOrder(){
@@ -1245,11 +1284,12 @@ function switchFmt(id){
 function goHole(idx){
   if(idx<0||idx>17) return;
   playState.currentHole=idx;
+  recomputePtmHolders();
 
   /* nav buttons */
   document.querySelectorAll('.hnb-btn').forEach(function(b,i){
     b.classList.remove('current');
-    var scored=playState.scores.some(function(ps){ return ps[i]!==null; });
+    var scored=playState.holes[i].scores.some(function(score){ return score!==null; });
     b.classList.toggle('scored',scored);
   });
   var cur=document.getElementById('hnb-'+idx);
@@ -1283,15 +1323,22 @@ function renderAllPanes(idx){
 function renderStroke(holeIdx){
   var container=document.getElementById('stroke-cards');
   container.innerHTML='';
+  renderWolfPointsBanner();
   var par=state.holes[holeIdx].par;
+  var hole=getHoleState(holeIdx);
+  var wolfIdx=hole.wolf;
+  var moneyIdx=hole.moneyHolder;
 
   state.players.forEach(function(p,pi){
-    var score=playState.scores[pi][holeIdx];
+    var score=getScore(pi,holeIdx);
     var cls=scoreClass(score,par);
     var lbl=scoreLbl(score,par);
+    var isWolf=pi===wolfIdx;
+    var isMoney=pi===moneyIdx;
+    var isPartner=hole.wolfPartner===pi&&!hole.loneWolf&&!isWolf;
 
     var card=document.createElement('div');
-    card.className='stroke-card'+(score!==null?' has-score':'');
+    card.className='stroke-card'+(score!==null?' has-score':'')+(isWolf?' is-wolf':'')+(isMoney?' has-money':'');
     card.id='sc-'+pi;
 
     var valHtml;
@@ -1307,6 +1354,14 @@ function renderStroke(holeIdx){
     card.innerHTML=
       '<div class="sc-player-name">'+esc(p.full_name)+'</div>'+
       '<div class="sc-to-par '+toParClass(pi)+'">'+toParStr(pi)+'</div>'+
+      '<div class="stroke-meta-row">'+
+        '<button class="stroke-meta-btn '+(isWolf?'active-wolf':'')+'" onclick="setWolfForHole('+holeIdx+','+pi+')">'+(isWolf?'🐺 Wolf':'🐺')+'</button>'+
+        '<button class="stroke-meta-btn '+(isMoney?'active-money':'')+'" onclick="setMoneyHolder('+holeIdx+','+pi+',true)">'+(isMoney?'💲 Money':'💲')+'</button>'+
+      '</div>'+
+      '<div class="stroke-meta-row">'+
+        '<button class="stroke-meta-btn '+(isPartner?'active-partner':'')+'" onclick="toggleWolfPartnerFromStroke('+holeIdx+','+pi+')">'+(isPartner?'🤝 Partner':'🤝 Partner')+'</button>'+
+        '<button class="stroke-meta-btn '+(isWolf&&hole.loneWolf?'active-lone':'')+'" onclick="toggleLoneWolfFromStroke('+holeIdx+','+pi+')">'+(isWolf&&hole.loneWolf?'🐺 Lone':'Lone Wolf')+'</button>'+
+      '</div>'+
       '<div class="score-ctrl">'+
         '<button class="score-adj" onclick="adjustScore('+pi+','+holeIdx+',-1)">−</button>'+
         valHtml+
@@ -1320,13 +1375,13 @@ function renderStroke(holeIdx){
   var row=document.getElementById('three-putt-row');
   row.innerHTML='';
   state.players.forEach(function(p,pi){
-    var is3=playState.threePutt[pi][holeIdx];
+    var is3=getThreePutt(pi,holeIdx);
     var btn=document.createElement('button');
     btn.className='three-putt-btn'+(is3?' active':'');
     btn.textContent=esc(p.abbreviation||p.full_name.charAt(0))+' 3-Putt';
     (function(playerIdx){
       btn.addEventListener('click',function(){
-        playState.threePutt[playerIdx][holeIdx]=!playState.threePutt[playerIdx][holeIdx];
+        setThreePutt(playerIdx,holeIdx,!getThreePutt(playerIdx,holeIdx));
         refreshHole(holeIdx);
       });
     })(pi);
@@ -1338,22 +1393,23 @@ function renderStroke(holeIdx){
    SCORE ADJUST & POPUP
    ============================================================ */
 function adjustScore(pi,holeIdx,delta){
-  var cur=playState.scores[pi][holeIdx];
+  var cur=getScore(pi,holeIdx);
   if(cur===null){
-    playState.scores[pi][holeIdx]=Math.max(1,state.holes[holeIdx].par+delta);
+    setScore(pi,holeIdx,Math.max(1,state.holes[holeIdx].par+delta));
   } else {
-    playState.scores[pi][holeIdx]=Math.max(1,Math.min(12,cur+delta));
+    setScore(pi,holeIdx,Math.max(1,Math.min(12,cur+delta)));
   }
   refreshHole(holeIdx);
 }
 
 function refreshHole(holeIdx){
+  recomputePtmHolders();
   renderAllPanes(holeIdx);
   renderSummary();
   /* update nav dot */
   var btn=document.getElementById('hnb-'+holeIdx);
   if(btn && holeIdx!==playState.currentHole){
-    var scored=playState.scores.some(function(ps){ return ps[holeIdx]!==null; });
+    var scored=playState.holes[holeIdx].scores.some(function(score){ return score!==null; });
     btn.classList.toggle('scored',scored);
   }
 }
@@ -1362,7 +1418,7 @@ var popupCtx=null;
 function openPopup(pi,holeIdx){
   popupCtx={pi:pi,holeIdx:holeIdx};
   var par=state.holes[holeIdx].par;
-  var cur=playState.scores[pi][holeIdx];
+  var cur=getScore(pi,holeIdx);
   document.getElementById('sp-title').textContent=
     esc(state.players[pi].full_name)+' — Hole '+(holeIdx+1)+' (Par '+par+')';
   var grid=document.getElementById('sp-grid');
@@ -1375,7 +1431,7 @@ function openPopup(pi,holeIdx){
     btn.innerHTML=s+'<div class="sp-lbl">'+lbl+'</div>';
     (function(score){
       btn.addEventListener('click',function(){
-        playState.scores[pi][holeIdx]=score;
+        setScore(pi,holeIdx,score);
         closePopup();
         refreshHole(holeIdx);
       });
@@ -1398,28 +1454,41 @@ function nextPtmPlayer(playerIdx){
 }
 
 function didPtmHolderLoseHole(playerIdx,holeIdx){
-  var holderScore=playState.scores[playerIdx][holeIdx];
+  var holderScore=getScore(playerIdx,holeIdx);
   if(holderScore===null) return false;
   var par=state.holes[holeIdx].par;
-  var isThreePutt=!!playState.threePutt[playerIdx][holeIdx];
+  var isThreePutt=getThreePutt(playerIdx,holeIdx);
   var isDoubleOrWorse=holderScore>=par+2;
   return isThreePutt||isDoubleOrWorse;
 }
 
+function recomputePtmHolders(){
+  if(!playState||!playState.holes.length) return;
+  var carry=0;
+  playState.holes.forEach(function(hole,holeIdx){
+    var resolved=hole.moneyManual&&hole.moneyHolder!==null?hole.moneyHolder:carry;
+    hole.moneyHolder=resolved;
+    carry=didPtmHolderLoseHole(resolved,holeIdx)?nextPtmPlayer(resolved):resolved;
+  });
+}
+
+function setMoneyHolder(holeIdx,playerIdx,isManual){
+  var hole=getHoleState(holeIdx);
+  hole.moneyHolder=playerIdx;
+  hole.moneyManual=!!isManual;
+  recomputePtmHolders();
+}
+
 function resolvePtmAuto(holeIdx){
-  if(holeIdx<=0) return 0;
-  var holder=0;
-  for(var i=0;i<holeIdx;i++){
-    if(didPtmHolderLoseHole(holder,i)) holder=nextPtmPlayer(holder);
-  }
-  return holder;
+  recomputePtmHolders();
+  return getHoleState(holeIdx).moneyHolder;
 }
 
 function resolvePtmFinalHole18(){
-  var startHolder=resolvePtmAuto(17);
+  recomputePtmHolders();
+  var startHolder=getHoleState(17).moneyHolder;
   var holder=startHolder;
-  var checks=state.players.length;
-  for(var i=0;i<checks;i++){
+  for(var i=0;i<state.players.length;i++){
     if(!didPtmHolderLoseHole(holder,17)) return holder;
     holder=nextPtmPlayer(holder);
   }
@@ -1429,6 +1498,7 @@ function resolvePtmFinalHole18(){
 function renderPtm(holeIdx){
   var container=document.getElementById('ptm-cards');
   container.innerHTML='';
+  recomputePtmHolders();
   var curHolder=holeIdx===17?resolvePtmFinalHole18():resolvePtmAuto(holeIdx);
 
   state.players.forEach(function(p,pi){
@@ -1439,6 +1509,12 @@ function renderPtm(holeIdx){
       '<div class="ptm-money-icon">💰</div>'+
       '<div class="ptm-abbr">'+esc(p.abbreviation||p.full_name.charAt(0))+'</div>'+
       '<div class="ptm-full-name">'+esc(p.full_name)+'</div>';
+    (function(playerIdx){
+      btn.addEventListener('click',function(){
+        setMoneyHolder(holeIdx,playerIdx,true);
+        refreshHole(holeIdx);
+      });
+    })(pi);
     container.appendChild(btn);
   });
 
@@ -1450,20 +1526,48 @@ function renderPtm(holeIdx){
    WOLF RENDER
    ============================================================ */
 function getWolfIdx(holeIdx){
-  var n=state.players.length;
-  if(!n) return 0;
-  return (n-1+holeIdx)%n;
+  return getHoleState(holeIdx).wolf;
+}
+
+function setWolfForHole(holeIdx,playerIdx){
+  var hole=getHoleState(holeIdx);
+  hole.wolf=playerIdx;
+  if(hole.wolfPartner===playerIdx) hole.wolfPartner=null;
+  refreshHole(holeIdx);
+}
+
+function toggleWolfPartnerFromStroke(holeIdx,playerIdx){
+  var hole=getHoleState(holeIdx);
+  if(playerIdx===hole.wolf) return;
+  if(hole.wolfPartner===playerIdx){
+    hole.wolfPartner=null;
+  } else {
+    hole.wolfPartner=playerIdx;
+    hole.loneWolf=false;
+    hole.wolfBlind=false;
+  }
+  refreshHole(holeIdx);
+}
+
+function toggleLoneWolfFromStroke(holeIdx,playerIdx){
+  var hole=getHoleState(holeIdx);
+  if(playerIdx!==hole.wolf) return;
+  hole.loneWolf=!hole.loneWolf;
+  if(hole.loneWolf) hole.wolfPartner=null;
+  hole.wolfBlind=false;
+  refreshHole(holeIdx);
 }
 
 function calcWolfPts(holeIdx){
   var n=state.players.length;
   var pts=new Array(n).fill(0);
   if(n<2) return pts;
-  var wolfIdx=getWolfIdx(holeIdx);
-  var wp=playState.wolfPartner[holeIdx];
-  var isLone=(wp===-1);
+  var hole=getHoleState(holeIdx);
+  var wolfIdx=hole.wolf;
+  var wp=hole.wolfPartner;
+  var isLone=hole.loneWolf;
   var scores=state.players.map(function(_,i){
-    return playState.scores[i][holeIdx];
+    return getScore(i,holeIdx);
   });
   if(scores.some(function(s){ return s===null; })) return pts;
 
@@ -1517,14 +1621,29 @@ function calcWolfTotalPts(pi){
   return tot;
 }
 
+function renderWolfPointsBanner(){
+  var banner=document.getElementById('wolf-points-banner');
+  if(!banner) return;
+  banner.innerHTML='';
+  state.players.forEach(function(p,pi){
+    var item=document.createElement('div');
+    item.className='wolf-points-pill';
+    item.innerHTML=
+      '<div class="wolf-points-name">'+esc(p.abbreviation||p.full_name.charAt(0))+'</div>'+
+      '<div class="wolf-points-val">'+calcWolfTotalPts(pi)+'</div>';
+    banner.appendChild(item);
+  });
+}
+
 function renderWolf(holeIdx){
-  var wolfIdx=getWolfIdx(holeIdx);
+  var hole=getHoleState(holeIdx);
+  var wolfIdx=hole.wolf;
   var wolfPlayer=state.players[wolfIdx];
   document.getElementById('wolf-who-name').textContent=wolfPlayer?wolfPlayer.full_name:'—';
 
-  var wp=playState.wolfPartner[holeIdx];
-  var isLone=wp===-1;
-  var isBlind=playState.wolfBlind[holeIdx];
+  var wp=hole.wolfPartner;
+  var isLone=hole.loneWolf;
+  var isBlind=hole.wolfBlind;
 
   document.getElementById('btn-lone-wolf').classList.toggle('active', isLone&&!isBlind);
   document.getElementById('btn-blind-wolf').classList.toggle('active', isBlind);
@@ -1559,12 +1678,13 @@ function renderWolf(holeIdx){
       (function(playerIdx, wasPartner){
         btn.addEventListener('click',function(){
           if(wasPartner){
-            playState.wolfPartner[holeIdx]=wolfIdx; // deselect → wolf alone
+            hole.wolfPartner=null;
           } else {
-            playState.wolfPartner[holeIdx]=playerIdx;
-            playState.wolfBlind[holeIdx]=false;
+            hole.wolfPartner=playerIdx;
+            hole.loneWolf=false;
+            hole.wolfBlind=false;
           }
-          renderWolf(holeIdx);
+          refreshHole(holeIdx);
         });
       })(pi, isPartner);
     }
@@ -1574,17 +1694,17 @@ function renderWolf(holeIdx){
 
 function toggleLoneWolf(blind){
   var h=playState.currentHole;
-  var cur=playState.wolfPartner[h];
-  var curBlind=playState.wolfBlind[h];
-  var alreadySet=cur===-1&&curBlind===blind;
+  var hole=getHoleState(h);
+  var alreadySet=hole.loneWolf&&hole.wolfBlind===blind;
   if(alreadySet){
-    playState.wolfPartner[h]=null;
-    playState.wolfBlind[h]=false;
+    hole.loneWolf=false;
+    hole.wolfBlind=false;
   } else {
-    playState.wolfPartner[h]=-1;
-    playState.wolfBlind[h]=blind;
+    hole.loneWolf=true;
+    hole.wolfBlind=blind;
+    hole.wolfPartner=null;
   }
-  renderWolf(h);
+  refreshHole(h);
 }
 
 /* ============================================================
@@ -1599,7 +1719,7 @@ function renderPar3(holeIdx){
     return;
   }
   state.players.forEach(function(p,pi){
-    var dist=playState.par3Dist[pi][holeIdx];
+    var dist=getPar3Dist(pi,holeIdx);
     var card=document.createElement('div');
     card.className='par3-card';
     card.innerHTML=
@@ -1610,7 +1730,7 @@ function renderPar3(holeIdx){
     (function(playerIdx){
       input.addEventListener('change',function(){
         var v=parseInt(input.value);
-        playState.par3Dist[playerIdx][holeIdx]=isFinite(v)?v:null;
+        setPar3Dist(playerIdx,holeIdx,isFinite(v)?v:null);
       });
     })(pi);
     container.appendChild(card);
@@ -1624,10 +1744,10 @@ function renderSummary(){
   var bar=document.getElementById('summary-bar');
   bar.innerHTML='';
   state.players.forEach(function(p,pi){
-    var s=playState.scores[pi];
     var tot=0,parTot=0,played=0;
     for(var i=0;i<18;i++){
-      if(s[i]!==null){ tot+=s[i]; parTot+=state.holes[i].par; played++; }
+      var score=getScore(pi,i);
+      if(score!==null){ tot+=score; parTot+=state.holes[i].par; played++; }
     }
     var diff=tot-parTot;
     var diffStr=played===0?'—':diff===0?'E':diff>0?'+'+diff:String(diff);
@@ -1713,13 +1833,13 @@ function buildStrokeTable(){
     t+='<tr><td class="lbl">'+esc(p.full_name)+'</td>';
     var out=0,inVal=0,outFilled=true,inFilled=true;
     for(var i=0;i<9;i++){
-      var s=(playState&&playState.scores[pi])?playState.scores[pi][i]:null;
+      var s=playState?getScore(pi,i):null;
       t+='<td>'+(s!==null?s:'')+'</td>';
       if(s===null) outFilled=false; else out+=s;
     }
     t+='<td class="sum">'+(outFilled?out:'')+'</td>';
     for(var i=9;i<18;i++){
-      var s=(playState&&playState.scores[pi])?playState.scores[pi][i]:null;
+      var s=playState?getScore(pi,i):null;
       t+='<td>'+(s!==null?s:'')+'</td>';
       if(s===null) inFilled=false; else inVal+=s;
     }
@@ -1772,9 +1892,6 @@ function resolvePtmAutoForPrint(holeIdx){
 
 function buildWolfTable(num){
   var players=state.players;
-  var n=players.length;
-  var wolfOrder=[];
-  for(var i=0;i<18;i++) wolfOrder.push(i%n);
   var rotation=players.map(function(p){ return esc(p.full_name); }).join(' · ');
   var t='<div class="sc-fmt-hdr"><span>FORMAT '+num+' — WOLF</span>'+
         '<span class="sc-fmt-rule">Rotation: '+rotation+' (repeat) · Tap to select partner before all tee</span></div>';
@@ -1782,17 +1899,17 @@ function buildWolfTable(num){
   t+='<table class="sc-table">';
   t+=holeHeaderRow('WOLF');
   t+='<tr><td class="lbl" style="font-size:6pt">IS WOLF</td>';
-  for(var i=0;i<9;i++) t+='<td style="color:#C0392B;font-weight:700">'+esc(players[wolfOrder[i]].abbreviation)+'</td>';
+  for(var i=0;i<9;i++) t+='<td style="color:#C0392B;font-weight:700">'+esc(players[getWolfIdx(i)].abbreviation)+'</td>';
   t+='<td class="sum"></td>';
-  for(var i=9;i<18;i++) t+='<td style="color:#C0392B;font-weight:700">'+esc(players[wolfOrder[i]].abbreviation)+'</td>';
+  for(var i=9;i<18;i++) t+='<td style="color:#C0392B;font-weight:700">'+esc(players[getWolfIdx(i)].abbreviation)+'</td>';
   t+='<td class="sum"></td><td class="sum"></td></tr>';
   t+='<tr><td class="lbl">PARTNER (circle)</td>';
   for(var i=0;i<18;i++){
-    var wp=playState?playState.wolfPartner[i]:null;
+    var wp=playState?(getHoleState(i).loneWolf?-1:getHoleState(i).wolfPartner):null;
     var isLone=wp===-1;
     var cell;
     if(isLone) cell='<span style="text-decoration:underline;color:#C0392B">LONE</span>';
-    else if(wp!==null&&wp!==wolfOrder[i]&&players[wp]) cell='<span style="text-decoration:underline">'+esc(players[wp].abbreviation)+'</span>';
+    else if(wp!==null&&wp!==getWolfIdx(i)&&players[wp]) cell='<span style="text-decoration:underline">'+esc(players[wp].abbreviation)+'</span>';
     else cell='';
     t+='<td>'+cell+'</td>';
     if(i===8) t+='<td class="sum"></td>';
@@ -1833,11 +1950,11 @@ function buildPar3Table(num){
     t+='<tr><td class="lbl">'+esc(p.full_name)+'</td>';
     var wins=0;
     par3holes.forEach(function(i){
-      var dist=(playState&&playState.par3Dist[pi])?playState.par3Dist[pi][i]:null;
+      var dist=playState?getPar3Dist(pi,i):null;
       t+='<td>'+(dist!==null?dist+'\'':'')+'</td>';
       /* check if this player won this par3 */
       if(dist!==null && playState){
-        var allDists=state.players.map(function(_,x){ return playState.par3Dist[x]?playState.par3Dist[x][i]:null; });
+        var allDists=state.players.map(function(_,x){ return getPar3Dist(x,i); });
         var minDist=null;
         allDists.forEach(function(d){ if(d!==null&&(minDist===null||d<minDist)) minDist=d; });
         if(dist===minDist){
