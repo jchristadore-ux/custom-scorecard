@@ -95,6 +95,12 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
 .player-inputs-secondary input{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:7px 10px;font-size:0.78rem;font-family:'DM Sans',sans-serif;transition:border-color 0.2s;}
 .player-inputs-secondary input:focus{outline:none;border-color:var(--green-bright);color:var(--text);}
 .player-inputs-secondary input::placeholder{color:var(--text-muted);}
+.player-inputs-tertiary{display:flex;gap:8px;}
+.player-inputs-tertiary input{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:7px 10px;font-size:0.75rem;font-family:'DM Sans',sans-serif;transition:border-color 0.2s;}
+.player-inputs-tertiary input:focus{outline:none;border-color:var(--green-bright);color:var(--text);}
+.sync-code-wrap{display:grid;grid-template-columns:1fr;gap:8px;}
+@media(min-width:580px){.sync-code-wrap{grid-template-columns:1fr 1fr;}}
+.sync-status{font-size:0.78rem;color:var(--text-dim);padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;}
 .drag-handle{color:var(--text-muted);font-size:1.1rem;cursor:grab;padding:0 4px;touch-action:none;margin-top:10px;}
 
 /* ── BUTTONS ── */
@@ -499,6 +505,23 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
     <div id="formats-list"></div>
   </div>
 
+
+  <div class="section">
+    <div class="section-title">Live Round Sync</div>
+    <div class="sync-code-wrap">
+      <div class="form-group">
+        <label>Round Code</label>
+        <input type="text" id="inp-round-code" placeholder="ABC123" autocomplete="off">
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="generateRoundCode()">🎟 Generate Code</button>
+        <button class="btn btn-gold" onclick="joinRoundByCode()">🔗 Join Code</button>
+        <button class="btn btn-danger" onclick="leaveRoundSync()">⛔ Leave Sync</button>
+      </div>
+    </div>
+    <div class="sync-status" id="sync-status">Realtime sync is local-only until Supabase keys are configured in RealtimeService.</div>
+  </div>
+
   <div style="padding:8px 0 16px;text-align:center;">
     <button class="btn btn-gold btn-start-round" onclick="switchTab('play')">⛳ TEE IT UP →</button>
   </div>
@@ -617,6 +640,10 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script>
 'use strict';
 
@@ -719,36 +746,32 @@ var NJ_COURSES = [
    ============================================================ */
 var GHINService = (function(){
   var API_BASE = 'https://api2.ghin.com/api/v1';
-  // To enable: set GHIN_EMAIL and GHIN_PASSWORD to your GHIN admin credentials
-  // These are intentionally left empty — configure before production use
-  var GHIN_EMAIL = '';
-  var GHIN_PASSWORD = '';
-  var _token = null;
+  var _tokenByGolfer = {};
 
-  function isConfigured(){
-    return !!(GHIN_EMAIL && GHIN_PASSWORD);
+  function hasPlayerAuth(player){
+    return !!(player && player.ghin_email && player.ghin_password);
   }
 
-  function login(){
-    if(!isConfigured()) return Promise.reject(new Error('GHIN credentials not configured'));
+  function loginForPlayer(player){
+    if(!hasPlayerAuth(player)) return Promise.reject(new Error('Player GHIN email/password missing'));
     return fetch(API_BASE + '/golfers/login.json', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({user:{email:GHIN_EMAIL,password:GHIN_PASSWORD,remember_me:true}})
+      body:JSON.stringify({user:{email:player.ghin_email,password:player.ghin_password,remember_me:true}})
     })
     .then(function(r){ return r.json(); })
     .then(function(data){
       if(data && data.golfer_user && data.golfer_user.golfer_user_token){
-        _token = data.golfer_user.golfer_user_token;
-        return _token;
+        _tokenByGolfer[player.ghin.trim()] = data.golfer_user.golfer_user_token;
+        return _tokenByGolfer[player.ghin.trim()];
       }
       throw new Error('GHIN login failed: ' + JSON.stringify(data));
     });
   }
 
-  function postScore(ghinNumber, scorePayload){
-    // scorePayload: {adjusted_gross_score, course_name, played_at, tee_set_side, number_of_holes, ...}
-    if(!isConfigured()) return Promise.reject(new Error('GHIN credentials not configured'));
+  function postScore(player, scorePayload){
+    if(!hasPlayerAuth(player)) return Promise.reject(new Error('Player GHIN auth is missing'));
+    var ghinNumber = player.ghin.trim();
     var doPost = function(token){
       return fetch(API_BASE + '/golfers/' + ghinNumber + '/scores.json', {
         method:'POST',
@@ -757,18 +780,13 @@ var GHINService = (function(){
       })
       .then(function(r){ return r.json(); });
     };
-    if(_token) return doPost(_token);
-    return login().then(doPost);
+    if(_tokenByGolfer[ghinNumber]) return doPost(_tokenByGolfer[ghinNumber]);
+    return loginForPlayer(player).then(doPost);
   }
 
   function submitRoundScore(player, roundData){
-    // roundData: {courseName, teeColor, date, totalScore, holesPlayed}
-    if(!player.ghin || !player.ghin.trim()){
-      return Promise.reject(new Error('No GHIN number for ' + player.full_name));
-    }
-    if(!isConfigured()){
-      return Promise.reject(new Error('GHIN service not configured — set GHIN_EMAIL and GHIN_PASSWORD in GHINService'));
-    }
+    if(!player.ghin || !player.ghin.trim()) return Promise.reject(new Error('No GHIN number for ' + player.full_name));
+    if(!hasPlayerAuth(player)) return Promise.reject(new Error('No GHIN login creds for ' + player.full_name));
     var payload = {
       adjusted_gross_score: roundData.totalScore,
       course_name: roundData.courseName,
@@ -777,17 +795,17 @@ var GHINService = (function(){
       number_of_holes: roundData.holesPlayed,
       score_type: 'home'
     };
-    return postScore(player.ghin.trim(), payload);
+    return postScore(player, payload);
   }
 
-  return {isConfigured:isConfigured, submitRoundScore:submitRoundScore};
-})();
+  return {hasPlayerAuth:hasPlayerAuth, submitRoundScore:submitRoundScore};
+})();;
 
 /* ============================================================
    EMAIL SERVICE LAYER
    Uses EmailJS (https://www.emailjs.com) — free tier: 200 emails/month
    Setup: Create account, add Gmail service, create template, plug in IDs below.
-   Template variables: {{to_email}}, {{to_name}}, {{subject}}, {{scorecard_html}}, {{course_name}}, {{round_date}}
+   Template variables: {{to_email}}, {{to_name}}, {{subject}}, {{scorecard_html}}, {{course_name}}, {{round_date}}, {{scorecard_pdf_base64}}, {{scorecard_pdf_name}}
    ============================================================ */
 var EmailService = (function(){
   // Configure these with your EmailJS credentials
@@ -809,7 +827,7 @@ var EmailService = (function(){
     }
   }
 
-  function sendScorecardEmail(toEmail, toName, subject, scorecardHtml, courseName, roundDate){
+  function sendScorecardEmail(toEmail, toName, subject, scorecardHtml, courseName, roundDate, scorecardPdfBase64, scorecardPdfName){
     if(!isConfigured()){
       return Promise.reject(new Error('EmailJS not configured — set SERVICE_ID, TEMPLATE_ID, PUBLIC_KEY in EmailService'));
     }
@@ -823,7 +841,9 @@ var EmailService = (function(){
       subject: subject,
       scorecard_html: scorecardHtml,
       course_name: courseName,
-      round_date: roundDate
+      round_date: roundDate,
+      scorecard_pdf_base64: scorecardPdfBase64 || '',
+      scorecard_pdf_name: scorecardPdfName || 'playpal-scorecard.pdf'
     });
   }
 
@@ -838,10 +858,10 @@ var BB = {
   tee_color:'Black Tees',
   group_name:'EGT',
   players:[
-    {full_name:'Gadget',    abbreviation:'G',  ghin:'',email:''},
-    {full_name:'Straight T',abbreviation:'ST', ghin:'',email:''},
-    {full_name:'Bird',      abbreviation:'B',  ghin:'',email:''},
-    {full_name:'Iron Mike', abbreviation:'IM', ghin:'',email:''}
+    {full_name:'Gadget',    abbreviation:'G',  ghin:'',email:'',ghin_email:'',ghin_password:''},
+    {full_name:'Straight T',abbreviation:'ST', ghin:'',email:'',ghin_email:'',ghin_password:''},
+    {full_name:'Bird',      abbreviation:'B',  ghin:'',email:'',ghin_email:'',ghin_password:''},
+    {full_name:'Iron Mike', abbreviation:'IM', ghin:'',email:'',ghin_email:'',ghin_password:''}
   ],
   holes:[
     {par:5,yards:495,hdcp:13},{par:5,yards:474,hdcp:11},{par:4,yards:371,hdcp:5},
@@ -862,6 +882,61 @@ var BB = {
 var state = deepClone(BB);
 var playState = null;
 var selectedCourseIdx = 0; // Beaver Brook is default
+
+var RealtimeService = (function(){
+  var SUPABASE_URL = '';
+  var SUPABASE_ANON_KEY = '';
+  var client = null;
+  var channel = null;
+  var currentCode = '';
+  var applyingRemote = false;
+
+  function isConfigured(){ return !!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase); }
+  function init(){
+    if(!isConfigured()) return false;
+    if(!client) client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return true;
+  }
+  function setStatus(msg){ var el = document.getElementById('sync-status'); if(el) el.textContent = msg; }
+  function snapshotState(){ return {state:state, playState:playState, selectedCourseIdx:selectedCourseIdx, ts:Date.now()}; }
+  function applyRemoteSnapshot(payload){
+    if(!payload || !payload.state) return;
+    applyingRemote = true;
+    state = payload.state;
+    playState = payload.playState;
+    selectedCourseIdx = payload.selectedCourseIdx || 0;
+    loadStateToUI();
+    if(playState){
+      document.getElementById('play-start').style.display = 'none';
+      document.getElementById('play-active').style.display = 'block';
+      buildHoleNav(); buildFmtTabs(); goHole(playState.currentHole || 0);
+    }
+    applyingRemote = false;
+  }
+  function join(code){
+    if(!init()) { setStatus('Realtime disabled. Add SUPABASE_URL + SUPABASE_ANON_KEY in RealtimeService.'); return; }
+    leave();
+    currentCode = code.toUpperCase();
+    channel = client.channel('round-' + currentCode);
+    channel.on('broadcast', {event:'round-sync'}, function(msg){
+      if(msg && msg.payload && msg.payload.snapshot){ applyRemoteSnapshot(msg.payload.snapshot); setStatus('Synced live on code ' + currentCode + '.'); }
+    });
+    channel.subscribe(function(status){
+      if(status === 'SUBSCRIBED'){
+        setStatus('Connected to live round ' + currentCode + '.');
+        publish();
+      }
+    });
+  }
+  function leave(){
+    if(channel && client){ client.removeChannel(channel); }
+    channel = null;
+    currentCode = '';
+    setStatus('Not connected to a live round.');
+  }
+  function publish(){ if(!channel || applyingRemote) return; channel.send({type:'broadcast', event:'round-sync', payload:{snapshot:snapshotState()}}); }
+  return {isConfigured:isConfigured, join:join, leave:leave, publish:publish, setStatus:setStatus};
+})();
 
 /* ============================================================
    PLAY STATE
@@ -1029,6 +1104,10 @@ function renderPlayers(){
           '<input type="text" placeholder="GHIN #" value="' + esc(p.ghin||'') + '" oninput="state.players[' + i + '].ghin=this.value" autocomplete="off">' +
           '<input type="email" placeholder="Email address" value="' + esc(p.email||'') + '" oninput="state.players[' + i + '].email=this.value" autocomplete="off">' +
         '</div>' +
+        '<div class="player-inputs-tertiary">' +
+          '<input type="email" placeholder="GHIN Login Email" value="' + esc(p.ghin_email||'') + '" oninput="state.players[' + i + '].ghin_email=this.value" autocomplete="off">' +
+          '<input type="password" placeholder="GHIN Password" value="' + esc(p.ghin_password||'') + '" oninput="state.players[' + i + '].ghin_password=this.value" autocomplete="new-password">' +
+        '</div>' +
       '</div>';
     list.appendChild(row);
   });
@@ -1055,7 +1134,7 @@ function toggleFmt(i){
 
 function addPlayer(){
   if(state.players.length >= 6) return;
-  state.players.push({full_name:'Player '+(state.players.length+1),abbreviation:'P'+(state.players.length+1),ghin:'',email:''});
+  state.players.push({full_name:'Player '+(state.players.length+1),abbreviation:'P'+(state.players.length+1),ghin:'',email:'',ghin_email:'',ghin_password:''});
   renderPlayers();
 }
 function removeLastPlayer(){
@@ -1138,6 +1217,7 @@ function rebuild(){
   state.group_name  = document.getElementById('inp-group').value || '';
   updateHoleSums();
   buildScorecard();
+  RealtimeService.publish();
 }
 
 /* ============================================================
@@ -1273,6 +1353,7 @@ function adjustScore(pi,hi,delta){
 
 function refreshHole(hi){
   recomputePtmHolders();renderAllPanes(hi);renderSummary();
+  RealtimeService.publish();
   var btn=document.getElementById('hnb-'+hi);
   if(btn&&hi!==playState.currentHole){
     btn.classList.toggle('scored',playState.holes[hi].scores.some(function(s){return s!==null;}));
@@ -1625,18 +1706,16 @@ function openSaveModal(){
 
   // GHIN status
   html += '<div class="save-section"><div class="save-section-title">🏌️ GHIN Score Submission</div>';
-  var ghinEnabled = GHINService.isConfigured();
-  if(!ghinEnabled){
-    html += '<div class="ghin-note">'+
-      '<strong>GHIN integration not configured.</strong> To enable, set <code>GHIN_EMAIL</code> and <code>GHIN_PASSWORD</code> in the <code>GHINService</code> configuration in the app source. '+
-      'These are your USGA GHIN admin credentials. The service layer is fully built and ready to connect.</div>';
-  }
+  html += '<div class="ghin-note">'+
+    'Each player needs a GHIN # plus their GHIN login email/password to post scores from this device.'+
+    '</div>';
   state.players.forEach(function(p, pi){
     var hasGhin = !!(p.ghin && p.ghin.trim());
+    var hasAuth = GHINService.hasPlayerAuth(p);
     html += '<div class="save-status-row" id="ghin-status-'+pi+'">'+
       '<span class="save-status-icon">🏌️</span>'+
       '<span class="save-status-text">'+esc(p.full_name)+(hasGhin?' (GHIN: '+esc(p.ghin)+')':' — no GHIN on file')+'</span>'+
-      '<span class="save-status-state '+(hasGhin?'pending':'skipped')+'">'+(hasGhin&&ghinEnabled?'Pending':hasGhin&&!ghinEnabled?'Config needed':'Skip')+'</span>'+
+      '<span class="save-status-state '+(hasGhin&&hasAuth?'pending':'skipped')+'">'+(hasGhin&&hasAuth?'Pending':'Need GHIN login')+'</span>'+
       '</div>';
   });
   html += '</div>';
@@ -1657,6 +1736,25 @@ function setStatusState(prefix, pi, stateCls, text){
   if(span){ span.className = 'save-status-state ' + stateCls; span.textContent = text; }
 }
 
+function createScorecardPdfBase64(){
+  return new Promise(function(resolve, reject){
+    if(typeof window.html2canvas === 'undefined' || !window.jspdf || !window.jspdf.jsPDF){ reject(new Error('html2canvas/jsPDF not loaded')); return; }
+    buildScorecard();
+    var node = document.getElementById('scorecard-preview');
+    if(!node){ reject(new Error('Scorecard preview not found')); return; }
+    window.html2canvas(node, {backgroundColor:'#ffffff', scale:2}).then(function(canvas){
+      var imgData = canvas.toDataURL('image/png');
+      var pdf = new window.jspdf.jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
+      var pageW = pdf.internal.pageSize.getWidth();
+      var pageH = pdf.internal.pageSize.getHeight();
+      var ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
+      var w = canvas.width * ratio, h = canvas.height * ratio;
+      pdf.addImage(imgData, 'PNG', (pageW-w)/2, (pageH-h)/2, w, h);
+      resolve(pdf.output('datauristring').split(',')[1]);
+    }).catch(reject);
+  });
+}
+
 function executeSaveRound(){
   var saveBtn = document.getElementById('btn-confirm-save');
   if(saveBtn) saveBtn.disabled = true;
@@ -1666,8 +1764,9 @@ function executeSaveRound(){
   var teeColor = state.tee_color || '';
   var scorecardHtml = buildScorecardHtmlForEmail();
   var emailEnabled = EmailService.isConfigured();
-  var ghinEnabled = GHINService.isConfigured();
+  var roundDateIso = new Date().toISOString().split('T')[0];
 
+  createScorecardPdfBase64().then(function(pdfBase64){
   var emailPromises = state.players.map(function(p, pi){
     if(!p.email || !p.email.trim()) return Promise.resolve({pi:pi, type:'email', skipped:true});
     if(!emailEnabled){
@@ -1684,7 +1783,7 @@ function executeSaveRound(){
     return EmailService.sendScorecardEmail(
       p.email.trim(), p.full_name,
       'Your PlayPal Scorecard — ' + courseName + ' · ' + today,
-      scorecardHtml, courseName, today
+      scorecardHtml, courseName, today, pdfBase64, 'playpal-scorecard-' + roundDateIso + '.pdf'
     ).then(function(){
       setStatusState('email', pi, 'done', 'Sent ✓');
       return {pi:pi, type:'email', ok:true};
@@ -1696,17 +1795,13 @@ function executeSaveRound(){
 
   var ghinPromises = state.players.map(function(p, pi){
     if(!p.ghin || !p.ghin.trim()) return Promise.resolve({pi:pi, type:'ghin', skipped:true});
-    if(!ghinEnabled){
-      setStatusState('ghin', pi, 'skipped', 'Config needed');
-      return Promise.resolve({pi:pi, type:'ghin', skipped:true});
-    }
     var rd = getPlayerRoundScore(pi);
     if(rd.played === 0) return Promise.resolve({pi:pi, type:'ghin', skipped:true});
     setStatusState('ghin', pi, 'sending', 'Posting…');
     return GHINService.submitRoundScore(p, {
       courseName: courseName,
       teeColor: teeColor,
-      date: new Date().toISOString().split('T')[0],
+      date: roundDateIso,
       totalScore: rd.total,
       holesPlayed: rd.played
     }).then(function(){
@@ -1725,7 +1820,23 @@ function executeSaveRound(){
       setTimeout(function(){ closeSaveModal(); }, 1800);
     }
   });
+  }).catch(function(err){
+    if(saveBtn) saveBtn.disabled = false;
+    alert('Could not generate PDF for email attachment: ' + err.message);
+  });
 }
+
+function generateRoundCode(){
+  var code = Math.random().toString(36).substring(2,8).toUpperCase();
+  document.getElementById('inp-round-code').value = code;
+  RealtimeService.join(code);
+}
+function joinRoundByCode(){
+  var code = (document.getElementById('inp-round-code').value || '').trim().toUpperCase();
+  if(!code){ alert('Enter a round code first.'); return; }
+  RealtimeService.join(code);
+}
+function leaveRoundSync(){ RealtimeService.leave(); }
 
 /* ============================================================
    PRINT SCORECARD BUILDER
@@ -1877,6 +1988,7 @@ window.addEventListener('DOMContentLoaded',function(){
   document.getElementById('active-course-banner').style.display = '';
   var parsed = parseCourseNameAndTee(NJ_COURSES[0].course_name);
   document.getElementById('acb-name').textContent = parsed.name + ' · ' + parsed.tee;
+  RealtimeService.setStatus(RealtimeService.isConfigured() ? 'Ready for live sync. Generate a code to start.' : 'Realtime sync is local-only until Supabase keys are configured in RealtimeService.');
 });
 </script>
 </body>
