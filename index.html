@@ -699,7 +699,9 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -898,53 +900,60 @@ var PlayerProfileService = (function(){
 })();
 
 /*
-  MULTIPLAYER ARCHITECTURE (legacy diagnosis + final design)
+  MULTIPLAYER ARCHITECTURE (ported from working cross-device sync app)
   -----------------------------------------------------------------------------
-  Legacy diagnosis (what was broken before this refactor):
-  1) Round code was created only in browser memory with Math.random().
-  2) No database row existed for a round, so Join Code had no durable source of truth.
-  3) Sync used ephemeral Realtime broadcast channels only, meaning refresh/new clients had no
-     guaranteed way to load canonical state and could diverge.
-  4) Clients could appear connected to the same code while holding different local snapshots.
-
-  Final architecture (single source of truth in database):
-  1) Round creation inserts exactly one row into public.live_rounds with a unique join_code.
-  2) join_code is the deterministic lookup key clients use to fetch the exact same round row.
-  3) The row's snapshot JSON is the authoritative multiplayer state (setup + scores + play state).
-  4) Every scoring/setup mutation writes snapshot back to that same row.
-  5) Realtime listens to Postgres UPDATE events on that exact row id.
-  6) On update, all clients rehydrate UI from database snapshot automatically.
-
-  If multiplayer breaks again, inspect these in order:
-  - Supabase table public.live_rounds schema/constraints/indexes,
-  - RealtimeService.createRound()/join()/publish() in this file,
-  - Realtime filter (id=eq.<round_id>) matching writes to the same table.
+  Canonical source of truth:
+  1) Firestore document jrlions_state/{sync_code} stores the full live snapshot.
+  2) Each client keeps one sync code in localStorage and attaches to that doc.
+  3) All state writes are full-snapshot writes with updatedAt timestamps.
+  4) onSnapshot streams remote updates; incoming snapshots rehydrate setup + play UI.
+  5) Debounced writes + updatedAt checks prevent stale overwrite and reduce write spam.
 */
 var RealtimeService = (function(){
-  // Frontend must use Supabase URL + anon key only (never secret/service role key).
-  var SUPABASE_URL = 'https://frkcfcvzhbiocuvuixfc.supabase.co';
-  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZya2NmY3Z6aGJpb2N1dnVpeGZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4MDMzNTEsImV4cCI6MjA5MjM3OTM1MX0.27mcGxUMKYj-v2CVM-i9k_NWG4ThJ0tEfSu-E3Q4xv8';
-  var ROUNDS_TABLE = 'live_rounds';
-  var SESSION_KEY = 'playpal.live_round_session.v1';
-  var client = null;
-  var channel = null;
+  var SYNC_CODE_KEY = 'playpal.sync_code.v1';
+  var MIN_CODE_LEN = 4;
+
+  var FIREBASE_CONFIG = {
+    apiKey: "AIzaSyDCe-JMzTG0Xg1CtXtYxHUvbgoX027gyhg",
+    authDomain: "jr-lions-gameday-dashboard.firebaseapp.com",
+    projectId: "jr-lions-gameday-dashboard",
+    storageBucket: "jr-lions-gameday-dashboard.firebasestorage.app",
+    messagingSenderId: "558627353317",
+    appId: "1:558627353317:web:81e9dbd7ef13f215145a0c"
+  };
+
+  var db = null;
   var currentCode = '';
-  var currentRoundId = null;
-  var currentRound = null;
+  var stateDoc = null;
+  var unsubState = null;
+  var ready = false;
+  var authReady = false;
+  var statusLabel = 'Local only';
+  var statusClass = 'off';
+
+  var writeTimer = null;
+  var lastWroteJSON = '';
+  var localUpdatedAt = 0;
   var applyingRemote = false;
-  var writeInFlight = false;
-  var writeQueued = false;
   var joinInFlight = false;
 
-  function isConfigured(){ return !!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase); }
-  function init(){
-    if(!isConfigured()) return false;
-    if(!client) client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    return true;
+  function _firebaseConfigured(){
+    return !!(
+      FIREBASE_CONFIG &&
+      FIREBASE_CONFIG.apiKey      && FIREBASE_CONFIG.apiKey      !== 'REPLACE_ME' &&
+      FIREBASE_CONFIG.authDomain  && FIREBASE_CONFIG.authDomain  !== 'REPLACE_ME' &&
+      FIREBASE_CONFIG.projectId   && FIREBASE_CONFIG.projectId   !== 'REPLACE_ME'
+    );
   }
-  function roundsTable(){ return client.schema('public').from(ROUNDS_TABLE); }
-  function setStatus(msg){ var el = document.getElementById('sync-status'); if(el) el.textContent = msg; }
-  function snapshotState(){ return {state:state, playState:playState, selectedCourseIdx:selectedCourseIdx, ts:Date.now()}; }
+  function setStatus(msg){
+    statusLabel = msg || statusLabel;
+    var el = document.getElementById('sync-status');
+    if(el) el.textContent = statusLabel;
+  }
+  function setStatusWithClass(cls, label){
+    statusClass = cls || statusClass;
+    setStatus(label || statusLabel);
+  }
   function getJoinLink(code){
     var c = String(code || currentCode || '').trim().toUpperCase();
     if(!c) return '';
@@ -957,18 +966,7 @@ var RealtimeService = (function(){
     btn.disabled = joinInFlight;
     btn.textContent = joinInFlight ? ('Joining ' + String(code || '').toUpperCase() + '…') : '🔗 Join Code';
   }
-  function setLoading(busy, code){ setJoinBusy(busy, code); }
-  function showError(msg){ setStatus(msg || 'Could not join round.'); }
-  function navigateToScorecard(){
-    showPlayActiveFromState();
-    switchTab('play');
-  }
-  function renderScorecard(){
-    if(currentRound && currentRound.snapshot){
-      applySnapshot(currentRound.snapshot);
-    }
-    buildScorecard();
-  }
+  function snapshotState(){ return {state:state, playState:playState, selectedCourseIdx:selectedCourseIdx, ts:Date.now()}; }
   function showPlayActiveFromState(){
     if(!playState) return;
     document.getElementById('play-start').style.display = 'none';
@@ -997,15 +995,51 @@ var RealtimeService = (function(){
       });
     }
   }
-  function saveSession(){
-    if(!currentRoundId || !currentCode){
-      localStorage.removeItem(SESSION_KEY);
-      return;
-    }
-    localStorage.setItem(SESSION_KEY, JSON.stringify({roundId:currentRoundId, joinCode:currentCode}));
+
+  function persistCode(code){
+    try{ localStorage.setItem(SYNC_CODE_KEY, code); }catch(_){ }
   }
-  function readSession(){
-    try{ return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); }catch(_){ return null; }
+  function readStoredCode(){
+    try{ return String(localStorage.getItem(SYNC_CODE_KEY) || ''); }catch(_){ return ''; }
+  }
+  function genSyncCode(){
+    var alpha = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    var out = '';
+    if(window.crypto && window.crypto.getRandomValues){
+      var buf = new Uint32Array(6);
+      window.crypto.getRandomValues(buf);
+      for(var i=0;i<6;i++) out += alpha[buf[i] % alpha.length];
+      return out;
+    }
+    for(var j=0;j<6;j++) out += alpha.charAt(Math.floor(Math.random()*alpha.length));
+    return out;
+  }
+  function normalizeSyncCode(v){
+    return String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+  }
+
+  function isConfigured(){
+    return !!(_firebaseConfigured() && window.firebase && window.firebase.firestore && window.firebase.auth);
+  }
+  function init(){
+    if(!isConfigured()) return false;
+    if(db) return true;
+    try{
+      if(!window.firebase.apps || !window.firebase.apps.length) window.firebase.initializeApp(FIREBASE_CONFIG);
+      db = window.firebase.firestore();
+      window.firebase.auth().signInAnonymously().then(function(){
+        authReady = true;
+        if(currentCode && !ready) cloudAttach(currentCode);
+      }).catch(function(err){
+        console.error('[sync] auth failed', err);
+        setStatusWithClass('err', 'Auth failed');
+      });
+      return true;
+    }catch(err){
+      console.error('[sync] init failed', err);
+      setStatusWithClass('err', 'Sync error');
+      return false;
+    }
   }
 
   function applySnapshot(snapshot){
@@ -1020,153 +1054,147 @@ var RealtimeService = (function(){
     applyingRemote = false;
   }
 
-  function generateJoinCode(){
-    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    var out = '';
-    for(var i=0;i<6;i++) out += chars.charAt(Math.floor(Math.random()*chars.length));
-    return out;
+  function cloudDetach(){
+    if(unsubState){ try{ unsubState(); }catch(_){ } }
+    unsubState = null;
+    stateDoc = null;
+    ready = false;
   }
 
-  function subscribeToRound(roundId){
-    if(!client || !roundId) return;
-    if(channel){ client.removeChannel(channel); channel = null; }
-    channel = client.channel('live_rounds_channel');
-    channel.on(
-      'postgres_changes',
-      {
-        event:'*',
-        schema:'public',
-        table:ROUNDS_TABLE,
-        filter:'id=eq.' + roundId
-      },
-      function(payload){
-        console.log('Realtime update:', payload);
-        currentRound = payload && payload.new ? payload.new : currentRound;
-        renderScorecard();
-      }
+  function cloudWriteState(immediate){
+    if(!db || !stateDoc || !authReady) return;
+    if(!ready){
+      setTimeout(function(){ cloudWriteState(immediate); }, 400);
+      return;
+    }
+    var snapshot = snapshotState();
+    var payloadJSON = JSON.stringify(snapshot);
+    if(payloadJSON === lastWroteJSON && !immediate) return;
+    lastWroteJSON = payloadJSON;
+    setStatusWithClass('busy', 'Saving…');
+    stateDoc.set({ snapshot:snapshot, updatedAt: localUpdatedAt || Date.now() })
+      .then(function(){ setStatusWithClass('ok', 'Connected to round ' + currentCode + '.'); })
+      .catch(function(err){ console.error('[sync] state write failed', err); setStatusWithClass('err', 'Sync error'); });
+  }
+
+  function cloudScheduleStateWrite(){
+    if(!db || !stateDoc) return;
+    clearTimeout(writeTimer);
+    writeTimer = setTimeout(function(){ writeTimer = null; cloudWriteState(false); }, 500);
+  }
+
+  function cloudOnStateSnapshot(snap){
+    if(!snap.exists){ cloudWriteState(true); return; }
+    var data = snap.data() || {};
+    if(!data.snapshot || !data.snapshot.state) return;
+
+    var incomingJSON = JSON.stringify(data.snapshot);
+    if(incomingJSON === lastWroteJSON) return;
+    var remoteStamp = typeof data.updatedAt === 'number' ? data.updatedAt : 0;
+    if(remoteStamp && remoteStamp < localUpdatedAt){ cloudWriteState(true); return; }
+
+    applySnapshot(data.snapshot);
+    localUpdatedAt = remoteStamp || Date.now();
+  }
+
+  function cloudAttach(code){
+    if(!db) return;
+    cloudDetach();
+    currentCode = code;
+    stateDoc = db.collection('jrlions_state').doc(code);
+    unsubState = stateDoc.onSnapshot(
+      function(snap){ cloudOnStateSnapshot(snap); },
+      function(err){ console.error('[sync] state listener', err); setStatusWithClass('err', 'Sync error'); }
     );
-    channel.subscribe(function(status){
-      if(status === 'SUBSCRIBED') setStatus('Connected to round ' + currentCode + '.');
-    });
+    ready = true;
+    setStatusWithClass('ok', 'Connected to round ' + currentCode + '.');
+    renderLiveShare();
   }
 
-  async function createRound(){
-    if(!init()){ setStatus('Realtime disabled. Configure Supabase credentials.'); return null; }
-    leave();
-    setStatus('Creating live round…');
-    setJoinBusy(false);
-
-    try{
-      for(var attempt=0;attempt<10;attempt++){
-        var code = generateJoinCode();
-        var payload = { join_code:code, snapshot:snapshotState() };
-        var res = await roundsTable().insert(payload).select('id,join_code,snapshot').single();
-        if(res.error){
-          if((res.error.code === '23505' || String(res.error.message||'').toLowerCase().indexOf('duplicate') !== -1) && attempt < 9){
-            continue;
-          }
-          var msg = String(res.error.message || 'Unknown error');
-          if(msg.indexOf("Could not find the table 'public.live_rounds' in the schema cache") !== -1){
-            msg += ' — run supabase/live_rounds.sql to create public.live_rounds and refresh PostgREST schema cache.';
-          }
-          setStatus('Create failed: ' + msg);
-          return null;
-        }
-
-        currentRound = res.data;
-        currentRoundId = res.data.id;
-        currentCode = res.data.join_code;
-        document.getElementById('inp-round-code').value = currentCode;
-        applySnapshot(res.data.snapshot);
-        saveSession();
-        subscribeToRound(res.data.id);
-        renderLiveShare();
-        setStatus('Round created. Share code ' + currentCode + '.');
-        return currentCode;
-      }
-
-      setStatus('Could not generate a unique code. Try again.');
-      return null;
-    }catch(err){
-      setStatus('Create failed: ' + (err && err.message ? err.message : String(err)));
+  function createRound(){
+    if(!init()){
+      setStatus('Realtime disabled. Configure Firebase credentials.');
       return null;
     }
+    leave(false);
+    var code = genSyncCode();
+    persistCode(code);
+    lastWroteJSON = '';
+    localUpdatedAt = Date.now();
+    document.getElementById('inp-round-code').value = code;
+    setStatusWithClass('busy', 'Connecting ' + code + '…');
+    cloudAttach(code);
+    showPlayActiveFromState();
+    return code;
   }
 
   async function join(code){
-    if(!init()){ setStatus('Realtime disabled. Configure Supabase credentials.'); return false; }
-    var joinCode = String(code || '').trim().toUpperCase();
-    if(!joinCode){ setStatus('Enter a valid round code.'); return false; }
+    if(!init()){ setStatus('Realtime disabled. Configure Firebase credentials.'); return false; }
+    var joinCode = normalizeSyncCode(code);
+    if(joinCode.length < MIN_CODE_LEN){ setStatus('Enter a valid round code.'); return false; }
 
-    leave();
-    setLoading(true, joinCode);
-    setStatus('Joining round ' + joinCode + '…');
+    setJoinBusy(true, joinCode);
+    setStatusWithClass('busy', 'Joining round ' + joinCode + '…');
 
-    try{
-      var res = await roundsTable().select('id,join_code,snapshot').eq('join_code', joinCode).single();
-      if(res.error || !res.data){
-        throw new Error('Invalid join code');
-      }
-
-      currentRound = res.data;
-      currentRoundId = res.data.id;
-      currentCode = res.data.join_code;
-      document.getElementById('inp-round-code').value = currentCode;
-      applySnapshot(res.data.snapshot);
-      saveSession();
-      subscribeToRound(res.data.id);
-      setLoading(false, joinCode);
-      navigateToScorecard();
-      setStatus('Joined round ' + currentCode + '.');
-      return true;
-    }catch(err){
-      console.error(err);
-      setLoading(false, joinCode);
-      showError('Could not join round');
-      return false;
-    }
-  }
-
-  function leave(){
-    if(channel && client){ client.removeChannel(channel); }
-    channel = null;
-    currentRound = null;
-    currentRoundId = null;
-    currentCode = '';
-    writeInFlight = false;
-    writeQueued = false;
-    localStorage.removeItem(SESSION_KEY);
+    leave(false);
+    persistCode(joinCode);
+    lastWroteJSON = '';
+    document.getElementById('inp-round-code').value = joinCode;
+    cloudAttach(joinCode);
+    showPlayActiveFromState();
     renderLiveShare();
-    setJoinBusy(false);
-    setStatus('Not connected to a live round.');
+    setJoinBusy(false, joinCode);
+    setStatusWithClass('ok', 'Joined round ' + joinCode + '.');
+    return true;
   }
 
-  async function flushWrite(){
-    if(!client || !currentRoundId || applyingRemote) return;
-    if(writeInFlight){ writeQueued = true; return; }
-
-    do {
-      writeQueued = false;
-      writeInFlight = true;
-      var res = await roundsTable().update({snapshot:snapshotState()}).eq('id', currentRoundId);
-      writeInFlight = false;
-      if(res.error){ setStatus('Sync write failed: ' + res.error.message); return; }
-    } while(writeQueued);
+  function leave(clearStoredCode){
+    cloudDetach();
+    currentCode = '';
+    lastWroteJSON = '';
+    localUpdatedAt = 0;
+    clearTimeout(writeTimer);
+    writeTimer = null;
+    setJoinBusy(false);
+    if(clearStoredCode !== false){
+      try{ localStorage.removeItem(SYNC_CODE_KEY); }catch(_){ }
+    }
+    renderLiveShare();
+    setStatusWithClass('off', 'Not connected to a live round.');
   }
 
   function publish(){
-    if(!currentRoundId || applyingRemote || joinInFlight) return;
-    flushWrite();
+    if(!currentCode || applyingRemote || joinInFlight) return;
+    localUpdatedAt = Date.now();
+    cloudScheduleStateWrite();
   }
 
   async function restoreSession(){
-    var session = readSession();
-    if(!session || !session.joinCode) return false;
-    return join(session.joinCode);
+    if(!init()) return false;
+    var code = normalizeSyncCode(readStoredCode());
+    if(code.length < MIN_CODE_LEN) return false;
+    document.getElementById('inp-round-code').value = code;
+    await join(code);
+    return true;
   }
+
   function getCurrentCode(){ return currentCode; }
   function getJoinLinkForCurrent(){ return getJoinLink(currentCode); }
-  function isConnected(){ return !!currentRoundId; }
+  function isConnected(){ return !!currentCode; }
+
+  window.addEventListener('beforeunload', function(){
+    if(writeTimer){ clearTimeout(writeTimer); writeTimer = null; cloudWriteState(true); }
+  });
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'hidden' && writeTimer){
+      clearTimeout(writeTimer);
+      writeTimer = null;
+      cloudWriteState(true);
+    }
+  });
+  window.addEventListener('online', function(){
+    if(currentCode) cloudWriteState(true);
+  });
 
   return {
     isConfigured:isConfigured,
@@ -1181,6 +1209,8 @@ var RealtimeService = (function(){
     getJoinLinkForCurrent:getJoinLinkForCurrent
   };
 })();
+
+;
 
 /* ============================================================
    PLAY STATE
@@ -2255,7 +2285,7 @@ window.addEventListener('DOMContentLoaded',function(){
   document.getElementById('active-course-banner').style.display = '';
   var parsed = parseCourseNameAndTee(NJ_COURSES[0].course_name);
   document.getElementById('acb-name').textContent = parsed.name + ' · ' + parsed.tee;
-  RealtimeService.setStatus(RealtimeService.isConfigured() ? 'Ready for live sync. Create a round or join with a code.' : 'Realtime disabled. Configure Supabase credentials.');
+  RealtimeService.setStatus(RealtimeService.isConfigured() ? 'Ready for live sync. Create a round or join with a code.' : 'Realtime disabled. Configure Firebase credentials.');
 
   var deepLinkCode = new URLSearchParams(window.location.search).get('join');
   if(deepLinkCode){
