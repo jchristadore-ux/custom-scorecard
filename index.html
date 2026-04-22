@@ -873,7 +873,7 @@ var BB = {
 
 var state = deepClone(BB);
 var playState = null;
-var selectedCourseIdx = 0; // Beaver Brook is default
+var selectedCourseIdx = null;
 var playerProfiles = [];
 var selectedPlayerIds = [];
 var editingProfileId = null;
@@ -1047,7 +1047,7 @@ var RealtimeService = (function(){
     applyingRemote = true;
     state = snapshot.state;
     playState = snapshot.playState;
-    selectedCourseIdx = snapshot.selectedCourseIdx || 0;
+    selectedCourseIdx = typeof snapshot.selectedCourseIdx === 'number' ? snapshot.selectedCourseIdx : null;
     loadStateToUI();
     if(playState) showPlayActiveFromState();
     renderLiveShare();
@@ -1340,6 +1340,23 @@ function selectCourse(idx){
 
   rebuild();
   renderCourseList(document.getElementById('course-search').value);
+}
+
+function blankHoles(){
+  return Array.from({length:18}, function(){
+    return {par:'', yards:'', hdcp:''};
+  });
+}
+
+function makeInitialSetupState(){
+  return {
+    course_name:'',
+    tee_color:'',
+    group_name:'',
+    players:[],
+    holes:blankHoles(),
+    formats:deepClone(BB.formats)
+  };
 }
 
 /* ============================================================
@@ -2268,23 +2285,13 @@ function colGroupHTML(){
    INIT
    ============================================================ */
 window.addEventListener('DOMContentLoaded',function(){
-  // Pre-populate with Beaver Brook (index 0)
-  state = deepClone(BB);
+  state = makeInitialSetupState();
   playerProfiles = PlayerProfileService.listProfiles();
-  try{ selectedPlayerIds = JSON.parse(localStorage.getItem('playpal.selected_player_ids.v1') || '[]'); }catch(_){ selectedPlayerIds = []; }
-  selectedPlayerIds = selectedPlayerIds.filter(function(id){
-    return playerProfiles.some(function(p){ return p.id === id; });
-  });
-  if(!selectedPlayerIds.length && playerProfiles.length){
-    selectedPlayerIds = playerProfiles.slice(0,4).map(function(p){ return p.id; });
-  }
+  selectedPlayerIds = [];
+  try{ localStorage.removeItem('playpal.selected_player_ids.v1'); }catch(_){ }
   loadStateToUI();
-  syncSelectionToState();
   renderCourseList();
-  // Show active course banner for default
-  document.getElementById('active-course-banner').style.display = '';
-  var parsed = parseCourseNameAndTee(NJ_COURSES[0].course_name);
-  document.getElementById('acb-name').textContent = parsed.name + ' · ' + parsed.tee;
+  document.getElementById('active-course-banner').style.display = 'none';
   RealtimeService.setStatus(RealtimeService.isConfigured() ? 'Ready for live sync. Create a round or join with a code.' : 'Realtime disabled. Configure Firebase credentials.');
 
   var deepLinkCode = new URLSearchParams(window.location.search).get('join');
