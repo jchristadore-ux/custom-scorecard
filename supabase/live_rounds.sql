@@ -1,6 +1,8 @@
 -- Multiplayer foundation table for PlayPal.
 -- Join Code is stored once per round and is the deterministic lookup key.
 
+create extension if not exists pgcrypto;
+
 create table if not exists public.live_rounds (
   id uuid primary key default gen_random_uuid(),
   join_code text not null,
@@ -32,7 +34,18 @@ for each row
 execute function public.set_live_rounds_updated_at();
 
 alter table public.live_rounds replica identity full;
-alter publication supabase_realtime add table public.live_rounds;
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'live_rounds'
+  ) then
+    alter publication supabase_realtime add table public.live_rounds;
+  end if;
+end$$;
 
 -- RLS example for an anonymous front-end app. Tighten this for production auth.
 alter table public.live_rounds enable row level security;
@@ -69,3 +82,9 @@ begin
       for update using (true) with check (true);
   end if;
 end$$;
+
+grant usage on schema public to anon, authenticated, service_role;
+grant select, insert, update on table public.live_rounds to anon, authenticated, service_role;
+
+-- Force PostgREST to refresh schema cache so newly-created table is immediately available.
+select pg_notify('pgrst', 'reload schema');
