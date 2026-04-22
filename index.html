@@ -808,15 +808,11 @@ var NJ_COURSES = [
 
 /* ============================================================
    EMAIL SERVICE LAYER
-   Uses EmailJS (https://www.emailjs.com) — free tier: 200 emails/month
-   Setup: Create account, add Gmail service, create template, plug in IDs below.
-   Template variables: {{to_email}}, {{to_name}}, {{subject}}, {{scorecard_html}}, {{course_name}}, {{round_date}}, {{scorecard_pdf_base64}}, {{scorecard_pdf_name}}
    ============================================================ */
 var EmailService = (function(){
-  // Configure these with your EmailJS credentials
-  var EMAILJS_SERVICE_ID = 'service_l1hju5b';   // e.g. 'service_abc123'
-  var EMAILJS_TEMPLATE_ID = 'template_eaj9hfo';  // e.g. 'template_xyz789'
-  var EMAILJS_PUBLIC_KEY = 'NNXLB9T2e0L-K7j61';   // e.g. 'user_ABCDEFGHIJK'
+  var EMAILJS_SERVICE_ID = 'service_l1hju5b';
+  var EMAILJS_TEMPLATE_ID = 'template_eaj9hfo';
+  var EMAILJS_PUBLIC_KEY = 'NNXLB9T2e0L-K7j61';
 
   var _initialized = false;
 
@@ -834,7 +830,7 @@ var EmailService = (function(){
 
   function sendScorecardEmail(toEmail, toName, subject, scorecardHtml, courseName, roundDate, scorecardPdfBase64, scorecardPdfName){
     if(!isConfigured()){
-      return Promise.reject(new Error('EmailJS not configured — set SERVICE_ID, TEMPLATE_ID, PUBLIC_KEY in EmailService'));
+      return Promise.reject(new Error('EmailJS not configured'));
     }
     init();
     if(typeof emailjs === 'undefined'){
@@ -911,16 +907,6 @@ var PlayerProfileService = (function(){
   return {listProfiles:listProfiles, upsert:upsert, remove:remove};
 })();
 
-/*
-  MULTIPLAYER ARCHITECTURE (ported from working cross-device sync app)
-  -----------------------------------------------------------------------------
-  Canonical source of truth:
-  1) Firestore document jrlions_state/{sync_code} stores the full live snapshot.
-  2) Each client keeps one sync code in localStorage and attaches to that doc.
-  3) All state writes are full-snapshot writes with updatedAt timestamps.
-  4) onSnapshot streams remote updates; incoming snapshots rehydrate setup + play UI.
-  5) Debounced writes + updatedAt checks prevent stale overwrite and reduce write spam.
-*/
 var RealtimeService = (function(){
   var SYNC_CODE_KEY = 'playpal.sync_code.v1';
   var MIN_CODE_LEN = 4;
@@ -967,11 +953,14 @@ var RealtimeService = (function(){
     statusClass = cls || statusClass;
     setStatus(label || statusLabel);
   }
+
+  /* ── FIX: QR/join URL always points to the hosted join page with ?code= ── */
   function getJoinLink(code){
     var c = String(code || currentCode || '').trim().toUpperCase();
     if(!c) return '';
-    return window.location.origin + '/round/' + encodeURIComponent(c);
+    return 'https://jchristadore-ux.github.io/join?code=' + encodeURIComponent(c);
   }
+
   function setJoinBusy(busy, code){
     joinInFlight = !!busy;
     var btn = document.getElementById('btn-join-round');
@@ -1301,7 +1290,6 @@ function toParClass(pi){
    COURSE SELECTION
    ============================================================ */
 function parseCourseNameAndTee(fullName){
-  // "Beaver Brook Country Club (Annandale, NJ) — Black Tees"
   var dashIdx = fullName.indexOf(' — ');
   if(dashIdx !== -1){
     return {name: fullName.substring(0, dashIdx), tee: fullName.substring(dashIdx + 3)};
@@ -1350,11 +1338,9 @@ function selectCourse(idx){
   var course = NJ_COURSES[idx];
   var parsed = parseCourseNameAndTee(course.course_name);
 
-  // Populate course name + tee (keep group as-is)
   document.getElementById('inp-course').value = parsed.name.toUpperCase();
   document.getElementById('inp-tee').value = parsed.tee;
 
-  // Load hole data
   course.holes.forEach(function(h, i){
     var n = i + 1;
     document.getElementById('par-' + n).value = h.par !== null ? h.par : '';
@@ -1362,7 +1348,6 @@ function selectCourse(idx){
     document.getElementById('hcp-' + n).value = h.hcp !== null ? h.hcp : '';
   });
 
-  // Update active course banner
   var banner = document.getElementById('active-course-banner');
   banner.style.display = '';
   document.getElementById('acb-name').textContent = parsed.name + (parsed.tee ? ' · ' + parsed.tee : '');
@@ -1391,12 +1376,15 @@ function makeInitialSetupState(){
 /* ============================================================
    TAB SWITCHING
    ============================================================ */
+
+/* ── FIX: extractJoinCodeFromRoute now reads ?code= param (QR target) ── */
 function extractJoinCodeFromRoute(){
   var path = (window.location.pathname || '').replace(/\/+$/,'');
   var roundMatch = path.match(/\/round\/([A-Za-z0-9_-]+)$/i);
   if(roundMatch && roundMatch[1]) return roundMatch[1].toUpperCase();
-  var joinMatch = new URLSearchParams(window.location.search).get('join');
-  return joinMatch ? joinMatch.toUpperCase() : '';
+  var params = new URLSearchParams(window.location.search);
+  var codeMatch = params.get('code') || params.get('join');
+  return codeMatch ? codeMatch.toUpperCase() : '';
 }
 
 function updateRouteForMode(){
@@ -2051,7 +2039,6 @@ function buildScorecardTextForPlayer(pi){
   lines.push('TO PAR: ' + (played === 0 ? '—' : grandDiff === 0 ? 'E' : grandDiff > 0 ? '+' + grandDiff : String(grandDiff)));
   lines.push('');
 
-  // Wolf points if enabled
   var wolfFmt = state.formats.find(function(f){ return f.id==='wolf'&&f.enabled; });
   if(wolfFmt && playState){
     lines.push('WOLF POINTS: ' + calcWolfTotalPts(pi));
@@ -2073,7 +2060,6 @@ function buildScorecardTextForPlayer(pi){
 }
 
 function buildScorecardHtmlForEmail(){
-  // Full HTML scorecard suitable for email body
   var courseName = state.course_name || 'Golf Course';
   var teeColor = state.tee_color || '';
   var today = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
@@ -2083,7 +2069,6 @@ function buildScorecardHtmlForEmail(){
   html += '<div style="font-size:12px;color:rgba(212,175,119,0.8);margin-top:2px;">' + today + '</div></div>';
   html += '<div style="padding:16px 20px;">';
 
-  // Score table
   html += '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px;">';
   html += '<tr style="background:#0A5C3E;"><th style="padding:6px 4px;text-align:left;color:#D4AF77;">Player</th>';
   for(var i=1;i<=9;i++) html += '<th style="padding:4px 2px;color:white;">' + i + '</th>';
@@ -2117,7 +2102,6 @@ function openSaveModal(){
   var today = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   var courseName = state.course_name || 'Golf Course';
 
-  // Score summary
   var html = '<div class="save-section"><div class="save-section-title">Round Summary — ' + esc(courseName) + '</div>';
   state.players.forEach(function(p, pi){
     var rd = getPlayerRoundScore(pi);
@@ -2131,7 +2115,6 @@ function openSaveModal(){
   });
   html += '</div>';
 
-  // Email status
   html += '<div class="save-section"><div class="save-section-title">📧 Email Scorecards</div>';
   html += '<div class="security-note">Automatic email delivery is disabled because player profiles no longer store email addresses. Use print/PDF export to share scorecards.</div>';
   html += '</div>';
@@ -2360,21 +2343,27 @@ window.addEventListener('DOMContentLoaded',function(){
   document.getElementById('active-course-banner').style.display = 'none';
   RealtimeService.setStatus(RealtimeService.isConfigured() ? 'Choose Create Round or Join Round to begin.' : 'Realtime disabled. Configure Firebase credentials.');
 
+  /* ── FIX: extractJoinCodeFromRoute now picks up ?code= from QR scans ── */
   var deepLinkCode = extractJoinCodeFromRoute();
   var path = (window.location.pathname || '').replace(/\/+$/,'');
+
   if(path === '/join'){
+    /* Always show join UI when landing on /join */
     setAppMode(JOIN_ROUND_MODE, {skipRoute:true});
-  }else if(path === '/setup'){
+  } else if(path === '/setup'){
     setAppMode(CREATE_ROUND_MODE, {skipRoute:true});
   }
 
   if(deepLinkCode){
+    /* Pre-fill the join code input */
     var joinInput = document.getElementById('inp-round-code-join');
     if(joinInput) joinInput.value = deepLinkCode.toUpperCase();
+    /* Force join mode — never create */
     setAppMode(JOIN_ROUND_MODE, {skipRoute:true});
     RealtimeService.join(deepLinkCode);
     return;
   }
+
   RealtimeService.restoreSession();
 });
 </script>
