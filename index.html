@@ -519,7 +519,7 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
         <button class="btn btn-danger" onclick="leaveRoundSync()">⛔ Leave Sync</button>
       </div>
     </div>
-    <div class="sync-status" id="sync-status">Realtime sync is local-only until Supabase keys are configured in RealtimeService.</div>
+    <div class="sync-status" id="sync-status">Live sync uses database-backed Join Codes. Create or join a round to connect.</div>
   </div>
 
   <div style="padding:8px 0 16px;text-align:center;">
@@ -799,7 +799,7 @@ var GHINService = (function(){
   }
 
   return {hasPlayerAuth:hasPlayerAuth, submitRoundScore:submitRoundScore};
-})();;
+})();
 
 /* ============================================================
    EMAIL SERVICE LAYER
@@ -883,13 +883,40 @@ var state = deepClone(BB);
 var playState = null;
 var selectedCourseIdx = 0; // Beaver Brook is default
 
+/*
+  MULTIPLAYER ARCHITECTURE (legacy diagnosis + final design)
+  -----------------------------------------------------------------------------
+  Legacy diagnosis (what was broken before this refactor):
+  1) Round code was created only in browser memory with Math.random().
+  2) No database row existed for a round, so Join Code had no durable source of truth.
+  3) Sync used ephemeral Realtime broadcast channels only, meaning refresh/new clients had no
+     guaranteed way to load canonical state and could diverge.
+  4) Clients could appear connected to the same code while holding different local snapshots.
+
+  Final architecture (single source of truth in database):
+  1) Round creation inserts exactly one row into public.live_rounds with a unique join_code.
+  2) join_code is the deterministic lookup key clients use to fetch the exact same round row.
+  3) The row's snapshot JSON is the authoritative multiplayer state (setup + scores + play state).
+  4) Every scoring/setup mutation writes snapshot back to that same row.
+  5) Realtime listens to Postgres UPDATE events on that exact row id.
+  6) On update, all clients rehydrate UI from database snapshot automatically.
+
+  If multiplayer breaks again, inspect these in order:
+  - Supabase table public.live_rounds schema/constraints/indexes,
+  - RealtimeService.createRound()/join()/publish() in this file,
+  - Realtime filter (id=eq.<round_id>) matching writes to the same table.
+*/
 var RealtimeService = (function(){
-  var SUPABASE_URL = 'https://frkcfcvzhbiocuvuixfc.supabase.co/rest/v1/';
+  var SUPABASE_URL = 'https://frkcfcvzhbiocuvuixfc.supabase.co';
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZya2NmY3Z6aGJpb2N1dnVpeGZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4MDMzNTEsImV4cCI6MjA5MjM3OTM1MX0.27mcGxUMKYj-v2CVM-i9k_NWG4ThJ0tEfSu-E3Q4xv8';
+  var ROUNDS_TABLE = 'live_rounds';
   var client = null;
   var channel = null;
   var currentCode = '';
+  var currentRoundId = null;
   var applyingRemote = false;
+  var writeInFlight = false;
+  var writeQueued = false;
 
   function isConfigured(){ return !!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase); }
   function init(){
@@ -899,43 +926,131 @@ var RealtimeService = (function(){
   }
   function setStatus(msg){ var el = document.getElementById('sync-status'); if(el) el.textContent = msg; }
   function snapshotState(){ return {state:state, playState:playState, selectedCourseIdx:selectedCourseIdx, ts:Date.now()}; }
-  function applyRemoteSnapshot(payload){
-    if(!payload || !payload.state) return;
+
+  function applySnapshot(snapshot){
+    if(!snapshot || !snapshot.state) return;
     applyingRemote = true;
-    state = payload.state;
-    playState = payload.playState;
-    selectedCourseIdx = payload.selectedCourseIdx || 0;
+    state = snapshot.state;
+    playState = snapshot.playState;
+    selectedCourseIdx = snapshot.selectedCourseIdx || 0;
     loadStateToUI();
     if(playState){
       document.getElementById('play-start').style.display = 'none';
       document.getElementById('play-active').style.display = 'block';
-      buildHoleNav(); buildFmtTabs(); goHole(playState.currentHole || 0);
+      buildHoleNav();
+      buildFmtTabs();
+      goHole(playState.currentHole || 0);
     }
     applyingRemote = false;
   }
-  function join(code){
-    if(!init()) { setStatus('Realtime disabled. Add SUPABASE_URL + SUPABASE_ANON_KEY in RealtimeService.'); return; }
-    leave();
-    currentCode = code.toUpperCase();
-    channel = client.channel('round-' + currentCode);
-    channel.on('broadcast', {event:'round-sync'}, function(msg){
-      if(msg && msg.payload && msg.payload.snapshot){ applyRemoteSnapshot(msg.payload.snapshot); setStatus('Synced live on code ' + currentCode + '.'); }
-    });
-    channel.subscribe(function(status){
-      if(status === 'SUBSCRIBED'){
-        setStatus('Connected to live round ' + currentCode + '.');
-        publish();
+
+  function generateJoinCode(){
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    var out = '';
+    for(var i=0;i<6;i++) out += chars.charAt(Math.floor(Math.random()*chars.length));
+    return out;
+  }
+
+  function subscribeToRound(){
+    if(!client || !currentRoundId) return;
+    if(channel){ client.removeChannel(channel); channel = null; }
+    channel = client.channel('round-db-' + currentRoundId);
+    channel.on('postgres_changes', {
+      event:'UPDATE',
+      schema:'public',
+      table:ROUNDS_TABLE,
+      filter:'id=eq.' + currentRoundId
+    }, function(payload){
+      if(payload && payload.new && payload.new.snapshot){
+        applySnapshot(payload.new.snapshot);
+        setStatus('Live sync active on code ' + currentCode + '.');
       }
     });
+    channel.subscribe(function(status){
+      if(status === 'SUBSCRIBED') setStatus('Connected to round ' + currentCode + '.');
+    });
   }
+
+  async function createRound(){
+    if(!init()){ setStatus('Realtime disabled. Configure Supabase credentials.'); return; }
+    leave();
+    setStatus('Creating live round…');
+
+    for(var attempt=0;attempt<10;attempt++){
+      var code = generateJoinCode();
+      var payload = { join_code:code, snapshot:snapshotState() };
+      var res = await client.from(ROUNDS_TABLE).insert(payload).select('id,join_code,snapshot').single();
+      if(res.error){
+        if((res.error.code === '23505' || String(res.error.message||'').toLowerCase().indexOf('duplicate') !== -1) && attempt < 9){
+          continue;
+        }
+        setStatus('Create failed: ' + res.error.message);
+        return;
+      }
+
+      currentRoundId = res.data.id;
+      currentCode = res.data.join_code;
+      document.getElementById('inp-round-code').value = currentCode;
+      applySnapshot(res.data.snapshot);
+      subscribeToRound();
+      setStatus('Round created. Share code ' + currentCode + '.');
+      return currentCode;
+    }
+
+    setStatus('Could not generate a unique code. Try again.');
+  }
+
+  async function join(code){
+    if(!init()){ setStatus('Realtime disabled. Configure Supabase credentials.'); return; }
+    var joinCode = String(code || '').trim().toUpperCase();
+    if(!joinCode){ setStatus('Enter a valid round code.'); return; }
+
+    leave();
+    setStatus('Joining round ' + joinCode + '…');
+
+    var res = await client.from(ROUNDS_TABLE).select('id,join_code,snapshot').eq('join_code', joinCode).maybeSingle();
+    if(res.error){ setStatus('Join failed: ' + res.error.message); return; }
+    if(!res.data){ setStatus('Round code ' + joinCode + ' was not found.'); return; }
+
+    currentRoundId = res.data.id;
+    currentCode = res.data.join_code;
+    document.getElementById('inp-round-code').value = currentCode;
+    applySnapshot(res.data.snapshot);
+    subscribeToRound();
+    setStatus('Joined round ' + currentCode + '.');
+  }
+
   function leave(){
     if(channel && client){ client.removeChannel(channel); }
     channel = null;
+    currentRoundId = null;
     currentCode = '';
+    writeInFlight = false;
+    writeQueued = false;
     setStatus('Not connected to a live round.');
   }
-  function publish(){ if(!channel || applyingRemote) return; channel.send({type:'broadcast', event:'round-sync', payload:{snapshot:snapshotState()}}); }
-  return {isConfigured:isConfigured, join:join, leave:leave, publish:publish, setStatus:setStatus};
+
+  async function flushWrite(){
+    if(!client || !currentRoundId || applyingRemote) return;
+    if(writeInFlight){ writeQueued = true; return; }
+
+    do {
+      writeQueued = false;
+      writeInFlight = true;
+      var res = await client.from(ROUNDS_TABLE).update({snapshot:snapshotState()}).eq('id', currentRoundId);
+      writeInFlight = false;
+      if(res.error){ setStatus('Sync write failed: ' + res.error.message); return; }
+    } while(writeQueued);
+  }
+
+  function publish(){
+    if(!currentRoundId || applyingRemote) return;
+    flushWrite();
+  }
+
+  function isConnected(){ return !!currentRoundId; }
+
+  return {isConfigured:isConfigured, createRound:createRound, join:join, leave:leave, publish:publish, setStatus:setStatus, isConnected:isConnected};
 })();
 
 /* ============================================================
@@ -1827,9 +1942,7 @@ function executeSaveRound(){
 }
 
 function generateRoundCode(){
-  var code = Math.random().toString(36).substring(2,8).toUpperCase();
-  document.getElementById('inp-round-code').value = code;
-  RealtimeService.join(code);
+  RealtimeService.createRound();
 }
 function joinRoundByCode(){
   var code = (document.getElementById('inp-round-code').value || '').trim().toUpperCase();
@@ -1988,7 +2101,7 @@ window.addEventListener('DOMContentLoaded',function(){
   document.getElementById('active-course-banner').style.display = '';
   var parsed = parseCourseNameAndTee(NJ_COURSES[0].course_name);
   document.getElementById('acb-name').textContent = parsed.name + ' · ' + parsed.tee;
-  RealtimeService.setStatus(RealtimeService.isConfigured() ? 'Ready for live sync. Generate a code to start.' : 'Realtime sync is local-only until Supabase keys are configured in RealtimeService.');
+  RealtimeService.setStatus(RealtimeService.isConfigured() ? 'Ready for live sync. Create a round or join with a code.' : 'Realtime disabled. Configure Supabase credentials.');
 });
 </script>
 </body>

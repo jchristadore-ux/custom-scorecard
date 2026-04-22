@@ -64,29 +64,31 @@ This project is a single-page golf scorecard app (`index.html`) with:
 
 ---
 
-## 3) Unique round code + realtime multi-device tracking
+## 3) Database-backed join code + realtime multi-device tracking
 
 ### What is implemented
-- New **Live Round Sync** section:
-  - Generate Code
-  - Join Code
-  - Leave Sync
-- Realtime sync abstraction is implemented with Supabase Realtime channels.
-- Code is used as channel suffix: `round-<CODE>`.
+- Join Code is now a database key, not just an in-memory channel name.
+- `public.live_rounds` stores exactly one row per round:
+  - `join_code` (unique, indexed)
+  - `snapshot` (authoritative JSON state)
+- Every client joins by querying `join_code` and loading the same row.
+- Score/setup writes update that same row.
+- Realtime listeners subscribe to Postgres `UPDATE` events filtered by `round_id`.
 
 ### Setup steps
 1. Create a Supabase project.
-2. In `RealtimeService` in `index.html`, set:
-   - `SUPABASE_URL`
+2. Run `supabase/live_rounds.sql` in the Supabase SQL editor.
+3. In `RealtimeService` in `index.html`, set:
+   - `SUPABASE_URL` (project URL, no `/rest/v1` suffix)
    - `SUPABASE_ANON_KEY`
-3. Ensure Realtime is enabled in the Supabase project.
-4. On one device: click **Generate Code**.
-5. On other devices: enter code and click **Join Code**.
-6. Scoring/setup mutations broadcast snapshots in near realtime.
+4. On one device: click **Generate Code** (creates a DB row and returns Join Code).
+5. On other devices: enter code and click **Join Code** (queries DB row + subscribes).
+6. Any score change writes snapshot to DB and broadcasts via Realtime to all clients.
 
 ### Behavior
-- If Supabase keys are blank, app shows local-only status (no cross-device sync).
-- Once configured, devices connected to the same code receive snapshot updates.
+- Database is the single source of truth.
+- Refreshing either browser rehydrates from the same `snapshot` row.
+- No polling is used; updates are realtime Postgres events only.
 
 ---
 
