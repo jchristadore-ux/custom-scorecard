@@ -37,6 +37,11 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
 .setup-header{padding:28px 0 12px;text-align:center;}
 .setup-header h1{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;letter-spacing:4px;background:linear-gradient(135deg,var(--green-bright) 0%,var(--gold) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .setup-header p{font-size:0.85rem;color:var(--text-dim);margin-top:6px;}
+.mode-switch{display:flex;gap:8px;margin:10px 0 16px;}
+.mode-btn{flex:1;}
+.mode-btn.active{border-color:var(--green-bright);color:var(--green-bright);background:rgba(0,200,83,0.08);}
+.join-entry{display:none;}
+.join-entry.active{display:block;}
 .section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
 .section-title{font-family:'Bebas Neue',sans-serif;font-size:0.85rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
 .section-title::before{content:'';display:inline-block;width:3px;height:14px;background:linear-gradient(to bottom,var(--green-bright),var(--gold));border-radius:2px;}
@@ -407,6 +412,24 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
     <h1>PlayPal</h1>
     <p>Custom scorecard for your golf crew. Let's play.</p>
   </div>
+  <div class="mode-switch">
+    <button class="btn mode-btn active" id="btn-mode-create" onclick="setAppMode(CREATE_ROUND_MODE)">⚙️ Create Round</button>
+    <button class="btn mode-btn" id="btn-mode-join" onclick="setAppMode(JOIN_ROUND_MODE)">🔗 Join Round</button>
+  </div>
+
+  <div class="section join-entry" id="join-round-entry">
+    <div class="section-title">Join Existing Round</div>
+    <div class="form-group">
+      <label>Join Code</label>
+      <input type="text" id="inp-round-code-join" placeholder="ABC123" autocomplete="off">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gold" id="btn-join-round" onclick="joinRoundByCode()">🔗 Join Round</button>
+    </div>
+    <div class="sync-status" id="sync-status">Enter a valid join code to open the active live scorecard.</div>
+  </div>
+
+  <div id="create-round-sections">
 
   <!-- COURSE SELECTION -->
   <div class="section">
@@ -531,25 +554,9 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
     <div id="formats-list"></div>
   </div>
 
-
-  <div class="section">
-    <div class="section-title">Live Round Sync</div>
-    <div class="sync-code-wrap">
-      <div class="form-group">
-        <label>Round Code</label>
-        <input type="text" id="inp-round-code" placeholder="ABC123" autocomplete="off">
-      </div>
-      <div class="btn-row">
-        <button class="btn" onclick="generateRoundCode()">🎟 Generate Code</button>
-        <button class="btn btn-gold" id="btn-join-round" onclick="joinRoundByCode()">🔗 Join Code</button>
-        <button class="btn btn-danger" onclick="leaveRoundSync()">⛔ Leave Sync</button>
-      </div>
-    </div>
-    <div class="sync-status" id="sync-status">Live sync uses database-backed Join Codes. Create or join a round to connect.</div>
-  </div>
-
   <div style="padding:8px 0 16px;text-align:center;">
     <button class="btn btn-gold btn-start-round" onclick="switchTab('play')">⛳ TEE IT UP →</button>
+  </div>
   </div>
 </div>
 </div>
@@ -574,6 +581,7 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
         <div class="live-share-actions">
           <button class="btn" onclick="copyRoundCode()">Copy Code</button>
           <button class="btn" onclick="copyRoundJoinLink()">Copy Join Link</button>
+          <button class="btn btn-danger" onclick="leaveRoundSync()">Leave Sync</button>
         </div>
       </div>
       <div class="qr-wrap" id="live-share-qr"></div>
@@ -877,6 +885,10 @@ var selectedCourseIdx = null;
 var playerProfiles = [];
 var selectedPlayerIds = [];
 var editingProfileId = null;
+var CREATE_ROUND_MODE = 'CREATE_ROUND_MODE';
+var JOIN_ROUND_MODE = 'JOIN_ROUND_MODE';
+var ACTIVE_ROUND_MODE = 'ACTIVE_ROUND_MODE';
+var appMode = CREATE_ROUND_MODE;
 
 var PlayerProfileService = (function(){
   var PROFILES_KEY = 'playpal.player_profiles.v1';
@@ -936,6 +948,7 @@ var RealtimeService = (function(){
   var localUpdatedAt = 0;
   var applyingRemote = false;
   var joinInFlight = false;
+  var allowCreateIfMissing = false;
 
   function _firebaseConfigured(){
     return !!(
@@ -957,7 +970,7 @@ var RealtimeService = (function(){
   function getJoinLink(code){
     var c = String(code || currentCode || '').trim().toUpperCase();
     if(!c) return '';
-    return window.location.origin + window.location.pathname + '?join=' + encodeURIComponent(c);
+    return window.location.origin + '/round/' + encodeURIComponent(c);
   }
   function setJoinBusy(busy, code){
     joinInFlight = !!busy;
@@ -969,11 +982,18 @@ var RealtimeService = (function(){
   function snapshotState(){ return {state:state, playState:playState, selectedCourseIdx:selectedCourseIdx, ts:Date.now()}; }
   function showPlayActiveFromState(){
     if(!playState) return;
+    setAppMode(ACTIVE_ROUND_MODE, {skipRoute:true});
+    switchTab('play');
     document.getElementById('play-start').style.display = 'none';
     document.getElementById('play-active').style.display = 'block';
     buildHoleNav();
     buildFmtTabs();
     goHole(playState.currentHole || 0);
+    if(currentCode){
+      try{
+        window.history.replaceState({}, '', '/round/' + encodeURIComponent(currentCode));
+      }catch(_){ }
+    }
   }
   function renderLiveShare(){
     var panel = document.getElementById('live-share-panel');
@@ -989,8 +1009,9 @@ var RealtimeService = (function(){
     panel.style.display = 'flex';
     codeEl.textContent = currentCode;
     qrEl.innerHTML = '<canvas id="qr"></canvas>';
+    var joinLink = getJoinLink(currentCode);
     if(window.QRCode && typeof window.QRCode.toCanvas === 'function'){
-      window.QRCode.toCanvas(document.getElementById('qr'), currentCode, function(err){
+      window.QRCode.toCanvas(document.getElementById('qr'), joinLink, function(err){
         if(err) console.error('QR generation failed:', err);
       });
     }
@@ -1084,7 +1105,12 @@ var RealtimeService = (function(){
   }
 
   function cloudOnStateSnapshot(snap){
-    if(!snap.exists){ cloudWriteState(true); return; }
+    if(!snap.exists){
+      if(allowCreateIfMissing){ cloudWriteState(true); return; }
+      leave(false);
+      setStatusWithClass('err', 'Round not found for code ' + currentCode + '.');
+      return;
+    }
     var data = snap.data() || {};
     if(!data.snapshot || !data.snapshot.state) return;
 
@@ -1097,10 +1123,11 @@ var RealtimeService = (function(){
     localUpdatedAt = remoteStamp || Date.now();
   }
 
-  function cloudAttach(code){
+  function cloudAttach(code, opts){
     if(!db) return;
     cloudDetach();
     currentCode = code;
+    allowCreateIfMissing = !!(opts && opts.allowCreateIfMissing);
     stateDoc = db.collection('jrlions_state').doc(code);
     unsubState = stateDoc.onSnapshot(
       function(snap){ cloudOnStateSnapshot(snap); },
@@ -1121,9 +1148,11 @@ var RealtimeService = (function(){
     persistCode(code);
     lastWroteJSON = '';
     localUpdatedAt = Date.now();
-    document.getElementById('inp-round-code').value = code;
     setStatusWithClass('busy', 'Connecting ' + code + '…');
-    cloudAttach(code);
+    cloudAttach(code, {allowCreateIfMissing:true});
+    try{
+      window.history.replaceState({}, '', '/scorecard');
+    }catch(_){ }
     showPlayActiveFromState();
     return code;
   }
@@ -1139,9 +1168,9 @@ var RealtimeService = (function(){
     leave(false);
     persistCode(joinCode);
     lastWroteJSON = '';
-    document.getElementById('inp-round-code').value = joinCode;
-    cloudAttach(joinCode);
-    showPlayActiveFromState();
+    cloudAttach(joinCode, {allowCreateIfMissing:false});
+    setAppMode(ACTIVE_ROUND_MODE, {skipRoute:true});
+    switchTab('play');
     renderLiveShare();
     setJoinBusy(false, joinCode);
     setStatusWithClass('ok', 'Joined round ' + joinCode + '.');
@@ -1151,6 +1180,7 @@ var RealtimeService = (function(){
   function leave(clearStoredCode){
     cloudDetach();
     currentCode = '';
+    allowCreateIfMissing = false;
     lastWroteJSON = '';
     localUpdatedAt = 0;
     clearTimeout(writeTimer);
@@ -1173,7 +1203,6 @@ var RealtimeService = (function(){
     if(!init()) return false;
     var code = normalizeSyncCode(readStoredCode());
     if(code.length < MIN_CODE_LEN) return false;
-    document.getElementById('inp-round-code').value = code;
     await join(code);
     return true;
   }
@@ -1362,6 +1391,35 @@ function makeInitialSetupState(){
 /* ============================================================
    TAB SWITCHING
    ============================================================ */
+function extractJoinCodeFromRoute(){
+  var path = (window.location.pathname || '').replace(/\/+$/,'');
+  var roundMatch = path.match(/\/round\/([A-Za-z0-9_-]+)$/i);
+  if(roundMatch && roundMatch[1]) return roundMatch[1].toUpperCase();
+  var joinMatch = new URLSearchParams(window.location.search).get('join');
+  return joinMatch ? joinMatch.toUpperCase() : '';
+}
+
+function updateRouteForMode(){
+  if(appMode === ACTIVE_ROUND_MODE) return;
+  var targetPath = appMode === JOIN_ROUND_MODE ? '/join' : '/setup';
+  try{
+    window.history.replaceState({}, '', targetPath);
+  }catch(_){ }
+}
+
+function setAppMode(mode, opts){
+  appMode = mode || CREATE_ROUND_MODE;
+  var createWrap = document.getElementById('create-round-sections');
+  var joinEntry = document.getElementById('join-round-entry');
+  var createBtn = document.getElementById('btn-mode-create');
+  var joinBtn = document.getElementById('btn-mode-join');
+  if(createWrap) createWrap.style.display = appMode === CREATE_ROUND_MODE ? '' : 'none';
+  if(joinEntry) joinEntry.classList.toggle('active', appMode === JOIN_ROUND_MODE);
+  if(createBtn) createBtn.classList.toggle('active', appMode === CREATE_ROUND_MODE);
+  if(joinBtn) joinBtn.classList.toggle('active', appMode === JOIN_ROUND_MODE);
+  if(!(opts && opts.skipRoute)) updateRouteForMode();
+}
+
 function switchTab(id){
   ['setup','play','print'].forEach(function(t){
     document.getElementById(t+'-panel').classList.toggle('active', t===id);
@@ -1615,6 +1673,10 @@ function startPlay(){
   buildHoleNav();
   buildFmtTabs();
   goHole(0);
+  setAppMode(ACTIVE_ROUND_MODE, {skipRoute:true});
+  if(!RealtimeService.isConnected()){
+    RealtimeService.createRound();
+  }
 }
 
 function buildHoleNav(){
@@ -2115,15 +2177,18 @@ function executeSaveRound(){
   });
 }
 
-function generateRoundCode(){
-  RealtimeService.createRound();
-}
 async function joinRoundByCode(){
-  var code = (document.getElementById('inp-round-code').value || '').trim().toUpperCase();
+  var code = (document.getElementById('inp-round-code-join').value || '').trim().toUpperCase();
   if(!code){ alert('Enter a round code first.'); return; }
   await RealtimeService.join(code);
 }
-function leaveRoundSync(){ RealtimeService.leave(); }
+function leaveRoundSync(){
+  RealtimeService.leave();
+  if(appMode === ACTIVE_ROUND_MODE){
+    setAppMode(CREATE_ROUND_MODE);
+    switchTab('setup');
+  }
+}
 function copyRoundCode(){
   var code = RealtimeService.getCurrentCode();
   if(!code){ alert('No active join code.'); return; }
@@ -2291,12 +2356,22 @@ window.addEventListener('DOMContentLoaded',function(){
   try{ localStorage.removeItem('playpal.selected_player_ids.v1'); }catch(_){ }
   loadStateToUI();
   renderCourseList();
+  setAppMode(CREATE_ROUND_MODE, {skipRoute:true});
   document.getElementById('active-course-banner').style.display = 'none';
-  RealtimeService.setStatus(RealtimeService.isConfigured() ? 'Ready for live sync. Create a round or join with a code.' : 'Realtime disabled. Configure Firebase credentials.');
+  RealtimeService.setStatus(RealtimeService.isConfigured() ? 'Choose Create Round or Join Round to begin.' : 'Realtime disabled. Configure Firebase credentials.');
 
-  var deepLinkCode = new URLSearchParams(window.location.search).get('join');
+  var deepLinkCode = extractJoinCodeFromRoute();
+  var path = (window.location.pathname || '').replace(/\/+$/,'');
+  if(path === '/join'){
+    setAppMode(JOIN_ROUND_MODE, {skipRoute:true});
+  }else if(path === '/setup'){
+    setAppMode(CREATE_ROUND_MODE, {skipRoute:true});
+  }
+
   if(deepLinkCode){
-    document.getElementById('inp-round-code').value = deepLinkCode.toUpperCase();
+    var joinInput = document.getElementById('inp-round-code-join');
+    if(joinInput) joinInput.value = deepLinkCode.toUpperCase();
+    setAppMode(JOIN_ROUND_MODE, {skipRoute:true});
     RealtimeService.join(deepLinkCode);
     return;
   }
