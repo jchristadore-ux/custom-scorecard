@@ -116,6 +116,14 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
 .sync-code-wrap{display:grid;grid-template-columns:1fr;gap:8px;}
 @media(min-width:580px){.sync-code-wrap{grid-template-columns:1fr 1fr;}}
 .sync-status{font-size:0.78rem;color:var(--text-dim);padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;}
+.live-share-panel{margin:10px 12px 0;padding:12px;border:1px solid var(--border2);background:var(--surface);border-radius:12px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+.live-share-copy{flex:1;min-width:170px;}
+.live-share-label{font-size:0.65rem;color:var(--text-muted);letter-spacing:1.4px;text-transform:uppercase;font-weight:700;}
+.live-share-code{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:3px;color:var(--green-bright);line-height:1;margin-top:4px;}
+.live-share-help{font-size:0.76rem;color:var(--text-dim);margin-top:3px;}
+.live-share-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.qr-wrap{width:128px;height:128px;padding:8px;border-radius:10px;background:#fff;border:1px solid #d8d8d8;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.qr-wrap canvas,.qr-wrap img{max-width:100%;max-height:100%;display:block;}
 .drag-handle{color:var(--text-muted);font-size:1.1rem;cursor:grab;padding:0 4px;touch-action:none;margin-top:10px;}
 
 /* ── BUTTONS ── */
@@ -533,7 +541,7 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
       </div>
       <div class="btn-row">
         <button class="btn" onclick="generateRoundCode()">🎟 Generate Code</button>
-        <button class="btn btn-gold" onclick="joinRoundByCode()">🔗 Join Code</button>
+        <button class="btn btn-gold" id="btn-join-round" onclick="joinRoundByCode()">🔗 Join Code</button>
         <button class="btn btn-danger" onclick="leaveRoundSync()">⛔ Leave Sync</button>
       </div>
     </div>
@@ -558,6 +566,18 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
   </div>
 
   <div id="play-active" class="play-active">
+    <div class="live-share-panel" id="live-share-panel" style="display:none;">
+      <div class="live-share-copy">
+        <div class="live-share-label">Live Round Sharing</div>
+        <div class="live-share-code" id="live-share-code">—</div>
+        <div class="live-share-help">Share this code to join this round.</div>
+        <div class="live-share-actions">
+          <button class="btn" onclick="copyRoundCode()">Copy Code</button>
+          <button class="btn" onclick="copyRoundJoinLink()">Copy Join Link</button>
+        </div>
+      </div>
+      <div class="qr-wrap" id="live-share-qr"></div>
+    </div>
     <div class="hole-nav-bar" id="hole-nav-bar"></div>
     <div class="hole-header">
       <div class="hole-badge">
@@ -680,6 +700,7 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -900,9 +921,11 @@ var PlayerProfileService = (function(){
   - Realtime filter (id=eq.<round_id>) matching writes to the same table.
 */
 var RealtimeService = (function(){
+  // Frontend must use Supabase URL + anon key only (never secret/service role key).
   var SUPABASE_URL = 'https://frkcfcvzhbiocuvuixfc.supabase.co';
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZya2NmY3Z6aGJpb2N1dnVpeGZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4MDMzNTEsImV4cCI6MjA5MjM3OTM1MX0.27mcGxUMKYj-v2CVM-i9k_NWG4ThJ0tEfSu-E3Q4xv8';
   var ROUNDS_TABLE = 'live_rounds';
+  var SESSION_KEY = 'playpal.live_round_session.v1';
   var client = null;
   var channel = null;
   var currentCode = '';
@@ -910,6 +933,7 @@ var RealtimeService = (function(){
   var applyingRemote = false;
   var writeInFlight = false;
   var writeQueued = false;
+  var joinInFlight = false;
 
   function isConfigured(){ return !!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase); }
   function init(){
@@ -920,6 +944,59 @@ var RealtimeService = (function(){
   function roundsTable(){ return client.schema('public').from(ROUNDS_TABLE); }
   function setStatus(msg){ var el = document.getElementById('sync-status'); if(el) el.textContent = msg; }
   function snapshotState(){ return {state:state, playState:playState, selectedCourseIdx:selectedCourseIdx, ts:Date.now()}; }
+  function getJoinLink(code){
+    var c = String(code || currentCode || '').trim().toUpperCase();
+    if(!c) return '';
+    return window.location.origin + window.location.pathname + '?join=' + encodeURIComponent(c);
+  }
+  function setJoinBusy(busy, code){
+    joinInFlight = !!busy;
+    var btn = document.getElementById('btn-join-round');
+    if(!btn) return;
+    btn.disabled = joinInFlight;
+    btn.textContent = joinInFlight ? ('Joining ' + String(code || '').toUpperCase() + '…') : '🔗 Join Code';
+  }
+  function showPlayActiveFromState(){
+    if(!playState) return;
+    document.getElementById('play-start').style.display = 'none';
+    document.getElementById('play-active').style.display = 'block';
+    buildHoleNav();
+    buildFmtTabs();
+    goHole(playState.currentHole || 0);
+  }
+  function renderLiveShare(){
+    var panel = document.getElementById('live-share-panel');
+    var codeEl = document.getElementById('live-share-code');
+    var qrEl = document.getElementById('live-share-qr');
+    if(!panel || !codeEl || !qrEl) return;
+    if(!currentCode){
+      panel.style.display = 'none';
+      codeEl.textContent = '—';
+      qrEl.innerHTML = '';
+      return;
+    }
+    panel.style.display = 'flex';
+    codeEl.textContent = currentCode;
+    qrEl.innerHTML = '';
+    if(window.QRCode){
+      new window.QRCode(qrEl, {
+        text:getJoinLink(currentCode) || currentCode,
+        width:112,
+        height:112,
+        correctLevel:window.QRCode.CorrectLevel.M
+      });
+    }
+  }
+  function saveSession(){
+    if(!currentRoundId || !currentCode){
+      localStorage.removeItem(SESSION_KEY);
+      return;
+    }
+    localStorage.setItem(SESSION_KEY, JSON.stringify({roundId:currentRoundId, joinCode:currentCode}));
+  }
+  function readSession(){
+    try{ return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); }catch(_){ return null; }
+  }
 
   function applySnapshot(snapshot){
     if(!snapshot || !snapshot.state) return;
@@ -928,13 +1005,8 @@ var RealtimeService = (function(){
     playState = snapshot.playState;
     selectedCourseIdx = snapshot.selectedCourseIdx || 0;
     loadStateToUI();
-    if(playState){
-      document.getElementById('play-start').style.display = 'none';
-      document.getElementById('play-active').style.display = 'block';
-      buildHoleNav();
-      buildFmtTabs();
-      goHole(playState.currentHole || 0);
-    }
+    if(playState) showPlayActiveFromState();
+    renderLiveShare();
     applyingRemote = false;
   }
 
@@ -966,56 +1038,77 @@ var RealtimeService = (function(){
   }
 
   async function createRound(){
-    if(!init()){ setStatus('Realtime disabled. Configure Supabase credentials.'); return; }
+    if(!init()){ setStatus('Realtime disabled. Configure Supabase credentials.'); return null; }
     leave();
     setStatus('Creating live round…');
+    setJoinBusy(false);
 
-    for(var attempt=0;attempt<10;attempt++){
-      var code = generateJoinCode();
-      var payload = { join_code:code, snapshot:snapshotState() };
-      var res = await roundsTable().insert(payload).select('id,join_code,snapshot').single();
-      if(res.error){
-        if((res.error.code === '23505' || String(res.error.message||'').toLowerCase().indexOf('duplicate') !== -1) && attempt < 9){
-          continue;
+    try{
+      for(var attempt=0;attempt<10;attempt++){
+        var code = generateJoinCode();
+        var payload = { join_code:code, snapshot:snapshotState() };
+        var res = await roundsTable().insert(payload).select('id,join_code,snapshot').single();
+        if(res.error){
+          if((res.error.code === '23505' || String(res.error.message||'').toLowerCase().indexOf('duplicate') !== -1) && attempt < 9){
+            continue;
+          }
+          var msg = String(res.error.message || 'Unknown error');
+          if(msg.indexOf("Could not find the table 'public.live_rounds' in the schema cache") !== -1){
+            msg += ' — run supabase/live_rounds.sql to create public.live_rounds and refresh PostgREST schema cache.';
+          }
+          setStatus('Create failed: ' + msg);
+          return null;
         }
-        var msg = String(res.error.message || 'Unknown error');
-        if(msg.indexOf("Could not find the table 'public.live_rounds' in the schema cache") !== -1){
-          msg += ' — run supabase/live_rounds.sql to create public.live_rounds and refresh PostgREST schema cache.';
-        }
-        setStatus('Create failed: ' + msg);
-        return;
+
+        currentRoundId = res.data.id;
+        currentCode = res.data.join_code;
+        document.getElementById('inp-round-code').value = currentCode;
+        applySnapshot(res.data.snapshot);
+        saveSession();
+        subscribeToRound();
+        renderLiveShare();
+        setStatus('Round created. Share code ' + currentCode + '.');
+        return currentCode;
       }
+
+      setStatus('Could not generate a unique code. Try again.');
+      return null;
+    }catch(err){
+      setStatus('Create failed: ' + (err && err.message ? err.message : String(err)));
+      return null;
+    }
+  }
+
+  async function join(code){
+    if(!init()){ setStatus('Realtime disabled. Configure Supabase credentials.'); return false; }
+    var joinCode = String(code || '').trim().toUpperCase();
+    if(!joinCode){ setStatus('Enter a valid round code.'); return false; }
+
+    leave();
+    setJoinBusy(true, joinCode);
+    setStatus('Joining round ' + joinCode + '…');
+
+    try{
+      var res = await roundsTable().select('id,join_code,snapshot').eq('join_code', joinCode).maybeSingle();
+      if(res.error){ setStatus('Join failed: ' + res.error.message); return false; }
+      if(!res.data){ setStatus('Invalid join code.'); return false; }
 
       currentRoundId = res.data.id;
       currentCode = res.data.join_code;
       document.getElementById('inp-round-code').value = currentCode;
       applySnapshot(res.data.snapshot);
+      saveSession();
       subscribeToRound();
-      setStatus('Round created. Share code ' + currentCode + '.');
-      return currentCode;
+      showPlayActiveFromState();
+      switchTab('play');
+      setStatus('Joined round ' + currentCode + '.');
+      return true;
+    }catch(err){
+      setStatus('Join failed: ' + (err && err.message ? err.message : String(err)));
+      return false;
+    }finally{
+      setJoinBusy(false, joinCode);
     }
-
-    setStatus('Could not generate a unique code. Try again.');
-  }
-
-  async function join(code){
-    if(!init()){ setStatus('Realtime disabled. Configure Supabase credentials.'); return; }
-    var joinCode = String(code || '').trim().toUpperCase();
-    if(!joinCode){ setStatus('Enter a valid round code.'); return; }
-
-    leave();
-    setStatus('Joining round ' + joinCode + '…');
-
-    var res = await roundsTable().select('id,join_code,snapshot').eq('join_code', joinCode).maybeSingle();
-    if(res.error){ setStatus('Join failed: ' + res.error.message); return; }
-    if(!res.data){ setStatus('Round code ' + joinCode + ' was not found.'); return; }
-
-    currentRoundId = res.data.id;
-    currentCode = res.data.join_code;
-    document.getElementById('inp-round-code').value = currentCode;
-    applySnapshot(res.data.snapshot);
-    subscribeToRound();
-    setStatus('Joined round ' + currentCode + '.');
   }
 
   function leave(){
@@ -1025,6 +1118,9 @@ var RealtimeService = (function(){
     currentCode = '';
     writeInFlight = false;
     writeQueued = false;
+    localStorage.removeItem(SESSION_KEY);
+    renderLiveShare();
+    setJoinBusy(false);
     setStatus('Not connected to a live round.');
   }
 
@@ -1042,13 +1138,31 @@ var RealtimeService = (function(){
   }
 
   function publish(){
-    if(!currentRoundId || applyingRemote) return;
+    if(!currentRoundId || applyingRemote || joinInFlight) return;
     flushWrite();
   }
 
+  async function restoreSession(){
+    var session = readSession();
+    if(!session || !session.joinCode) return false;
+    return join(session.joinCode);
+  }
+  function getCurrentCode(){ return currentCode; }
+  function getJoinLinkForCurrent(){ return getJoinLink(currentCode); }
   function isConnected(){ return !!currentRoundId; }
 
-  return {isConfigured:isConfigured, createRound:createRound, join:join, leave:leave, publish:publish, setStatus:setStatus, isConnected:isConnected};
+  return {
+    isConfigured:isConfigured,
+    createRound:createRound,
+    join:join,
+    leave:leave,
+    publish:publish,
+    setStatus:setStatus,
+    isConnected:isConnected,
+    restoreSession:restoreSession,
+    getCurrentCode:getCurrentCode,
+    getJoinLinkForCurrent:getJoinLinkForCurrent
+  };
 })();
 
 /* ============================================================
@@ -1940,12 +2054,30 @@ function executeSaveRound(){
 function generateRoundCode(){
   RealtimeService.createRound();
 }
-function joinRoundByCode(){
+async function joinRoundByCode(){
   var code = (document.getElementById('inp-round-code').value || '').trim().toUpperCase();
   if(!code){ alert('Enter a round code first.'); return; }
-  RealtimeService.join(code);
+  await RealtimeService.join(code);
 }
 function leaveRoundSync(){ RealtimeService.leave(); }
+function copyRoundCode(){
+  var code = RealtimeService.getCurrentCode();
+  if(!code){ alert('No active join code.'); return; }
+  navigator.clipboard.writeText(code).then(function(){
+    RealtimeService.setStatus('Copied join code ' + code + '.');
+  }).catch(function(){
+    alert('Copy failed on this device.');
+  });
+}
+function copyRoundJoinLink(){
+  var link = RealtimeService.getJoinLinkForCurrent();
+  if(!link){ alert('No active round link.'); return; }
+  navigator.clipboard.writeText(link).then(function(){
+    RealtimeService.setStatus('Copied join link.');
+  }).catch(function(){
+    alert('Copy failed on this device.');
+  });
+}
 
 /* ============================================================
    PRINT SCORECARD BUILDER
@@ -2107,6 +2239,14 @@ window.addEventListener('DOMContentLoaded',function(){
   var parsed = parseCourseNameAndTee(NJ_COURSES[0].course_name);
   document.getElementById('acb-name').textContent = parsed.name + ' · ' + parsed.tee;
   RealtimeService.setStatus(RealtimeService.isConfigured() ? 'Ready for live sync. Create a round or join with a code.' : 'Realtime disabled. Configure Supabase credentials.');
+
+  var deepLinkCode = new URLSearchParams(window.location.search).get('join');
+  if(deepLinkCode){
+    document.getElementById('inp-round-code').value = deepLinkCode.toUpperCase();
+    RealtimeService.join(deepLinkCode);
+    return;
+  }
+  RealtimeService.restoreSession();
 });
 </script>
 </body>
