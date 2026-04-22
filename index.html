@@ -884,8 +884,8 @@ var playState = null;
 var selectedCourseIdx = 0; // Beaver Brook is default
 
 var RealtimeService = (function(){
-  var SUPABASE_URL = '';
-  var SUPABASE_ANON_KEY = '';
+  var SUPABASE_URL = 'https://frkcfcvzhbiocuvuixfc.supabase.co/rest/v1/';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZya2NmY3Z6aGJpb2N1dnVpeGZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4MDMzNTEsImV4cCI6MjA5MjM3OTM1MX0.27mcGxUMKYj-v2CVM-i9k_NWG4ThJ0tEfSu-E3Q4xv8';
   var client = null;
   var channel = null;
   var currentCode = '';
