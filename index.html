@@ -87,6 +87,21 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
 .player-row:last-child{border-bottom:none;}
 .player-order{flex:0 0 26px;height:26px;background:linear-gradient(135deg,var(--green),var(--green-dim));border-radius:999px;display:flex;align-items:center;justify-content:center;color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:0.9rem;letter-spacing:0.5px;flex-shrink:0;margin-top:2px;}
 .player-inputs-wrap{flex:1;display:flex;flex-direction:column;gap:6px;}
+.player-select-bar{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
+.player-search-input{flex:1;background:var(--surface);border:1px solid var(--border2);color:var(--text);border-radius:10px;padding:10px 12px;font-size:0.88rem;}
+.player-picker-list{max-height:210px;overflow-y:auto;border:1px solid var(--border2);border-radius:10px;background:var(--surface);}
+.player-picker-item{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);}
+.player-picker-item:last-child{border-bottom:none;}
+.player-picker-item.selected{background:rgba(0,200,83,0.08);}
+.picker-meta{font-size:0.7rem;color:var(--text-muted);}
+.player-actions{display:flex;gap:6px;}
+.tiny-btn{border:1px solid var(--border2);background:var(--card2);color:var(--text-dim);border-radius:8px;padding:5px 8px;font-size:0.7rem;cursor:pointer;}
+.tiny-btn.danger{color:var(--red);border-color:#c0392b;}
+.empty-note{font-size:0.78rem;color:var(--text-muted);padding:12px;}
+.player-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:350;display:none;align-items:flex-end;justify-content:center;}
+.player-modal-overlay.open{display:flex;}
+.player-modal{background:var(--card);border:1px solid var(--border2);border-radius:20px 20px 0 0;padding:20px;max-width:560px;width:100%;max-height:88vh;overflow:auto;}
+.security-note{font-size:0.72rem;color:var(--text-muted);margin-top:8px;background:var(--surface);border:1px solid var(--border);padding:8px;border-radius:8px;line-height:1.4;}
 .player-inputs-row{display:flex;gap:8px;}
 .player-inputs-row input{flex:1;background:var(--surface);border:1px solid var(--border2);color:var(--text);border-radius:10px;padding:9px 12px;font-size:0.88rem;font-family:'DM Sans',sans-serif;transition:border-color 0.2s;}
 .player-inputs-row input:focus{outline:none;border-color:var(--green-bright);box-shadow:0 0 0 3px rgba(0,200,83,0.1);}
@@ -490,12 +505,17 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
 
   <!-- PLAYERS -->
   <div class="section">
-    <div class="section-title">Players</div>
+    <div class="section-title">Player Profiles</div>
+    <div class="player-select-bar">
+      <input id="player-picker-search" class="player-search-input" type="text" placeholder="Search saved players…" oninput="renderPlayerPicker()">
+      <button class="btn" onclick="openPlayerModal()">+ Create Player</button>
+    </div>
+    <div id="player-picker-list" class="player-picker-list"></div>
+    <div class="security-note">GHIN login credentials are stored separately and encrypted in local browser storage. Passwords are never shown after save.</div>
+    <div class="section-title" style="margin-top:14px;">Round Players</div>
     <div id="players-list"></div>
     <div class="btn-row">
       <button class="btn" onclick="randomizePlayerOrder()">🔀 Randomize Order</button>
-      <button class="btn" onclick="addPlayer()">+ Add Player</button>
-      <button class="btn btn-danger" onclick="removeLastPlayer()">− Remove Last</button>
     </div>
   </div>
 
@@ -637,6 +657,35 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
       <button class="modal-close" onclick="closeSaveModal()">×</button>
     </div>
     <div id="save-modal-body"></div>
+  </div>
+</div>
+
+<!-- PLAYER PROFILE MODAL -->
+<div class="player-modal-overlay" id="player-modal-overlay" onclick="closePlayerModalIfOutside(event)">
+  <div class="player-modal">
+    <div class="modal-header">
+      <div class="modal-title" id="player-modal-title">Create Player</div>
+      <button class="modal-close" onclick="closePlayerModal()">×</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Player Name *</label><input id="profile-name" type="text" autocomplete="off"></div>
+      <div class="form-group"><label>Abbreviation</label><input id="profile-abbr" type="text" maxlength="3" autocomplete="off"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>GHIN Number *</label><input id="profile-ghin" type="text" autocomplete="off"></div>
+      <div class="form-group"><label>Email *</label><input id="profile-email" type="email" autocomplete="off"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>GHIN Login Email *</label><input id="profile-ghin-email" type="email" autocomplete="off"></div>
+      <div class="form-group"><label>GHIN Password *</label><input id="profile-ghin-password" type="password" autocomplete="new-password" placeholder="Required on create; optional on edit"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Notes (optional)</label><input id="profile-notes" type="text" autocomplete="off"></div>
+      <div class="form-group"><label>Handicap Index (optional)</label><input id="profile-handicap" type="text" autocomplete="off"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="savePlayerProfile()">Save Player</button>
+    </div>
   </div>
 </div>
 
@@ -882,6 +931,73 @@ var BB = {
 var state = deepClone(BB);
 var playState = null;
 var selectedCourseIdx = 0; // Beaver Brook is default
+var playerProfiles = [];
+var selectedPlayerIds = [];
+var editingProfileId = null;
+
+var PlayerProfileService = (function(){
+  var PROFILES_KEY = 'playpal.player_profiles.v1';
+  var CREDS_KEY = 'playpal.player_credentials.v1';
+  var SECRET_KEY = 'playpal.player_secret.v1';
+
+  function readJson(key, fallback){
+    try{ var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }catch(_){ return fallback; }
+  }
+  function writeJson(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+  function toB64(buf){
+    return btoa(String.fromCharCode.apply(null, new Uint8Array(buf)));
+  }
+  function fromB64(txt){
+    var bin = atob(txt); var out = new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  async function getKey(){
+    var keyB64 = localStorage.getItem(SECRET_KEY);
+    if(!keyB64){
+      var raw = crypto.getRandomValues(new Uint8Array(32));
+      keyB64 = toB64(raw.buffer);
+      localStorage.setItem(SECRET_KEY, keyB64);
+    }
+    return crypto.subtle.importKey('raw', fromB64(keyB64), {name:'AES-GCM'}, false, ['encrypt','decrypt']);
+  }
+  async function encryptPassword(plain){
+    var key = await getKey();
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    var data = new TextEncoder().encode(plain);
+    var ct = await crypto.subtle.encrypt({name:'AES-GCM', iv:iv}, key, data);
+    return {iv:toB64(iv.buffer), cipher:toB64(ct)};
+  }
+  async function decryptPassword(payload){
+    if(!payload || !payload.iv || !payload.cipher) return '';
+    try{
+      var key = await getKey();
+      var plain = await crypto.subtle.decrypt({name:'AES-GCM', iv:fromB64(payload.iv)}, key, fromB64(payload.cipher));
+      return new TextDecoder().decode(plain);
+    }catch(_){ return ''; }
+  }
+  function listProfiles(){ return readJson(PROFILES_KEY, []); }
+  function listCreds(){ return readJson(CREDS_KEY, {}); }
+  function saveProfiles(list){ writeJson(PROFILES_KEY, list); }
+  function saveCreds(map){ writeJson(CREDS_KEY, map); }
+  async function getPassword(profileId){ return decryptPassword(listCreds()[profileId]); }
+  async function upsert(profile, plainPassword){
+    var profiles = listProfiles();
+    var idx = profiles.findIndex(function(p){ return p.id === profile.id; });
+    if(idx >= 0) profiles[idx] = profile; else profiles.push(profile);
+    saveProfiles(profiles);
+    if(plainPassword){
+      var creds = listCreds();
+      creds[profile.id] = await encryptPassword(plainPassword);
+      saveCreds(creds);
+    }
+  }
+  function remove(profileId){
+    saveProfiles(listProfiles().filter(function(p){ return p.id !== profileId; }));
+    var creds = listCreds(); delete creds[profileId]; saveCreds(creds);
+  }
+  return {listProfiles:listProfiles, getPassword:getPassword, upsert:upsert, remove:remove};
+})();
 
 /*
   MULTIPLAYER ARCHITECTURE (legacy diagnosis + final design)
@@ -1204,28 +1320,58 @@ function switchTab(id){
 function renderPlayers(){
   var list = document.getElementById('players-list');
   list.innerHTML = '';
+  if(!state.players.length){
+    list.innerHTML = '<div class="empty-note">Select players above to build this round.</div>';
+    return;
+  }
   state.players.forEach(function(p, i){
     var row = document.createElement('div');
     row.className = 'player-row';
     row.innerHTML =
       '<span class="player-order">' + (i+1) + '</span>' +
-      '<span class="drag-handle">☰</span>' +
       '<div class="player-inputs-wrap">' +
         '<div class="player-inputs-row">' +
-          '<input type="text" placeholder="Full Name" value="' + esc(p.full_name) + '" oninput="state.players[' + i + '].full_name=this.value;rebuild()">' +
-          '<input type="text" class="abbr-field" placeholder="Abbr" value="' + esc(p.abbreviation) + '" oninput="state.players[' + i + '].abbreviation=this.value;rebuild()">' +
+          '<input type="text" placeholder="Full Name" value="' + esc(p.full_name) + '" readonly>' +
+          '<input type="text" class="abbr-field" placeholder="Abbr" value="' + esc(p.abbreviation) + '" readonly>' +
         '</div>' +
         '<div class="player-inputs-secondary">' +
-          '<input type="text" placeholder="GHIN #" value="' + esc(p.ghin||'') + '" oninput="state.players[' + i + '].ghin=this.value" autocomplete="off">' +
-          '<input type="email" placeholder="Email address" value="' + esc(p.email||'') + '" oninput="state.players[' + i + '].email=this.value" autocomplete="off">' +
+          '<input type="text" placeholder="GHIN #" value="' + esc(p.ghin||'') + '" readonly>' +
+          '<input type="email" placeholder="Email address" value="' + esc(p.email||'') + '" readonly>' +
         '</div>' +
         '<div class="player-inputs-tertiary">' +
-          '<input type="email" placeholder="GHIN Login Email" value="' + esc(p.ghin_email||'') + '" oninput="state.players[' + i + '].ghin_email=this.value" autocomplete="off">' +
-          '<input type="password" placeholder="GHIN Password" value="' + esc(p.ghin_password||'') + '" oninput="state.players[' + i + '].ghin_password=this.value" autocomplete="new-password">' +
+          '<input type="email" placeholder="GHIN Login Email" value="' + esc(p.ghin_email||'') + '" readonly>' +
+          '<input type="password" placeholder="GHIN Password" value="••••••••" readonly>' +
         '</div>' +
       '</div>';
     list.appendChild(row);
   });
+}
+
+function renderPlayerPicker(){
+  var list = document.getElementById('player-picker-list');
+  var q = (document.getElementById('player-picker-search').value || '').toLowerCase().trim();
+  list.innerHTML = '';
+  var shown = 0;
+  playerProfiles.forEach(function(p){
+    var hay = (p.full_name + ' ' + (p.email||'') + ' ' + (p.ghin||'')).toLowerCase();
+    if(q && hay.indexOf(q) === -1) return;
+    shown++;
+    var selected = selectedPlayerIds.indexOf(p.id) !== -1;
+    var row = document.createElement('div');
+    row.className = 'player-picker-item' + (selected ? ' selected' : '');
+    row.innerHTML =
+      '<div style="display:flex;gap:8px;">' +
+        '<input type="checkbox" ' + (selected ? 'checked' : '') + ' onchange="togglePlayerSelection(\'' + esc(p.id) + '\')">' +
+        '<div><div style="font-weight:600;">' + esc(p.full_name) + ' (' + esc(p.abbreviation || '?') + ')</div>' +
+        '<div class="picker-meta">GHIN ' + esc(p.ghin) + ' · ' + esc(p.email) + '</div></div>' +
+      '</div>' +
+      '<div class="player-actions">' +
+        '<button class="tiny-btn" onclick="openPlayerModal(\'' + esc(p.id) + '\')">Edit</button>' +
+        '<button class="tiny-btn danger" onclick="deletePlayerProfile(\'' + esc(p.id) + '\')">Delete</button>' +
+      '</div>';
+    list.appendChild(row);
+  });
+  if(!shown) list.innerHTML = '<div class="empty-note">No saved players match this search.</div>';
 }
 
 function renderFormats(){
@@ -1247,15 +1393,95 @@ function toggleFmt(i){
   rebuild();
 }
 
-function addPlayer(){
-  if(state.players.length >= 6) return;
-  state.players.push({full_name:'Player '+(state.players.length+1),abbreviation:'P'+(state.players.length+1),ghin:'',email:'',ghin_email:'',ghin_password:''});
-  renderPlayers();
+function uid(){ return 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function playerFromProfile(profile, password){
+  return {
+    id: profile.id,
+    full_name: profile.full_name,
+    abbreviation: profile.abbreviation || (profile.full_name || '?').slice(0,2).toUpperCase(),
+    ghin: profile.ghin || '',
+    email: profile.email || '',
+    ghin_email: profile.ghin_email || '',
+    ghin_password: password || '',
+    notes: profile.notes || '',
+    handicap_index: profile.handicap_index || ''
+  };
 }
-function removeLastPlayer(){
-  if(state.players.length <= 2) return;
-  state.players.pop();
-  renderPlayers();
+function syncSelectionToState(){
+  Promise.all(selectedPlayerIds.map(function(id){
+    var profile = playerProfiles.find(function(p){ return p.id === id; });
+    if(!profile) return Promise.resolve(null);
+    return PlayerProfileService.getPassword(id).then(function(pw){ return playerFromProfile(profile, pw); });
+  })).then(function(players){
+    state.players = players.filter(Boolean);
+    renderPlayers();
+    rebuild();
+    localStorage.setItem('playpal.selected_player_ids.v1', JSON.stringify(selectedPlayerIds));
+  });
+}
+function togglePlayerSelection(id){
+  if(selectedPlayerIds.indexOf(id) !== -1){
+    selectedPlayerIds = selectedPlayerIds.filter(function(x){ return x !== id; });
+  }else{
+    if(selectedPlayerIds.length >= 6){ alert('Maximum 6 players per round.'); return; }
+    selectedPlayerIds.push(id);
+  }
+  renderPlayerPicker();
+  syncSelectionToState();
+}
+function openPlayerModal(profileId){
+  editingProfileId = profileId || null;
+  var profile = profileId ? playerProfiles.find(function(p){ return p.id === profileId; }) : null;
+  document.getElementById('player-modal-title').textContent = profile ? 'Edit Player' : 'Create Player';
+  document.getElementById('profile-name').value = profile ? profile.full_name : '';
+  document.getElementById('profile-abbr').value = profile ? (profile.abbreviation || '') : '';
+  document.getElementById('profile-ghin').value = profile ? (profile.ghin || '') : '';
+  document.getElementById('profile-email').value = profile ? (profile.email || '') : '';
+  document.getElementById('profile-ghin-email').value = profile ? (profile.ghin_email || '') : '';
+  document.getElementById('profile-ghin-password').value = '';
+  document.getElementById('profile-notes').value = profile ? (profile.notes || '') : '';
+  document.getElementById('profile-handicap').value = profile ? (profile.handicap_index || '') : '';
+  document.getElementById('player-modal-overlay').classList.add('open');
+}
+function closePlayerModal(){ document.getElementById('player-modal-overlay').classList.remove('open'); }
+function closePlayerModalIfOutside(e){ if(e.target===document.getElementById('player-modal-overlay')) closePlayerModal(); }
+function savePlayerProfile(){
+  var full_name = (document.getElementById('profile-name').value || '').trim();
+  var abbreviation = (document.getElementById('profile-abbr').value || '').trim().toUpperCase();
+  var ghin = (document.getElementById('profile-ghin').value || '').trim();
+  var email = (document.getElementById('profile-email').value || '').trim();
+  var ghin_email = (document.getElementById('profile-ghin-email').value || '').trim();
+  var ghin_password = (document.getElementById('profile-ghin-password').value || '').trim();
+  var notes = (document.getElementById('profile-notes').value || '').trim();
+  var handicap_index = (document.getElementById('profile-handicap').value || '').trim();
+  if(!full_name || !ghin || !email || !ghin_email){ alert('Player Name, GHIN #, Email, and GHIN Login Email are required.'); return; }
+  if(!editingProfileId && !ghin_password){ alert('GHIN Password is required when creating a player.'); return; }
+
+  var profile = {
+    id: editingProfileId || uid(),
+    full_name: full_name,
+    abbreviation: abbreviation || full_name.slice(0,2).toUpperCase(),
+    ghin: ghin,
+    email: email,
+    ghin_email: ghin_email,
+    notes: notes,
+    handicap_index: handicap_index
+  };
+  PlayerProfileService.upsert(profile, ghin_password).then(function(){
+    playerProfiles = PlayerProfileService.listProfiles();
+    if(selectedPlayerIds.indexOf(profile.id) === -1 && selectedPlayerIds.length < 6) selectedPlayerIds.push(profile.id);
+    renderPlayerPicker();
+    syncSelectionToState();
+    closePlayerModal();
+  });
+}
+function deletePlayerProfile(profileId){
+  if(!confirm('Delete this player profile?')) return;
+  PlayerProfileService.remove(profileId);
+  playerProfiles = PlayerProfileService.listProfiles();
+  selectedPlayerIds = selectedPlayerIds.filter(function(id){ return id !== profileId; });
+  renderPlayerPicker();
+  syncSelectionToState();
 }
 
 function fisherYatesShuffle(arr){
@@ -1281,6 +1507,8 @@ function randomizePlayerOrder(){
   if(state.players.length < 2) return;
   var old = state.players.slice();
   state.players = fisherYatesShuffle(state.players.slice());
+  selectedPlayerIds = state.players.map(function(p){ return p.id; });
+  localStorage.setItem('playpal.selected_player_ids.v1', JSON.stringify(selectedPlayerIds));
   reorderPlayState(old, state.players);
   renderPlayers(); rebuild();
   if(playState){ buildFmtTabs(); refreshHole(playState.currentHole); }
@@ -1298,6 +1526,7 @@ function loadStateToUI(){
   });
   updateHoleSums();
   renderPlayers();
+  renderPlayerPicker();
   renderFormats();
   rebuild();
 }
@@ -1339,6 +1568,11 @@ function rebuild(){
    START PLAY
    ============================================================ */
 function startPlay(){
+  if(state.players.length < 2){
+    alert('Select at least 2 saved player profiles before starting a round.');
+    switchTab('setup');
+    return;
+  }
   syncHolesFromUI();
   playState = makePlayState();
   document.getElementById('play-start').style.display = 'none';
@@ -2095,7 +2329,16 @@ function colGroupHTML(){
 window.addEventListener('DOMContentLoaded',function(){
   // Pre-populate with Beaver Brook (index 0)
   state = deepClone(BB);
+  playerProfiles = PlayerProfileService.listProfiles();
+  try{ selectedPlayerIds = JSON.parse(localStorage.getItem('playpal.selected_player_ids.v1') || '[]'); }catch(_){ selectedPlayerIds = []; }
+  selectedPlayerIds = selectedPlayerIds.filter(function(id){
+    return playerProfiles.some(function(p){ return p.id === id; });
+  });
+  if(!selectedPlayerIds.length && playerProfiles.length){
+    selectedPlayerIds = playerProfiles.slice(0,4).map(function(p){ return p.id; });
+  }
   loadStateToUI();
+  syncSelectionToState();
   renderCourseList();
   // Show active course banner for default
   document.getElementById('active-course-banner').style.display = '';
