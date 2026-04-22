@@ -700,7 +700,7 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -930,6 +930,7 @@ var RealtimeService = (function(){
   var channel = null;
   var currentCode = '';
   var currentRoundId = null;
+  var currentRound = null;
   var applyingRemote = false;
   var writeInFlight = false;
   var writeQueued = false;
@@ -956,6 +957,18 @@ var RealtimeService = (function(){
     btn.disabled = joinInFlight;
     btn.textContent = joinInFlight ? ('Joining ' + String(code || '').toUpperCase() + '…') : '🔗 Join Code';
   }
+  function setLoading(busy, code){ setJoinBusy(busy, code); }
+  function showError(msg){ setStatus(msg || 'Could not join round.'); }
+  function navigateToScorecard(){
+    showPlayActiveFromState();
+    switchTab('play');
+  }
+  function renderScorecard(){
+    if(currentRound && currentRound.snapshot){
+      applySnapshot(currentRound.snapshot);
+    }
+    buildScorecard();
+  }
   function showPlayActiveFromState(){
     if(!playState) return;
     document.getElementById('play-start').style.display = 'none';
@@ -977,13 +990,10 @@ var RealtimeService = (function(){
     }
     panel.style.display = 'flex';
     codeEl.textContent = currentCode;
-    qrEl.innerHTML = '';
-    if(window.QRCode){
-      new window.QRCode(qrEl, {
-        text:getJoinLink(currentCode) || currentCode,
-        width:112,
-        height:112,
-        correctLevel:window.QRCode.CorrectLevel.M
+    qrEl.innerHTML = '<canvas id="qr"></canvas>';
+    if(window.QRCode && typeof window.QRCode.toCanvas === 'function'){
+      window.QRCode.toCanvas(document.getElementById('qr'), currentCode, function(err){
+        if(err) console.error('QR generation failed:', err);
       });
     }
   }
@@ -1017,21 +1027,24 @@ var RealtimeService = (function(){
     return out;
   }
 
-  function subscribeToRound(){
-    if(!client || !currentRoundId) return;
+  function subscribeToRound(roundId){
+    if(!client || !roundId) return;
     if(channel){ client.removeChannel(channel); channel = null; }
-    channel = client.channel('round-db-' + currentRoundId);
-    channel.on('postgres_changes', {
-      event:'UPDATE',
-      schema:'public',
-      table:ROUNDS_TABLE,
-      filter:'id=eq.' + currentRoundId
-    }, function(payload){
-      if(payload && payload.new && payload.new.snapshot){
-        applySnapshot(payload.new.snapshot);
-        setStatus('Live sync active on code ' + currentCode + '.');
+    channel = client.channel('live_rounds_channel');
+    channel.on(
+      'postgres_changes',
+      {
+        event:'*',
+        schema:'public',
+        table:ROUNDS_TABLE,
+        filter:'id=eq.' + roundId
+      },
+      function(payload){
+        console.log('Realtime update:', payload);
+        currentRound = payload && payload.new ? payload.new : currentRound;
+        renderScorecard();
       }
-    });
+    );
     channel.subscribe(function(status){
       if(status === 'SUBSCRIBED') setStatus('Connected to round ' + currentCode + '.');
     });
@@ -1060,12 +1073,13 @@ var RealtimeService = (function(){
           return null;
         }
 
+        currentRound = res.data;
         currentRoundId = res.data.id;
         currentCode = res.data.join_code;
         document.getElementById('inp-round-code').value = currentCode;
         applySnapshot(res.data.snapshot);
         saveSession();
-        subscribeToRound();
+        subscribeToRound(res.data.id);
         renderLiveShare();
         setStatus('Round created. Share code ' + currentCode + '.');
         return currentCode;
@@ -1085,35 +1099,38 @@ var RealtimeService = (function(){
     if(!joinCode){ setStatus('Enter a valid round code.'); return false; }
 
     leave();
-    setJoinBusy(true, joinCode);
+    setLoading(true, joinCode);
     setStatus('Joining round ' + joinCode + '…');
 
     try{
-      var res = await roundsTable().select('id,join_code,snapshot').eq('join_code', joinCode).maybeSingle();
-      if(res.error){ setStatus('Join failed: ' + res.error.message); return false; }
-      if(!res.data){ setStatus('Invalid join code.'); return false; }
+      var res = await roundsTable().select('id,join_code,snapshot').eq('join_code', joinCode).single();
+      if(res.error || !res.data){
+        throw new Error('Invalid join code');
+      }
 
+      currentRound = res.data;
       currentRoundId = res.data.id;
       currentCode = res.data.join_code;
       document.getElementById('inp-round-code').value = currentCode;
       applySnapshot(res.data.snapshot);
       saveSession();
-      subscribeToRound();
-      showPlayActiveFromState();
-      switchTab('play');
+      subscribeToRound(res.data.id);
+      setLoading(false, joinCode);
+      navigateToScorecard();
       setStatus('Joined round ' + currentCode + '.');
       return true;
     }catch(err){
-      setStatus('Join failed: ' + (err && err.message ? err.message : String(err)));
+      console.error(err);
+      setLoading(false, joinCode);
+      showError('Could not join round');
       return false;
-    }finally{
-      setJoinBusy(false, joinCode);
     }
   }
 
   function leave(){
     if(channel && client){ client.removeChannel(channel); }
     channel = null;
+    currentRound = null;
     currentRoundId = null;
     currentCode = '';
     writeInFlight = false;
