@@ -947,7 +947,7 @@ var RealtimeService = (function(){
   function getJoinLink(code){
     var c = String(code || currentCode || '').trim().toUpperCase();
     if(!c) return '';
-    return 'https://jchristadore-ux.github.io/join?code=' + encodeURIComponent(c);
+    return 'https://jchristadore-ux.github.io/?code=' + encodeURIComponent(c);
   }
 
   function setJoinBusy(busy, code){
