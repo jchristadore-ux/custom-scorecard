@@ -351,6 +351,22 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
 /* ── SUMMARY BAR ── */
 .summary-bar{border-top:1px solid var(--border);padding:8px 0 0;margin-top:12px;}
 
+/* ── SETTLEMENT ── */
+.settlement-game{margin-bottom:16px;}
+.settlement-game-title{font-family:'Bebas Neue',sans-serif;font-size:0.85rem;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.settlement-winner{background:linear-gradient(135deg,rgba(10,92,62,0.3),rgba(0,200,83,0.08));border:1px solid rgba(0,200,83,0.3);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.settlement-winner-name{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:1px;color:var(--green-bright);}
+.settlement-winner-earns{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:1px;color:var(--gold);}
+.settlement-winner-sub{font-size:0.68rem;color:var(--text-muted);font-weight:600;letter-spacing:0.5px;text-transform:uppercase;}
+.settlement-ledger{display:flex;flex-direction:column;gap:5px;}
+.ledger-row{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;}
+.ledger-from{font-size:0.85rem;font-weight:600;color:var(--text);}
+.ledger-arrow{font-size:0.75rem;color:var(--text-muted);margin:0 6px;}
+.ledger-to{font-size:0.85rem;font-weight:600;color:var(--green-bright);}
+.ledger-amount{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:0.5px;color:var(--gold);}
+.settlement-no-stake{font-size:0.78rem;color:var(--text-muted);padding:8px 0;font-style:italic;}
+.settlement-tie{font-size:0.82rem;color:var(--text-dim);padding:8px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--border);}
+
 /* ── PRINT TAB ── */
 .print-body{max-width:900px;margin:0 auto;padding:20px 16px 40px;}
 .print-bar{text-align:center;padding:24px 0;}
@@ -554,6 +570,21 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
     <div id="formats-list"></div>
   </div>
 
+  <!-- STAKES -->
+  <div class="section">
+    <div class="section-title">Stakes</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>PTM Stake ($ per player)</label>
+        <input type="number" id="inp-stake-ptm" min="0" step="1" placeholder="0" oninput="syncStakesFromUI()">
+      </div>
+      <div class="form-group">
+        <label>Wolf Stake ($ per player)</label>
+        <input type="number" id="inp-stake-wolf" min="0" step="1" placeholder="0" oninput="syncStakesFromUI()">
+      </div>
+    </div>
+  </div>
+
   <div style="padding:8px 0 16px;text-align:center;">
     <button class="btn btn-gold btn-start-round" onclick="switchTab('play')">⛳ TEE IT UP →</button>
   </div>
@@ -711,7 +742,7 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script>
@@ -806,50 +837,7 @@ var NJ_COURSES = [
   {course_name:"Francis A. Byrne Golf Course (West Orange, NJ)",holes:Array.from({length:18},function(_,i){return{hole:i+1,par:null,yards:null,hcp:null};})}
 ];
 
-/* ============================================================
-   EMAIL SERVICE LAYER
-   ============================================================ */
-var EmailService = (function(){
-  var EMAILJS_SERVICE_ID = 'service_l1hju5b';
-  var EMAILJS_TEMPLATE_ID = 'template_eaj9hfo';
-  var EMAILJS_PUBLIC_KEY = 'NNXLB9T2e0L-K7j61';
 
-  var _initialized = false;
-
-  function isConfigured(){
-    return !!(EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY);
-  }
-
-  function init(){
-    if(_initialized || !isConfigured()) return;
-    if(typeof emailjs !== 'undefined'){
-      emailjs.init(EMAILJS_PUBLIC_KEY);
-      _initialized = true;
-    }
-  }
-
-  function sendScorecardEmail(toEmail, toName, subject, scorecardHtml, courseName, roundDate, scorecardPdfBase64, scorecardPdfName){
-    if(!isConfigured()){
-      return Promise.reject(new Error('EmailJS not configured'));
-    }
-    init();
-    if(typeof emailjs === 'undefined'){
-      return Promise.reject(new Error('EmailJS library not loaded'));
-    }
-    return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-      to_email: toEmail,
-      to_name: toName,
-      subject: subject,
-      scorecard_html: scorecardHtml,
-      course_name: courseName,
-      round_date: roundDate,
-      scorecard_pdf_base64: scorecardPdfBase64 || '',
-      scorecard_pdf_name: scorecardPdfName || 'playpal-scorecard.pdf'
-    });
-  }
-
-  return {isConfigured:isConfigured, sendScorecardEmail:sendScorecardEmail};
-})();
 
 /* ============================================================
    DEFAULT STATE
@@ -872,7 +860,8 @@ var BB = {
     {id:'ptm',   label:'PTM $', enabled:true},
     {id:'wolf',  label:'Wolf',  enabled:true},
     {id:'par3',  label:'Par 3', enabled:true}
-  ]
+  ],
+  stakes:{ptm:0,wolf:0}
 };
 
 var state = deepClone(BB);
@@ -1369,7 +1358,8 @@ function makeInitialSetupState(){
     group_name:'',
     players:[],
     holes:blankHoles(),
-    formats:deepClone(BB.formats)
+    formats:deepClone(BB.formats),
+    stakes:{ptm:0,wolf:0}
   };
 }
 
@@ -1605,6 +1595,11 @@ function loadStateToUI(){
     document.getElementById('yds-'+n).value = h.yards;
     document.getElementById('hcp-'+n).value = h.hdcp;
   });
+  var stakes = state.stakes || {ptm:0,wolf:0};
+  var ptmEl = document.getElementById('inp-stake-ptm');
+  var wolfEl = document.getElementById('inp-stake-wolf');
+  if(ptmEl) ptmEl.value = stakes.ptm || '';
+  if(wolfEl) wolfEl.value = stakes.wolf || '';
   updateHoleSums();
   renderPlayers();
   renderPlayerPicker();
@@ -1637,6 +1632,7 @@ function syncHolesFromUI(){
 
 function rebuild(){
   syncHolesFromUI();
+  syncStakesFromUI();
   state.course_name = document.getElementById('inp-course').value || BB.course_name;
   state.tee_color   = document.getElementById('inp-tee').value || '';
   state.group_name  = document.getElementById('inp-group').value || '';
@@ -2059,34 +2055,166 @@ function buildScorecardTextForPlayer(pi){
   return lines.join('\n');
 }
 
-function buildScorecardHtmlForEmail(){
-  var courseName = state.course_name || 'Golf Course';
-  var teeColor = state.tee_color || '';
-  var today = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  var html = '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0F1C2E;color:#F5F5F5;border-radius:12px;overflow:hidden;">';
-  html += '<div style="background:#0A5C3E;padding:16px 20px;"><div style="font-size:20px;font-weight:700;letter-spacing:2px;color:#D4AF77;">🤜 PlayPal Scorecard</div>';
-  html += '<div style="font-size:13px;color:rgba(255,255,255,0.8);margin-top:4px;">' + esc(courseName) + (teeColor ? ' · ' + esc(teeColor) : '') + '</div>';
-  html += '<div style="font-size:12px;color:rgba(212,175,119,0.8);margin-top:2px;">' + today + '</div></div>';
-  html += '<div style="padding:16px 20px;">';
+/* ============================================================
+   STAKES
+   ============================================================ */
+function syncStakesFromUI(){
+  var ptmEl = document.getElementById('inp-stake-ptm');
+  var wolfEl = document.getElementById('inp-stake-wolf');
+  if(!state.stakes) state.stakes = {ptm:0,wolf:0};
+  state.stakes.ptm = ptmEl ? (parseFloat(ptmEl.value) || 0) : 0;
+  state.stakes.wolf = wolfEl ? (parseFloat(wolfEl.value) || 0) : 0;
+}
 
-  html += '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px;">';
-  html += '<tr style="background:#0A5C3E;"><th style="padding:6px 4px;text-align:left;color:#D4AF77;">Player</th>';
-  for(var i=1;i<=9;i++) html += '<th style="padding:4px 2px;color:white;">' + i + '</th>';
-  html += '<th style="padding:4px 2px;color:#D4AF77;">OUT</th>';
-  for(var i=10;i<=18;i++) html += '<th style="padding:4px 2px;color:white;">' + i + '</th>';
-  html += '<th style="padding:4px 2px;color:#D4AF77;">IN</th><th style="padding:4px 2px;color:#D4AF77;">TOT</th></tr>';
+/* ============================================================
+   SETTLEMENT ENGINE
+   ============================================================ */
 
-  state.players.forEach(function(p, pi){
-    html += '<tr style="border-bottom:1px solid #1e3050;"><td style="padding:6px 4px;font-weight:600;">' + esc(p.full_name) + '</td>';
-    var out=0,inVal=0,oF=true,iF=true;
-    for(var i=0;i<9;i++){var s=getScore(pi,i);html+='<td style="padding:4px 2px;text-align:center;">'+(s!==null?s:'')+'</td>';if(s===null) oF=false;else out+=s;}
-    html += '<td style="padding:4px 2px;text-align:center;background:#0A5C3E;color:#D4AF77;font-weight:700;">' + (oF?out:'') + '</td>';
-    for(var i=9;i<18;i++){var s=getScore(pi,i);html+='<td style="padding:4px 2px;text-align:center;">'+(s!==null?s:'')+'</td>';if(s===null) iF=false;else inVal+=s;}
-    html += '<td style="padding:4px 2px;text-align:center;background:#0A5C3E;color:#D4AF77;font-weight:700;">' + (iF?inVal:'') + '</td>';
-    html += '<td style="padding:4px 2px;text-align:center;background:#0A5C3E;color:#D4AF77;font-weight:700;">' + ((oF&&iF)?out+inVal:'') + '</td></tr>';
-  });
-  html += '</table></div>';
-  html += '<div style="padding:8px 20px 16px;text-align:center;font-size:11px;color:#4a6a8a;">Powered by PlayPal 🤜</div></div>';
+/* PTM: whoever holds the money after hole 18 wins stake from all others */
+function calcPtmSettlement(){
+  if(!playState) return null;
+  var stake = (state.stakes && state.stakes.ptm) ? state.stakes.ptm : 0;
+  var winnerIdx = resolvePtmFinalHole18();
+  var n = state.players.length;
+  var entries = [];
+  for(var i = 0; i < n; i++){
+    if(i !== winnerIdx && stake > 0){
+      entries.push({from: state.players[i].full_name, to: state.players[winnerIdx].full_name, amount: stake});
+    }
+  }
+  return {
+    winnerIdx: winnerIdx,
+    winnerName: state.players[winnerIdx] ? state.players[winnerIdx].full_name : '—',
+    totalEarned: stake * (n - 1),
+    stake: stake,
+    entries: entries
+  };
+}
+
+/* Wolf: player with most points wins stake from all others; tie = no payout */
+function calcWolfSettlement(){
+  if(!playState) return null;
+  var stake = (state.stakes && state.stakes.wolf) ? state.stakes.wolf : 0;
+  var n = state.players.length;
+  var pts = state.players.map(function(_, pi){ return calcWolfTotalPts(pi); });
+  var maxPts = Math.max.apply(null, pts);
+  var winners = pts.reduce(function(acc, p, i){ if(p === maxPts) acc.push(i); return acc; }, []);
+
+  if(winners.length !== 1){
+    return {tie: true, stake: stake, pts: pts, entries: []};
+  }
+  var winnerIdx = winners[0];
+  var entries = [];
+  for(var i = 0; i < n; i++){
+    if(i !== winnerIdx && stake > 0){
+      entries.push({from: state.players[i].full_name, to: state.players[winnerIdx].full_name, amount: stake});
+    }
+  }
+  return {
+    winnerIdx: winnerIdx,
+    winnerName: state.players[winnerIdx].full_name,
+    totalEarned: stake * (n - 1),
+    stake: stake,
+    pts: pts,
+    tie: false,
+    entries: entries
+  };
+}
+
+/* Combined: merge PTM + Wolf entries, net out same-direction duplicates */
+function calcSettlement(){
+  var ptm = calcPtmSettlement();
+  var wolf = calcWolfSettlement();
+  /* Build a net balance map: balances[i][j] = amount i owes j */
+  var n = state.players.length;
+  var bal = [];
+  for(var i = 0; i < n; i++){ bal.push([]); for(var j = 0; j < n; j++) bal[i].push(0); }
+
+  function applyEntries(result){
+    if(!result || !result.entries) return;
+    result.entries.forEach(function(e){
+      var fi = state.players.findIndex(function(p){ return p.full_name === e.from; });
+      var ti = state.players.findIndex(function(p){ return p.full_name === e.to; });
+      if(fi < 0 || ti < 0) return;
+      bal[fi][ti] += e.amount;
+    });
+  }
+  applyEntries(ptm);
+  applyEntries(wolf);
+
+  /* Net: if A owes B $15 and B owes A $10, result is A owes B $5 */
+  var ledger = [];
+  for(var i = 0; i < n; i++){
+    for(var j = i+1; j < n; j++){
+      var net = bal[i][j] - bal[j][i];
+      if(net > 0) ledger.push({from: state.players[i].full_name, to: state.players[j].full_name, amount: net});
+      else if(net < 0) ledger.push({from: state.players[j].full_name, to: state.players[i].full_name, amount: -net});
+    }
+  }
+  return {ptm: ptm, wolf: wolf, ledger: ledger};
+}
+
+function renderSettlementSection(){
+  if(!playState) return '';
+  var s = calcSettlement();
+  var html = '<div class="save-section"><div class="save-section-title">💵 Settlement</div>';
+
+  /* PTM block */
+  html += '<div class="settlement-game">';
+  html += '<div class="settlement-game-title"><span>💰 Pass The Money</span>';
+  if(s.ptm && s.ptm.stake > 0) html += '<span style="color:var(--text-muted);font-size:0.7rem;font-family:\'DM Sans\',sans-serif;font-weight:600;">$' + s.ptm.stake + '/player</span>';
+  html += '</div>';
+  if(!s.ptm || s.ptm.stake === 0){
+    html += '<div class="settlement-no-stake">No PTM stake set.</div>';
+  } else {
+    html += '<div class="settlement-winner">';
+    html += '<div><div class="settlement-winner-sub">Winner</div><div class="settlement-winner-name">' + esc(s.ptm.winnerName) + '</div></div>';
+    html += '<div style="text-align:right;"><div class="settlement-winner-sub">Collects</div><div class="settlement-winner-earns">+$' + s.ptm.totalEarned + '</div></div>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  /* Wolf block */
+  html += '<div class="settlement-game">';
+  html += '<div class="settlement-game-title"><span>🐺 Wolf</span>';
+  if(s.wolf && s.wolf.stake > 0) html += '<span style="color:var(--text-muted);font-size:0.7rem;font-family:\'DM Sans\',sans-serif;font-weight:600;">$' + s.wolf.stake + '/player</span>';
+  html += '</div>';
+  if(!s.wolf || s.wolf.stake === 0){
+    html += '<div class="settlement-no-stake">No Wolf stake set.</div>';
+  } else if(s.wolf.tie){
+    html += '<div class="settlement-tie">🤝 Tie — no payout. Tied players: ';
+    var tiedNames = state.players.filter(function(_, i){ return s.wolf.pts[i] === Math.max.apply(null, s.wolf.pts); }).map(function(p){ return p.full_name; });
+    html += esc(tiedNames.join(', ')) + ' (' + Math.max.apply(null, s.wolf.pts) + ' pts)</div>';
+  } else {
+    html += '<div class="settlement-winner">';
+    html += '<div><div class="settlement-winner-sub">Winner</div><div class="settlement-winner-name">' + esc(s.wolf.winnerName) + '</div>';
+    html += '<div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">' + s.wolf.pts[s.wolf.winnerIdx] + ' pts</div></div>';
+    html += '<div style="text-align:right;"><div class="settlement-winner-sub">Collects</div><div class="settlement-winner-earns">+$' + s.wolf.totalEarned + '</div></div>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  /* Ledger */
+  var hasAnyStake = (s.ptm && s.ptm.stake > 0) || (s.wolf && s.wolf.stake > 0);
+  if(hasAnyStake){
+    html += '<div class="save-section-title" style="margin-top:4px;margin-bottom:8px;">Ledger</div>';
+    if(s.ledger.length === 0){
+      html += '<div class="settlement-tie">Everyone is square — no money changes hands.</div>';
+    } else {
+      html += '<div class="settlement-ledger">';
+      s.ledger.forEach(function(row){
+        html += '<div class="ledger-row">';
+        html += '<span class="ledger-from">' + esc(row.from) + '</span>';
+        html += '<span class="ledger-arrow">owes</span>';
+        html += '<span class="ledger-to">' + esc(row.to) + '</span>';
+        html += '<span class="ledger-amount">$' + row.amount + '</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+  }
+
+  html += '</div>';
   return html;
 }
 
@@ -2115,9 +2243,7 @@ function openSaveModal(){
   });
   html += '</div>';
 
-  html += '<div class="save-section"><div class="save-section-title">📧 Email Scorecards</div>';
-  html += '<div class="security-note">Automatic email delivery is disabled because player profiles no longer store email addresses. Use print/PDF export to share scorecards.</div>';
-  html += '</div>';
+  html += renderSettlementSection();
 
   html += '<button class="btn-confirm-save" id="btn-confirm-save" onclick="executeSaveRound()">✓ SAVE ROUND</button>';
 
@@ -2150,14 +2276,7 @@ function createScorecardPdfBase64(){
 function executeSaveRound(){
   var saveBtn = document.getElementById('btn-confirm-save');
   if(saveBtn) saveBtn.disabled = true;
-
-  createScorecardPdfBase64().then(function(){
-    if(saveBtn) saveBtn.disabled = false;
-    setTimeout(function(){ closeSaveModal(); }, 600);
-  }).catch(function(err){
-    if(saveBtn) saveBtn.disabled = false;
-    alert('Could not generate PDF for export: ' + err.message);
-  });
+  setTimeout(function(){ closeSaveModal(); }, 400);
 }
 
 async function joinRoundByCode(){
