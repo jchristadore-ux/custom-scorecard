@@ -1340,24 +1340,6 @@ var RealtimeService = (function(){
     }
   }
 
-  function showQRModal(){
-    var modal = document.getElementById('qr-modal');
-    var canvas = document.getElementById('qr-modal-canvas');
-    if(!modal || !canvas || !currentCode) return;
-    var joinLink = getJoinLink(currentCode);
-    if(window.QRCode && typeof window.QRCode.toCanvas === 'function'){
-      window.QRCode.toCanvas(canvas, joinLink, {width:260}, function(err){
-        if(err) console.error('QR modal generation failed:', err);
-      });
-    }
-    modal.classList.add('open');
-  }
-
-  function closeQRModal(){
-    var modal = document.getElementById('qr-modal');
-    if(modal) modal.classList.remove('open');
-  }
-
   function persistCode(code){ try{ localStorage.setItem(SYNC_CODE_KEY, code); }catch(_){ } }
   function readStoredCode(){ try{ return String(localStorage.getItem(SYNC_CODE_KEY)||''); }catch(_){ return ''; } }
   function genSyncCode(){
@@ -1562,6 +1544,25 @@ var RealtimeService = (function(){
     getJoinLinkForCurrent:getJoinLinkForCurrent, refreshSyncBanner:refreshSyncBanner
   };
 })();
+
+function showQRModal(){
+  var modal = document.getElementById('qr-modal');
+  var canvas = document.getElementById('qr-modal-canvas');
+  if(!modal || !canvas) return;
+  var joinLink = RealtimeService.getJoinLinkForCurrent();
+  if(!joinLink) return;
+  if(window.QRCode && typeof window.QRCode.toCanvas === 'function'){
+    window.QRCode.toCanvas(canvas, joinLink, {width:260}, function(err){
+      if(err) console.error('QR modal generation failed:', err);
+    });
+  }
+  modal.classList.add('open');
+}
+
+function closeQRModal(){
+  var modal = document.getElementById('qr-modal');
+  if(modal) modal.classList.remove('open');
+}
 
 /* ============================================================
    PLAY STATE
