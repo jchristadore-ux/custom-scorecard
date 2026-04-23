@@ -813,9 +813,9 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
 <!-- Hidden scorecard render target for PDF -->
 <div class="pdf-scorecard-source" id="pdf-scorecard-source" aria-hidden="true"></div>
 
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -936,17 +936,34 @@ var CustomCourseService = (function(){
     writeLocal(readLocal().filter(function(c){ return c.id !== courseId; }));
   }
 
-  function upsertFirestore(course){
-    if(!db || !authReady) return;
+  /* pendingOps queue — same pattern as PlayerProfileService */
+  var pendingOps = [];
+
+  function _firestoreUpsert(course){
     db.collection(COLLECTION).doc(course.id).set(course).catch(function(e){
       console.warn('[courses] Firestore write failed', e);
     });
   }
-  function removeFirestore(courseId){
-    if(!db || !authReady) return;
+  function _firestoreDelete(courseId){
     db.collection(COLLECTION).doc(courseId).delete().catch(function(e){
       console.warn('[courses] Firestore delete failed', e);
     });
+  }
+  function _flushPending(){
+    var ops = pendingOps.slice(); pendingOps = [];
+    ops.forEach(function(op){
+      if(op.type === 'upsert') _firestoreUpsert(op.course);
+      else if(op.type === 'delete') _firestoreDelete(op.id);
+    });
+  }
+
+  function upsertFirestore(course){
+    if(!db || !authReady){ pendingOps.push({type:'upsert', course:course}); return; }
+    _firestoreUpsert(course);
+  }
+  function removeFirestore(courseId){
+    if(!db || !authReady){ pendingOps.push({type:'delete', id:courseId}); return; }
+    _firestoreDelete(courseId);
   }
 
   function list(){ return readLocal(); }
@@ -966,6 +983,8 @@ var CustomCourseService = (function(){
   function initFirebase(firestoreDb){
     db = firestoreDb;
     authReady = true;
+    /* Flush any delete/upsert ops queued before auth was ready */
+    _flushPending();
     // Pull all remote courses down, push any local-only courses up
     db.collection(COLLECTION).get().then(function(snap){
       var remote = [];
@@ -1056,8 +1075,8 @@ var PlayerProfileService = (function(){
   var COLLECTION = 'playpal_profiles';
   var db = null;
   var authReady = false;
-  var syncEnabled = false;
-  var pendingWrites = [];
+  /* pendingOps: queue of {op:'upsert'|'delete', data} waiting for Firebase auth */
+  var pendingOps = [];
 
   function readLocal(){ try{ var r=localStorage.getItem(PROFILES_KEY); return r?JSON.parse(r):[]; }catch(_){ return []; } }
   function writeLocal(list){ try{ localStorage.setItem(PROFILES_KEY, JSON.stringify(list)); }catch(_){ } }
@@ -1075,26 +1094,50 @@ var PlayerProfileService = (function(){
     writeLocal(readLocal().filter(function(p){ return p.id !== profileId; }));
   }
 
-  function upsertFirestore(profile){
-    if(!db || !authReady) return;
+  function _firestoreUpsert(profile){
     var doc = {
       id: profile.id,
       full_name: profile.full_name,
       abbreviation: profile.abbreviation || '',
       notes: profile.notes || '',
       handicap_index: profile.handicap_index || '',
-      updatedAt: Date.now()
+      updatedAt: profile.updatedAt || Date.now()
     };
     db.collection(COLLECTION).doc(profile.id).set(doc).catch(function(err){
       console.warn('[profiles] Firestore write failed', err);
     });
   }
 
-  function removeFirestore(profileId){
-    if(!db || !authReady) return;
+  function _firestoreDelete(profileId){
     db.collection(COLLECTION).doc(profileId).delete().catch(function(err){
       console.warn('[profiles] Firestore delete failed', err);
     });
+  }
+
+  function _flushPending(){
+    var ops = pendingOps.slice();
+    pendingOps = [];
+    ops.forEach(function(op){
+      if(op.type === 'upsert') _firestoreUpsert(op.profile);
+      else if(op.type === 'delete') _firestoreDelete(op.id);
+    });
+  }
+
+  function upsertFirestore(profile){
+    if(!db || !authReady){
+      /* Queue the write — will be flushed when Firebase auth completes */
+      pendingOps.push({type:'upsert', profile:profile});
+      return;
+    }
+    _firestoreUpsert(profile);
+  }
+
+  function removeFirestore(profileId){
+    if(!db || !authReady){
+      pendingOps.push({type:'delete', id:profileId});
+      return;
+    }
+    _firestoreDelete(profileId);
   }
 
   function upsert(profile){
@@ -1148,13 +1191,15 @@ var PlayerProfileService = (function(){
   function initFirebase(firestoreDb){
     db = firestoreDb;
     authReady = true;
-    syncEnabled = true;
+    /* Flush any writes that happened before auth was ready */
+    _flushPending();
+    /* Pull remote state then push any local-only records up */
     syncFromFirestore(function(ok){
       renderSyncBadge(ok);
       playerProfiles = listProfiles();
       renderPlayerPicker();
     });
-    // Realtime listener for cross-device updates
+    /* Real-time listener: all devices see changes within ~1 second */
     db.collection(COLLECTION).onSnapshot(function(snap){
       snap.docChanges().forEach(function(change){
         var d = change.doc.data();
@@ -1169,6 +1214,7 @@ var PlayerProfileService = (function(){
           removeLocal(change.doc.id);
         }
       });
+      /* Refresh the global list and re-render picker on every remote change */
       playerProfiles = listProfiles();
       renderPlayerPicker();
     }, function(err){ console.warn('[profiles] onSnapshot error', err); });
@@ -1196,13 +1242,17 @@ var RealtimeService = (function(){
   /* ── QR join URL — ALWAYS points to the hosted page with ?code= ── */
   var QR_BASE_URL = 'https://jchristadore-ux.github.io/custom-scorecard/';
 
+  /* ── PASTE YOUR FIREBASE CONFIG HERE ─────────────────────────────────
+     Get this from: Firebase Console → Project Settings → Your Apps → Web App
+     Replace every value below with your project's values.
+     ──────────────────────────────────────────────────────────────────── */
   var FIREBASE_CONFIG = {
-      apiKey: "AIzaSyBay-gT70Q-_APEBJUgY9CzO_4t42omXco",
-      authDomain: "playpal-scorecard.firebaseapp.com",
-      projectId: "playpal-scorecard",
-      storageBucket: "playpal-scorecard.firebasestorage.app",
-      messagingSenderId: "1993034314",
-      appId: "1:1993034314:web:18624ba9da9e766ca274b3"
+    apiKey:            "AIzaSyBay-gT70Q-_APEBJUgY9CzO_4t42omXco",
+    authDomain:        "playpal-scorecard.firebaseapp.com",
+    projectId:         "playpal-scorecard",
+    storageBucket:     "playpal-scorecard.firebasestorage.app",
+    messagingSenderId: "1993034314",
+    appId:             "1:1993034314:web:18624ba9da9e766ca274b3"
   };
 
   var db = null;
@@ -1399,7 +1449,7 @@ var RealtimeService = (function(){
     cloudDetach();
     currentCode = code;
     allowCreateIfMissing = !!(opts && opts.allowCreateIfMissing);
-    stateDoc = db.collection('jrlions_state').doc(code);
+    stateDoc = db.collection('playpal_rounds').doc(code);
     unsubState = stateDoc.onSnapshot(
       function(snap){ cloudOnStateSnapshot(snap); },
       function(err){ console.error('[sync] listener error', err); setStatusWithClass('err','Sync error'); }
@@ -2539,11 +2589,6 @@ function exportRoundPdf(){
   var btn = document.getElementById('btn-export-pdf');
   if(btn){ btn.disabled = true; btn.textContent = 'Generating\u2026'; }
 
-  // Build full scorecard in the hidden render target
-  buildScorecard();
-  var source = document.getElementById('scorecard-preview');
-  if(!source){ if(btn){ btn.disabled=false; btn.textContent='\uD83D\uDCBE Save as PDF'; } return; }
-
   var h2c = window.html2canvas;
   var jsPDF = window.jspdf && window.jspdf.jsPDF;
   if(!h2c || !jsPDF){
@@ -2552,37 +2597,100 @@ function exportRoundPdf(){
     return;
   }
 
-  // Make the source temporarily visible at full opacity for capture
-  source.style.position = 'fixed';
-  source.style.left = '-9999px';
-  source.style.top = '0';
-  source.style.display = 'block';
-
-  h2c(source, {backgroundColor:'#ffffff', scale:2, useCORS:true, logging:false}).then(function(canvas){
-    source.style.position = '';
-    source.style.left = '';
-    source.style.top = '';
-
-    var pdf = new jsPDF({orientation:'landscape', unit:'pt', format:'a4'});
-    var pageW = pdf.internal.pageSize.getWidth();
-    var pageH = pdf.internal.pageSize.getHeight();
-    var ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
-    var w = canvas.width * ratio, h = canvas.height * ratio;
-    var imgData = canvas.toDataURL('image/png');
-    pdf.addImage(imgData, 'PNG', (pageW-w)/2, (pageH-h)/2, w, h);
-
-    var today = new Date();
-    var fname = 'PlayPal_' + (state.course_name||'Round').replace(/\s+/g,'_') + '_' +
-      today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0') + '.pdf';
-    pdf.save(fname);
-
-    if(btn){ btn.disabled=false; btn.textContent='\uD83D\uDCBE Save as PDF'; }
-  }).catch(function(err){
-    console.error('[pdf] export failed', err);
-    alert('PDF export failed: ' + err.message);
-    source.style.position = '';
-    if(btn){ btn.disabled=false; btn.textContent='\uD83D\uDCBE Save as PDF'; }
+  /* Build the scorecard HTML string (same function used by Print tab) */
+  var enabled = state.formats.filter(function(f){ return f.enabled; });
+  var scorecardHtml = buildHeader() + buildStrokeTable();
+  var fmtNum = 2;
+  enabled.forEach(function(f){
+    if(f.id==='ptm') scorecardHtml += buildPTMTable(fmtNum++);
+    if(f.id==='wolf') scorecardHtml += buildWolfTable(fmtNum++);
+    if(f.id==='par3') scorecardHtml += buildPar3Table(fmtNum++);
   });
+
+  /* Create a detached off-screen container with NO hidden ancestors.
+     This is the only reliable way to make html2canvas capture correctly.
+     Appending directly to body means no display:none parent. */
+  var container = document.createElement('div');
+  container.style.cssText = [
+    'position:fixed',
+    'left:-9999px',
+    'top:0',
+    'width:1100px',
+    'background:#ffffff',
+    'font-family:Arial,sans-serif',
+    'font-size:7pt',
+    'z-index:-1',
+    'pointer-events:none'
+  ].join(';');
+
+  /* Copy the scorecard CSS classes that the print preview uses.
+     We inline critical styles so html2canvas gets them even in the detached node. */
+  container.innerHTML =
+    '<style>' +
+    '.sc-header{background:#0A5C3E!important;color:white!important;display:flex;align-items:center;justify-content:space-between;padding:6px 10px;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}' +
+    '.sc-course{font-size:9pt;font-weight:700;letter-spacing:1px;text-transform:uppercase;}' +
+    '.sc-sub{font-size:7pt;color:rgba(255,255,255,0.7);}' +
+    '.sc-gold{color:#D4AF77;font-size:8pt;font-weight:700;}' +
+    '.sc-table{width:100%;border-collapse:collapse;}' +
+    '.sc-table th,.sc-table td{border:1px solid #ccc;padding:3px 2px;text-align:center;font-size:6.5pt;}' +
+    '.sc-table th{background:#0A5C3E!important;color:white!important;font-weight:700;-webkit-print-color-adjust:exact!important;}' +
+    '.sc-table td.lbl{text-align:left;padding-left:4px;font-weight:700;background:#f5f7fa;white-space:nowrap;}' +
+    '.sc-table td.sum{background:#0A5C3E!important;color:#D4AF77!important;font-weight:700;-webkit-print-color-adjust:exact!important;}' +
+    '.sc-table tr:nth-child(even) td{background:#f9fafb;}' +
+    '.sc-table tr:nth-child(even) td.lbl{background:#edf0f5;}' +
+    '.sc-table tr:nth-child(even) td.sum{background:#0A5C3E!important;color:#D4AF77!important;}' +
+    '.sc-fmt-hdr{background:#0A5C3E!important;color:#D4AF77!important;padding:3px 8px;font-size:7pt;font-weight:700;letter-spacing:1px;display:flex;justify-content:space-between;-webkit-print-color-adjust:exact!important;}' +
+    '.sc-fmt-rule{color:rgba(255,255,255,0.7);font-size:6pt;font-weight:400;}' +
+    '.sc-ptm-footer{display:flex;gap:20px;padding:4px 8px;font-size:6pt;background:#f5f7fa;border:1px solid #ddd;}' +
+    '</style>' +
+    scorecardHtml;
+
+  document.body.appendChild(container);
+
+  /* Small delay to let the browser paint the appended node */
+  setTimeout(function(){
+    h2c(container, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      allowTaint: true
+    }).then(function(canvas){
+      document.body.removeChild(container);
+
+      if(canvas.width === 0 || canvas.height === 0){
+        if(btn){ btn.disabled=false; btn.textContent='\uD83D\uDCBE Save as PDF'; }
+        alert('PDF capture failed — canvas was empty. Please try the Print Scorecard button instead.');
+        return;
+      }
+
+      var pdf = new jsPDF({orientation:'landscape', unit:'pt', format:'a4'});
+      var pageW = pdf.internal.pageSize.getWidth();
+      var pageH = pdf.internal.pageSize.getHeight();
+      var margin = 18;
+      var availW = pageW - margin * 2;
+      var availH = pageH - margin * 2;
+      var ratio = Math.min(availW / canvas.width, availH / canvas.height);
+      var w = canvas.width * ratio;
+      var h = canvas.height * ratio;
+      var imgData = canvas.toDataURL('image/jpeg', 0.95);
+      pdf.addImage(imgData, 'JPEG', (pageW - w) / 2, (pageH - h) / 2, w, h);
+
+      var today = new Date();
+      var coursePart = (state.course_name || 'Round').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
+      var datePart = today.getFullYear() + '-' +
+        String(today.getMonth()+1).padStart(2,'0') + '-' +
+        String(today.getDate()).padStart(2,'0');
+      pdf.save('PlayPal_' + coursePart + '_' + datePart + '.pdf');
+
+      if(btn){ btn.disabled=false; btn.textContent='\uD83D\uDCBE Save as PDF'; }
+    }).catch(function(err){
+      if(document.body.contains(container)) document.body.removeChild(container);
+      console.error('[pdf] export failed', err);
+      alert('PDF export failed: ' + (err.message || err) + '\n\nTry the Print Scorecard button as a fallback.');
+      if(btn){ btn.disabled=false; btn.textContent='\uD83D\uDCBE Save as PDF'; }
+    });
+  }, 80);
 }
 
 /* ============================================================
@@ -2667,11 +2775,19 @@ function buildPTMTable(num){
   players.forEach(function(p,pi){
     var ab=esc(p.abbreviation||'?');
     t+='<tr><td class="lbl">'+esc(p.full_name)+'</td>';
-    for(var i=0;i<9;i++){ var h=resolvePtmAutoForPrint(i); var is=h===pi; t+='<td style="'+(is?'font-weight:900;text-decoration:underline;':'')+'">'+ab+'</td>'; }
-    var h9=resolvePtmAutoForPrint(8)===pi;
+    for(var i=0;i<9;i++){
+      var h=playState?resolvePtmAutoForPrint(i):null;
+      var is=h===pi;
+      t+='<td style="'+(is?'font-weight:900;text-decoration:underline;':'')+'">'+ab+'</td>';
+    }
+    var h9=playState&&resolvePtmAutoForPrint(8)===pi;
     t+='<td class="sum" style="'+(h9?'font-weight:900;':'')+'">'+( h9?'&#9733;':ab)+'</td>';
-    for(var i=9;i<18;i++){ var h=resolvePtmAutoForPrint(i); var is=h===pi; t+='<td style="'+(is?'font-weight:900;text-decoration:underline;':'')+'">'+ab+'</td>'; }
-    var h18=resolvePtmAutoForPrint(17)===pi;
+    for(var i=9;i<18;i++){
+      var h=playState?resolvePtmAutoForPrint(i):null;
+      var is=h===pi;
+      t+='<td style="'+(is?'font-weight:900;text-decoration:underline;':'')+'">'+ab+'</td>';
+    }
+    var h18=playState&&resolvePtmAutoForPrint(17)===pi;
     t+='<td class="sum" style="'+(h18?'font-weight:900;':'')+'">'+( h18?'&#9733;':ab)+'</td><td class="sum"></td></tr>';
   });
   t+='</table><div class="sc-ptm-footer"><span>BUNDLE HOLDER AT HOLE 9: ________________</span>'+
@@ -2686,25 +2802,32 @@ function buildWolfTable(num){
     '<span class="sc-fmt-rule">Rotation: '+rotation+' (repeat) \u00B7 Select partner before all tee</span></div>';
   t+=colGroupHTML()+'<table class="sc-table">'+holeHeaderRow('WOLF');
   t+='<tr><td class="lbl" style="font-size:6pt">IS WOLF</td>';
-  for(var i=0;i<9;i++) t+='<td style="color:#C0392B;font-weight:700">'+esc(players[getWolfIdx(i)].abbreviation)+'</td>';
+  for(var i=0;i<9;i++){
+    var wi0=playState?esc(players[getWolfIdx(i)].abbreviation):'';
+    t+='<td style="color:#C0392B;font-weight:700">'+wi0+'</td>';
+  }
   t+='<td class="sum"></td>';
-  for(var i=9;i<18;i++) t+='<td style="color:#C0392B;font-weight:700">'+esc(players[getWolfIdx(i)].abbreviation)+'</td>';
+  for(var i=9;i<18;i++){
+    var wi1=playState?esc(players[getWolfIdx(i)].abbreviation):'';
+    t+='<td style="color:#C0392B;font-weight:700">'+wi1+'</td>';
+  }
   t+='<td class="sum"></td><td class="sum"></td></tr>';
   t+='<tr><td class="lbl">PARTNER</td>';
   for(var i=0;i<18;i++){
     var wp=playState?(getHoleState(i).loneWolf?-1:getHoleState(i).wolfPartner):null;
+    var wpiVal=playState?getWolfIdx(i):null;
     var cell=wp===-1?'<span style="text-decoration:underline;color:#C0392B">LONE</span>':
-      wp!==null&&wp!==getWolfIdx(i)&&players[wp]?'<span style="text-decoration:underline">'+esc(players[wp].abbreviation)+'</span>':'';
+      wp!==null&&wpiVal!==null&&wp!==wpiVal&&players[wp]?'<span style="text-decoration:underline">'+esc(players[wp].abbreviation)+'</span>':'';
     t+='<td>'+cell+'</td>'; if(i===8) t+='<td class="sum"></td>';
   }
   t+='<td class="sum"></td><td class="sum"></td></tr>';
   players.forEach(function(p,pi){
     t+='<tr><td class="lbl">'+esc(p.full_name)+'</td>';
     var oP=0;
-    for(var i=0;i<9;i++){ var pts=calcWolfPts(i)[pi]; t+='<td>'+(pts?pts:'')+'</td>'; oP+=pts; }
+    for(var i=0;i<9;i++){ var pts=playState?calcWolfPts(i)[pi]:0; t+='<td>'+(pts?pts:'')+'</td>'; oP+=pts; }
     t+='<td class="sum">'+(oP||'')+'</td>';
     var iP=0;
-    for(var i=9;i<18;i++){ var pts=calcWolfPts(i)[pi]; t+='<td>'+(pts?pts:'')+'</td>'; iP+=pts; }
+    for(var i=9;i<18;i++){ var pts=playState?calcWolfPts(i)[pi]:0; t+='<td>'+(pts?pts:'')+'</td>'; iP+=pts; }
     t+='<td class="sum">'+(iP||'')+'</td><td class="sum">'+(oP+iP||'')+'</td></tr>';
   });
   t+='</table>'; return t;
