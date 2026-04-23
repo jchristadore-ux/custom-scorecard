@@ -117,13 +117,14 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
 .sync-code-wrap{display:grid;grid-template-columns:1fr;gap:8px;}
 @media(min-width:580px){.sync-code-wrap{grid-template-columns:1fr 1fr;}}
 .sync-status{font-size:0.78rem;color:var(--text-dim);padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;}
-.live-share-panel{margin:10px 12px 0;padding:12px;border:1px solid var(--border2);background:var(--surface);border-radius:12px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
-.live-share-copy{flex:1;min-width:170px;}
-.live-share-label{font-size:0.65rem;color:var(--text-muted);letter-spacing:1.4px;text-transform:uppercase;font-weight:700;}
-.live-share-code{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:3px;color:var(--green-bright);line-height:1;margin-top:4px;}
-.live-share-help{font-size:0.76rem;color:var(--text-dim);margin-top:3px;}
-.live-share-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
-.qr-wrap{width:128px;height:128px;padding:8px;border-radius:10px;background:#fff;border:1px solid #d8d8d8;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.live-share-panel{padding:8px 12px;background:rgba(10,92,62,0.15);border-bottom:1px solid rgba(0,200,83,0.15);display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.live-share-copy{flex:1;min-width:120px;display:flex;align-items:center;gap:10px;}
+.live-share-label{font-size:0.62rem;color:var(--text-muted);letter-spacing:1.4px;text-transform:uppercase;font-weight:700;}
+.live-share-code{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;color:var(--green-bright);line-height:1;}
+.live-share-help{display:none;}
+.live-share-actions{display:flex;gap:6px;}
+.live-share-actions .btn{padding:5px 10px;font-size:0.72rem;}
+.qr-wrap{width:56px;height:56px;padding:4px;border-radius:6px;background:#fff;border:1px solid #d8d8d8;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .qr-wrap canvas,.qr-wrap img{max-width:100%;max-height:100%;display:block;}
 
 /* ── BUTTONS ── */
@@ -396,6 +397,32 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
 .sc-fmt-rule{color:rgba(255,255,255,0.6);font-size:6pt;font-weight:400;}
 .sc-ptm-footer{display:flex;gap:20px;padding:4px 8px;font-size:6pt;background:#f5f7fa;border:1px solid #ddd;}
 
+/* ── PDF SUMMARY ── */
+.pdf-summary-overlay{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,0.92);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+.pdf-summary-overlay.open{display:flex;}
+.pdf-summary-wrap{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:0;max-width:640px;width:calc(100% - 24px);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;}
+.pdf-summary-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.pdf-summary-title{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:2px;color:var(--gold);}
+.pdf-summary-body{overflow-y:auto;padding:16px 20px 20px;flex:1;}
+.pdf-summary-body::-webkit-scrollbar{width:4px;}
+.pdf-summary-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.pdf-action-bar{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0;}
+.btn-pdf{flex:1;background:linear-gradient(135deg,var(--gold-dim) 0%,var(--gold) 100%);color:#0F1C2E;border:none;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1.5px;padding:14px;border-radius:10px;cursor:pointer;transition:transform 0.15s;-webkit-tap-highlight-color:transparent;}
+.btn-pdf:active{transform:scale(0.97);}
+.btn-pdf:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.pdf-scorecard-source{position:absolute;left:-9999px;top:-9999px;width:900px;background:#fff;}
+/* Stroke leaderboard card */
+.leaderboard-table{width:100%;border-collapse:collapse;margin-bottom:8px;}
+.leaderboard-table th{background:var(--green);color:var(--text);font-size:0.72rem;font-weight:700;padding:6px 8px;text-align:left;letter-spacing:0.5px;}
+.leaderboard-table th:last-child,.leaderboard-table td:last-child{text-align:right;}
+.leaderboard-table td{padding:8px 8px;border-bottom:1px solid var(--border);font-size:0.88rem;color:var(--text);}
+.leaderboard-table tr:last-child td{border-bottom:none;}
+.lb-rank{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--text-muted);width:28px;}
+.lb-name{font-weight:600;}
+.lb-score{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:0.5px;}
+.lb-score.under{color:var(--birdie);}
+.lb-score.over{color:var(--bogey);}
+.lb-score.dbl{color:var(--double);}
 /* ── RESET BTN ── */
 .reset-btn{display:block;margin:4px auto 0;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:8px 20px;cursor:pointer;font-size:0.78rem;-webkit-tap-highlight-color:transparent;font-family:'DM Sans',sans-serif;transition:border-color 0.15s;}
 .reset-btn:hover{border-color:var(--red);color:var(--red);}
@@ -611,15 +638,15 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
   </div>
 
   <div id="play-active" class="play-active">
+    <!-- Sync pill — compact, only shown on hole 1 -->
     <div class="live-share-panel" id="live-share-panel" style="display:none;">
       <div class="live-share-copy">
-        <div class="live-share-label">Live Round Sharing</div>
+        <div class="live-share-label">&#128279; Round</div>
         <div class="live-share-code" id="live-share-code">&#8212;</div>
-        <div class="live-share-help">Share this code or QR to join this round.</div>
         <div class="live-share-actions">
-          <button class="btn" onclick="copyRoundCode()">Copy Code</button>
-          <button class="btn" onclick="copyRoundJoinLink()">Copy Join Link</button>
-          <button class="btn btn-danger" onclick="leaveRoundSync()">Leave Sync</button>
+          <button class="btn" onclick="copyRoundCode()" title="Copy code">Copy</button>
+          <button class="btn" onclick="copyRoundJoinLink()" title="Copy join link">Link</button>
+          <button class="btn btn-danger" onclick="leaveRoundSync()" title="Leave sync">&#215;</button>
         </div>
       </div>
       <div class="qr-wrap" id="live-share-qr"></div>
@@ -769,6 +796,23 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
   </div>
 </div>
 
+<!-- PDF SUMMARY OVERLAY -->
+<div class="pdf-summary-overlay" id="pdf-summary-overlay" onclick="closePdfSummaryIfOutside(event)">
+  <div class="pdf-summary-wrap">
+    <div class="pdf-summary-header">
+      <div class="pdf-summary-title">&#127942; Round Complete</div>
+      <button class="modal-close" onclick="closePdfSummary()">&#215;</button>
+    </div>
+    <div class="pdf-summary-body" id="pdf-summary-body"></div>
+    <div class="pdf-action-bar">
+      <button class="btn-pdf" id="btn-export-pdf" onclick="exportRoundPdf()">&#128190; Save as PDF</button>
+      <button class="btn" onclick="closePdfSummary()" style="flex:0 0 auto;">Close</button>
+    </div>
+  </div>
+</div>
+<!-- Hidden scorecard render target for PDF -->
+<div class="pdf-scorecard-source" id="pdf-scorecard-source" aria-hidden="true"></div>
+
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
@@ -868,29 +912,104 @@ var NJ_COURSES = [
 ];
 
 /* ============================================================
-   CUSTOM COURSES — LocalStorage persistence
+   CUSTOM COURSE SERVICE — Firestore + localStorage mirror
    ============================================================ */
-var CUSTOM_COURSES_KEY = 'playpal.custom_courses.v1';
+var CustomCourseService = (function(){
+  var LOCAL_KEY = 'playpal.custom_courses.v1';
+  var COLLECTION = 'playpal_courses';
+  var db = null;
+  var authReady = false;
 
-function loadCustomCourses(){
-  try{ var r = localStorage.getItem(CUSTOM_COURSES_KEY); return r ? JSON.parse(r) : []; }catch(_){ return []; }
-}
-function persistCustomCourses(list){
-  try{ localStorage.setItem(CUSTOM_COURSES_KEY, JSON.stringify(list)); }catch(_){ }
-}
-function addCustomCourse(course){
-  var list = loadCustomCourses();
-  list = list.filter(function(c){ return c.course_name !== course.course_name; });
-  list.unshift(course); // newest at top
-  persistCustomCourses(list);
-}
-function deleteCustomCourse(courseName){
-  persistCustomCourses(loadCustomCourses().filter(function(c){ return c.course_name !== courseName; }));
-}
+  function readLocal(){
+    try{ var r=localStorage.getItem(LOCAL_KEY); return r?JSON.parse(r):[]; }catch(_){ return []; }
+  }
+  function writeLocal(list){
+    try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(list)); }catch(_){ }
+  }
+  function upsertLocal(course){
+    var list = readLocal();
+    list = list.filter(function(c){ return c.id !== course.id; });
+    list.unshift(course);
+    writeLocal(list);
+  }
+  function removeLocal(courseId){
+    writeLocal(readLocal().filter(function(c){ return c.id !== courseId; }));
+  }
+
+  function upsertFirestore(course){
+    if(!db || !authReady) return;
+    db.collection(COLLECTION).doc(course.id).set(course).catch(function(e){
+      console.warn('[courses] Firestore write failed', e);
+    });
+  }
+  function removeFirestore(courseId){
+    if(!db || !authReady) return;
+    db.collection(COLLECTION).doc(courseId).delete().catch(function(e){
+      console.warn('[courses] Firestore delete failed', e);
+    });
+  }
+
+  function list(){ return readLocal(); }
+
+  function upsert(course){
+    if(!course.id) course.id = 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+    course.updatedAt = Date.now();
+    upsertLocal(course);
+    upsertFirestore(course);
+  }
+
+  function remove(courseId){
+    removeLocal(courseId);
+    removeFirestore(courseId);
+  }
+
+  function initFirebase(firestoreDb){
+    db = firestoreDb;
+    authReady = true;
+    // Pull all remote courses down, push any local-only courses up
+    db.collection(COLLECTION).get().then(function(snap){
+      var remote = [];
+      snap.forEach(function(doc){ remote.push(doc.data()); });
+      var local = readLocal();
+      var remoteIds = remote.map(function(c){ return c.id; });
+      // Push local-only to Firestore
+      local.forEach(function(lc){
+        if(remoteIds.indexOf(lc.id) === -1) upsertFirestore(lc);
+      });
+      // Merge remote into local (remote wins on updatedAt)
+      var localIds = local.map(function(c){ return c.id; });
+      remote.forEach(function(rc){
+        if(localIds.indexOf(rc.id) === -1){ upsertLocal(rc); }
+        else{
+          var lc = local.find(function(x){ return x.id === rc.id; });
+          if((rc.updatedAt||0) >= (lc.updatedAt||0)) upsertLocal(rc);
+          else upsertFirestore(lc);
+        }
+      });
+      renderCourseList(document.getElementById('course-search').value);
+    }).catch(function(e){ console.warn('[courses] initial sync failed', e); });
+
+    // Realtime listener
+    db.collection(COLLECTION).onSnapshot(function(snap){
+      snap.docChanges().forEach(function(change){
+        var d = change.doc.data();
+        if(change.type === 'added' || change.type === 'modified'){
+          var local = readLocal();
+          var existing = local.find(function(c){ return c.id === d.id; });
+          if(!existing || (d.updatedAt||0) >= (existing.updatedAt||0)) upsertLocal(d);
+        }
+        if(change.type === 'removed') removeLocal(change.doc.id);
+      });
+      renderCourseList(document.getElementById('course-search').value);
+    }, function(e){ console.warn('[courses] onSnapshot error', e); });
+  }
+
+  return { list:list, upsert:upsert, remove:remove, initFirebase:initFirebase };
+})();
 
 function getAllCourses(){
-  // Custom courses first, then NJ_COURSES
-  return loadCustomCourses().concat(NJ_COURSES);
+  // Custom courses first (from Firestore-synced local list), then NJ_COURSES
+  return CustomCourseService.list().concat(NJ_COURSES);
 }
 
 /* ============================================================
@@ -1128,7 +1247,11 @@ var RealtimeService = (function(){
     btn.disabled = joinInFlight;
     btn.textContent = joinInFlight ? ('Joining ' + String(code||'').toUpperCase() + '\u2026') : '\uD83D\uDD17 Join Round';
   }
-  function snapshotState(){ return {state:state, playState:playState, selectedCourseIdx:selectedCourseIdx, ts:Date.now()}; }
+  function snapshotState(){
+    var allC = getAllCourses();
+    var selName = (selectedCourseIdx !== null && allC[selectedCourseIdx]) ? allC[selectedCourseIdx].course_name : null;
+    return {state:state, playState:playState, selectedCourseIdx:selectedCourseIdx, selectedCourseName:selName, ts:Date.now()};
+  }
 
   function showPlayActiveFromState(){
     if(!playState) return;
@@ -1146,15 +1269,19 @@ var RealtimeService = (function(){
     var codeEl = document.getElementById('live-share-code');
     var qrEl = document.getElementById('live-share-qr');
     if(!panel || !codeEl || !qrEl) return;
-    if(!currentCode){ panel.style.display = 'none'; codeEl.textContent = '\u2014'; qrEl.innerHTML = ''; return; }
+    // Only show on hole 1 (index 0)
+    var onHole1 = !playState || playState.currentHole === 0;
+    if(!currentCode || !onHole1){ panel.style.display = 'none'; codeEl.textContent = '\u2014'; return; }
     panel.style.display = 'flex';
     codeEl.textContent = currentCode;
-    qrEl.innerHTML = '<canvas id="qr-canvas"></canvas>';
-    var joinLink = getJoinLink(currentCode);
-    if(window.QRCode && typeof window.QRCode.toCanvas === 'function'){
-      window.QRCode.toCanvas(document.getElementById('qr-canvas'), joinLink, {width:112}, function(err){
-        if(err) console.error('QR generation failed:', err);
-      });
+    if(!qrEl.hasChildNodes()){
+      qrEl.innerHTML = '<canvas id="qr-canvas"></canvas>';
+      var joinLink = getJoinLink(currentCode);
+      if(window.QRCode && typeof window.QRCode.toCanvas === 'function'){
+        window.QRCode.toCanvas(document.getElementById('qr-canvas'), joinLink, {width:48}, function(err){
+          if(err) console.error('QR generation failed:', err);
+        });
+      }
     }
   }
 
@@ -1175,25 +1302,38 @@ var RealtimeService = (function(){
 
   function isConfigured(){ return !!(_firebaseConfigured() && window.firebase && window.firebase.firestore && window.firebase.auth); }
 
-  function init(){
-    if(!isConfigured()) return false;
-    if(db) return true;
+  /* pendingAction queues a callback until anonymous auth resolves */
+  var pendingAction = null;
+
+  function init(onReady){
+    if(!isConfigured()){
+      if(onReady) onReady(false);
+      return false;
+    }
+    if(db && authReady){ if(onReady) onReady(true); return true; }
+    if(db && !authReady){
+      if(onReady){ var prev=pendingAction; pendingAction=function(){ if(prev) prev(); onReady(true); }; }
+      return true;
+    }
     try{
-      var app;
-      if(!window.firebase.apps || !window.firebase.apps.length){
-        app = window.firebase.initializeApp(FIREBASE_CONFIG);
-      } else {
-        app = window.firebase.apps[0];
-      }
+      if(!window.firebase.apps || !window.firebase.apps.length) window.firebase.initializeApp(FIREBASE_CONFIG);
       db = window.firebase.firestore();
+      if(onReady){ var prev2=pendingAction; pendingAction=function(){ if(prev2) prev2(); onReady(true); }; }
       window.firebase.auth().signInAnonymously().then(function(){
         authReady = true;
-        // Hand db ref to PlayerProfileService for cross-device profiles
         PlayerProfileService.initFirebase(db);
+        CustomCourseService.initFirebase(db);
         if(currentCode && !ready) cloudAttach(currentCode);
-      }).catch(function(err){ console.error('[sync] auth failed', err); setStatusWithClass('err','Auth failed'); });
+        var toRun=pendingAction; pendingAction=null;
+        if(toRun) toRun();
+      }).catch(function(err){
+        console.error('[sync] auth failed', err);
+        setStatus('Auth failed — check Firebase config.');
+        var toRun=pendingAction; pendingAction=null;
+        if(toRun) toRun();
+      });
       return true;
-    }catch(err){ console.error('[sync] init failed', err); return false; }
+    }catch(err){ console.error('[sync] init failed', err); if(onReady) onReady(false); return false; }
   }
 
   function applySnapshot(snapshot){
@@ -1201,7 +1341,14 @@ var RealtimeService = (function(){
     applyingRemote = true;
     state = snapshot.state;
     playState = snapshot.playState;
-    selectedCourseIdx = typeof snapshot.selectedCourseIdx === 'number' ? snapshot.selectedCourseIdx : null;
+    // Resolve course by name (stable across devices), not by index
+    if(snapshot.selectedCourseName){
+      var allC = getAllCourses();
+      var foundIdx = allC.findIndex(function(c){ return c.course_name === snapshot.selectedCourseName; });
+      selectedCourseIdx = foundIdx >= 0 ? foundIdx : null;
+    } else {
+      selectedCourseIdx = typeof snapshot.selectedCourseIdx === 'number' ? snapshot.selectedCourseIdx : null;
+    }
     loadStateToUI();
     if(playState) showPlayActiveFromState();
     renderLiveShare();
@@ -1263,32 +1410,34 @@ var RealtimeService = (function(){
   }
 
   function createRound(){
-    if(!init()){ setStatus('Realtime disabled. Configure Firebase credentials.'); return null; }
-    leave(false);
-    var code = genSyncCode();
-    persistCode(code);
-    lastWroteJSON = ''; localUpdatedAt = Date.now();
-    setStatusWithClass('busy','Connecting ' + code + '\u2026');
-    cloudAttach(code, {allowCreateIfMissing:true});
-    showPlayActiveFromState();
-    return code;
+    init(function(ok){
+      if(!ok){ setStatus('Realtime disabled. Configure Firebase credentials.'); return; }
+      leave(false);
+      var code = genSyncCode();
+      persistCode(code);
+      lastWroteJSON = ''; localUpdatedAt = Date.now();
+      setStatus('Connecting ' + code + '…');
+      cloudAttach(code, {allowCreateIfMissing:true});
+    });
   }
 
   function join(code){
-    if(!init()){ setStatus('Realtime disabled. Configure Firebase credentials.'); return false; }
     var joinCode = normalizeSyncCode(code);
     if(joinCode.length < MIN_CODE_LEN){ setStatus('Enter a valid round code.'); return false; }
     setJoinBusy(true, joinCode);
-    setStatusWithClass('busy','Joining round ' + joinCode + '\u2026');
-    leave(false);
-    persistCode(joinCode);
-    lastWroteJSON = '';
-    cloudAttach(joinCode, {allowCreateIfMissing:false});
-    setAppMode(ACTIVE_ROUND_MODE, {skipRoute:true});
-    switchTab('play');
-    renderLiveShare();
-    setJoinBusy(false, joinCode);
-    setStatusWithClass('ok','Joined round ' + joinCode + '.');
+    setStatus('Joining round ' + joinCode + '…');
+    init(function(ok){
+      setJoinBusy(false, joinCode);
+      if(!ok){ setStatus('Realtime disabled. Configure Firebase credentials.'); return; }
+      leave(false);
+      persistCode(joinCode);
+      lastWroteJSON = '';
+      cloudAttach(joinCode, {allowCreateIfMissing:false});
+      setAppMode(ACTIVE_ROUND_MODE, {skipRoute:true});
+      switchTab('play');
+      renderLiveShare();
+      setStatus('Joined round ' + joinCode + '.');
+    });
     return true;
   }
 
@@ -1309,9 +1458,12 @@ var RealtimeService = (function(){
   }
 
   function restoreSession(){
-    if(!init()) return false;
     var code = normalizeSyncCode(readStoredCode());
-    if(code.length < MIN_CODE_LEN) return false;
+    if(code.length < MIN_CODE_LEN){
+      // No stored code — still init Firebase so profiles/courses load
+      init(function(){});
+      return false;
+    }
     join(code);
     return true;
   }
@@ -1328,11 +1480,13 @@ var RealtimeService = (function(){
   });
   window.addEventListener('online', function(){ if(currentCode) cloudWriteState(true); });
 
+  function refreshSyncBanner(){ renderLiveShare(); }
+
   return {
     isConfigured:isConfigured, createRound:createRound, join:join, leave:leave,
     publish:publish, setStatus:setStatus, isConnected:isConnected,
     restoreSession:restoreSession, getCurrentCode:getCurrentCode,
-    getJoinLinkForCurrent:getJoinLinkForCurrent
+    getJoinLinkForCurrent:getJoinLinkForCurrent, refreshSyncBanner:refreshSyncBanner
   };
 })();
 
@@ -1445,8 +1599,9 @@ function saveCustomCourse(){
   if(!hasAtLeastOnePar){ alert('Enter par for at least one hole.'); return; }
 
   var fullName = tee ? rawName + ' \u2014 ' + tee : rawName;
-  var course = { course_name: fullName, holes: holes, custom: true };
-  addCustomCourse(course);
+  var courseId = 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  var course = { id: courseId, course_name: fullName, holes: holes, custom: true, updatedAt: Date.now() };
+  CustomCourseService.upsert(course);
   closeCourseModal();
 
   // Refresh course list and auto-select the new course
@@ -1516,7 +1671,7 @@ function deleteCustomCourseAndRefresh(idxStr){
   var course = allCourses[idx];
   if(!course || !course.custom) return;
   if(!confirm('Delete "' + course.course_name + '"?')) return;
-  deleteCustomCourse(course.course_name);
+  CustomCourseService.remove(course.id || course.course_name);
   if(selectedCourseIdx === idx) selectedCourseIdx = null;
   renderCourseList(document.getElementById('course-search').value);
 }
@@ -1855,6 +2010,7 @@ function startPlay(){
   document.getElementById('play-active').style.display = 'block';
   buildHoleNav(); buildFmtTabs(); goHole(0);
   setAppMode(ACTIVE_ROUND_MODE, {skipRoute:true});
+  // createRound is async-safe — it waits for Firebase auth before attaching
   if(!RealtimeService.isConnected()) RealtimeService.createRound();
 }
 
@@ -1909,6 +2065,7 @@ function goHole(idx){
   document.getElementById('btn-prev').disabled = idx===0;
   document.getElementById('btn-next').disabled = idx===17;
   renderAllPanes(idx); renderSummary();
+  RealtimeService.refreshSyncBanner();
 }
 
 function renderAllPanes(idx){ renderStroke(idx); renderPtm(idx); renderWolf(idx); renderPar3(idx); }
@@ -2299,29 +2456,134 @@ function getPlayerRoundScore(pi){
   return {total:tot,parTotal:parTot,played:played,toPar:tot-parTot};
 }
 
+/* ── BUILD LEADERBOARD HTML ── */
+function buildLeaderboardHtml(){
+  var players = state.players.slice();
+  var scored = players.map(function(p,pi){
+    var rd = getPlayerRoundScore(pi); return {p:p, pi:pi, rd:rd};
+  });
+  scored.sort(function(a,b){
+    if(a.rd.played===0 && b.rd.played===0) return 0;
+    if(a.rd.played===0) return 1;
+    if(b.rd.played===0) return -1;
+    return a.rd.toPar - b.rd.toPar;
+  });
+  var html = '<table class="leaderboard-table"><thead><tr>';
+  html += '<th>#</th><th>Player</th><th>Gross</th><th>To Par</th><th style="text-align:right">Thru</th>';
+  html += '</tr></thead><tbody>';
+  scored.forEach(function(item, rank){
+    var rd = item.rd;
+    var diffStr = rd.played===0 ? '\u2014' : rd.toPar===0?'E':rd.toPar>0?'+'+rd.toPar:String(rd.toPar);
+    var cls = rd.played===0?'':rd.toPar<0?'under':rd.toPar>3?'dbl':rd.toPar>0?'over':'';
+    html += '<tr>';
+    html += '<td class="lb-rank">'+(rank+1)+'</td>';
+    html += '<td class="lb-name">'+esc(item.p.full_name)+'</td>';
+    html += '<td><span class="lb-score '+cls+'">'+(rd.played?String(rd.total):'\u2014')+'</span></td>';
+    html += '<td><span class="lb-score '+cls+'">'+diffStr+'</span></td>';
+    html += '<td style="text-align:right;font-size:0.78rem;color:var(--text-muted);">'+(rd.played?rd.played:'\u2014')+'</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
 function openSaveModal(){
   if(!playState){ alert('Start a round first.'); return; }
-  var body=document.getElementById('save-modal-body');
-  var courseName=state.course_name||'Golf Course';
-  var html='<div class="save-section"><div class="save-section-title">Round Summary \u2014 '+esc(courseName)+'</div>';
-  state.players.forEach(function(p,pi){
-    var rd=getPlayerRoundScore(pi);
-    var diffStr=rd.played===0?'\u2014':rd.toPar===0?'E':rd.toPar>0?'+'+rd.toPar:String(rd.toPar);
-    var cls=rd.played===0?'even':rd.toPar<0?'under':rd.toPar>3?'dbl':rd.toPar>0?'over':'even';
-    html+='<div class="save-player-row">'+
-      '<div><div class="save-player-name">'+esc(p.full_name)+'</div></div>'+
-      '<div class="save-player-score '+cls+'">'+(rd.played?String(rd.total):' \u2014 ')+'<span style="font-size:0.8rem;margin-left:4px;">('+diffStr+')</span></div>'+
-      '</div>';
-  });
-  html+='</div>';
-  html+=renderSettlementSection();
-  html+='<button class="btn-confirm-save" id="btn-confirm-save" onclick="executeSaveRound()">&#10003; SAVE ROUND</button>';
-  body.innerHTML=html;
+  var body = document.getElementById('save-modal-body');
+  var courseName = state.course_name || 'Golf Course';
+  var html = '<div class="save-section"><div class="save-section-title">Round Summary \u2014 '+esc(courseName)+'</div>';
+  html += buildLeaderboardHtml();
+  html += '</div>';
+  html += renderSettlementSection();
+  html += '<button class="btn-confirm-save" id="btn-confirm-save" onclick="executeSaveRound()">&#127942; SAVE ROUND + EXPORT PDF</button>';
+  body.innerHTML = html;
   document.getElementById('save-modal-overlay').classList.add('open');
 }
 function closeSaveModal(){ document.getElementById('save-modal-overlay').classList.remove('open'); }
 function closeSaveModalIfOutside(e){ if(e.target===document.getElementById('save-modal-overlay')) closeSaveModal(); }
-function executeSaveRound(){ var btn=document.getElementById('btn-confirm-save'); if(btn) btn.disabled=true; setTimeout(function(){ closeSaveModal(); },400); }
+
+function executeSaveRound(){
+  var btn = document.getElementById('btn-confirm-save');
+  if(btn){ btn.disabled = true; btn.textContent = 'Preparing\u2026'; }
+  closeSaveModal();
+  // Open the full-screen summary + PDF overlay
+  setTimeout(function(){ openPdfSummary(); }, 200);
+}
+
+/* ── PDF SUMMARY OVERLAY ── */
+function openPdfSummary(){
+  if(!playState){ alert('No active round.'); return; }
+  var body = document.getElementById('pdf-summary-body');
+  var today = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  var courseName = state.course_name || 'Golf Course';
+  var tee = state.tee_color || '';
+
+  var html = '<div style="text-align:center;margin-bottom:16px;">';
+  html += '<div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;background:linear-gradient(135deg,var(--green-bright),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">'+esc(courseName)+'</div>';
+  if(tee) html += '<div style="font-size:0.78rem;color:var(--text-dim);margin-top:2px;">'+esc(tee)+'</div>';
+  html += '<div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">'+esc(today)+'</div>';
+  html += '</div>';
+
+  html += '<div class="save-section"><div class="save-section-title">Leaderboard</div>';
+  html += buildLeaderboardHtml();
+  html += '</div>';
+  html += renderSettlementSection();
+
+  body.innerHTML = html;
+  document.getElementById('pdf-summary-overlay').classList.add('open');
+}
+function closePdfSummary(){ document.getElementById('pdf-summary-overlay').classList.remove('open'); }
+function closePdfSummaryIfOutside(e){ if(e.target===document.getElementById('pdf-summary-overlay')) closePdfSummary(); }
+
+function exportRoundPdf(){
+  var btn = document.getElementById('btn-export-pdf');
+  if(btn){ btn.disabled = true; btn.textContent = 'Generating\u2026'; }
+
+  // Build full scorecard in the hidden render target
+  buildScorecard();
+  var source = document.getElementById('scorecard-preview');
+  if(!source){ if(btn){ btn.disabled=false; btn.textContent='\uD83D\uDCBE Save as PDF'; } return; }
+
+  var h2c = window.html2canvas;
+  var jsPDF = window.jspdf && window.jspdf.jsPDF;
+  if(!h2c || !jsPDF){
+    alert('PDF library not loaded. Try refreshing.');
+    if(btn){ btn.disabled=false; btn.textContent='\uD83D\uDCBE Save as PDF'; }
+    return;
+  }
+
+  // Make the source temporarily visible at full opacity for capture
+  source.style.position = 'fixed';
+  source.style.left = '-9999px';
+  source.style.top = '0';
+  source.style.display = 'block';
+
+  h2c(source, {backgroundColor:'#ffffff', scale:2, useCORS:true, logging:false}).then(function(canvas){
+    source.style.position = '';
+    source.style.left = '';
+    source.style.top = '';
+
+    var pdf = new jsPDF({orientation:'landscape', unit:'pt', format:'a4'});
+    var pageW = pdf.internal.pageSize.getWidth();
+    var pageH = pdf.internal.pageSize.getHeight();
+    var ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
+    var w = canvas.width * ratio, h = canvas.height * ratio;
+    var imgData = canvas.toDataURL('image/png');
+    pdf.addImage(imgData, 'PNG', (pageW-w)/2, (pageH-h)/2, w, h);
+
+    var today = new Date();
+    var fname = 'PlayPal_' + (state.course_name||'Round').replace(/\s+/g,'_') + '_' +
+      today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0') + '.pdf';
+    pdf.save(fname);
+
+    if(btn){ btn.disabled=false; btn.textContent='\uD83D\uDCBE Save as PDF'; }
+  }).catch(function(err){
+    console.error('[pdf] export failed', err);
+    alert('PDF export failed: ' + err.message);
+    source.style.position = '';
+    if(btn){ btn.disabled=false; btn.textContent='\uD83D\uDCBE Save as PDF'; }
+  });
+}
 
 /* ============================================================
    JOIN ROUND ACTIONS
@@ -2504,13 +2766,13 @@ window.addEventListener('DOMContentLoaded', function(){
   var deepLinkCode = extractJoinCodeFromRoute();
 
   if(deepLinkCode){
-    // Show join UI
+    // Show join UI with code pre-filled immediately
     setAppMode(JOIN_ROUND_MODE, {skipRoute:true});
     switchTab('setup');
     var joinInput = document.getElementById('inp-round-code-join');
     if(joinInput) joinInput.value = deepLinkCode;
-    // Auto-trigger join after Firebase initializes
-    // init() is called inside join() which calls init() internally
+    RealtimeService.setStatus('Connecting…');
+    // join() now defers internally until auth resolves — safe to call now
     RealtimeService.join(deepLinkCode);
     return;
   }
@@ -2521,12 +2783,12 @@ window.addEventListener('DOMContentLoaded', function(){
     setAppMode(JOIN_ROUND_MODE, {skipRoute:true});
   }
 
-  // Try to restore previous session
+  // restoreSession() calls init() internally with callback — profiles+courses load automatically
   RealtimeService.restoreSession();
 
   RealtimeService.setStatus(
     RealtimeService.isConfigured()
-      ? 'Choose Create Round or Join Round to begin.'
+      ? 'Ready.'
       : 'Realtime disabled. Configure Firebase credentials.'
   );
 });
