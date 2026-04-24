@@ -124,13 +124,15 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
 .live-share-help{display:none;}
 .live-share-actions{display:flex;gap:6px;}
 .live-share-actions .btn{padding:5px 10px;font-size:0.72rem;}
-.qr-wrap{width:56px;height:56px;padding:4px;border-radius:6px;background:#fff;border:1px solid #d8d8d8;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;}
+.qr-wrap{width:56px;height:56px;padding:4px;border-radius:6px;background:#fff;border:1px solid #d8d8d8;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none;}
 .qr-wrap canvas,.qr-wrap img{max-width:100%;max-height:100%;display:block;}
-#qr-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:9999;align-items:center;justify-content:center;}
+#qr-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:2147483647;align-items:center;justify-content:center;padding:4vh 3vw;}
 #qr-modal.open{display:flex;}
-#qr-modal-inner{background:#fff;border-radius:16px;padding:24px 28px;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:0 8px 40px rgba(0,0,0,0.45);}
-#qr-modal-label{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;letter-spacing:2.5px;color:#0a5c3e;}
-#qr-modal-hint{font-size:0.75rem;color:#888;}
+#qr-modal-inner{position:relative;width:min(94vw,860px);height:min(94vh,860px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;}
+#qr-modal-label{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.2rem,3.2vw,2rem);letter-spacing:2.5px;color:#fff;text-transform:uppercase;text-align:center;}
+#qr-modal-canvas{width:min(82vw,82vh);height:min(82vw,82vh);max-width:860px;max-height:860px;background:#fff;border-radius:18px;padding:2.2vw;box-shadow:0 14px 60px rgba(0,0,0,0.65);}
+#qr-modal-hint{font-size:clamp(0.85rem,1.9vw,1.1rem);color:#d5d9e0;text-align:center;}
+#qr-modal-close{position:absolute;top:max(8px,1.5vh);right:max(8px,1.5vw);width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,0.35);background:rgba(15,28,46,0.75);color:#fff;font-size:2rem;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;}
 
 /* ── BUTTONS ── */
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
@@ -654,7 +656,7 @@ body{background:#0F1C2E;color:#F5F5F5;font-family:'DM Sans',sans-serif;min-heigh
           <button class="btn btn-danger" onclick="leaveRoundSync()" title="Leave sync">&#215;</button>
         </div>
       </div>
-      <div class="qr-wrap" id="live-share-qr" onclick="showQRModal()" title="Tap to enlarge"></div>
+      <div class="qr-wrap" id="live-share-qr" title="Tap to enlarge"></div>
     </div>
     <div class="hole-nav-bar" id="hole-nav-bar"></div>
     <div class="hole-header">
@@ -1545,23 +1547,95 @@ var RealtimeService = (function(){
   };
 })();
 
+var qrModalLastTouchAt = 0;
+var qrModalScrollY = 0;
+
+function lockBodyScroll(){
+  qrModalScrollY = window.scrollY || window.pageYOffset || 0;
+  document.body.style.position = 'fixed';
+  document.body.style.top = '-' + qrModalScrollY + 'px';
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.width = '100%';
+  document.body.style.overflow = 'hidden';
+}
+
+function unlockBodyScroll(){
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.width = '';
+  document.body.style.overflow = '';
+  window.scrollTo(0, qrModalScrollY || 0);
+}
+
+function bindPress(el, handler){
+  if(!el || typeof handler !== 'function') return;
+  el.addEventListener('pointerup', function(ev){
+    if(ev.pointerType === 'touch' || ev.pointerType === 'pen'){
+      qrModalLastTouchAt = Date.now();
+      ev.preventDefault();
+    }
+    handler(ev);
+  }, {passive:false});
+  el.addEventListener('touchend', function(ev){
+    qrModalLastTouchAt = Date.now();
+    ev.preventDefault();
+    handler(ev);
+  }, {passive:false});
+  el.addEventListener('click', function(ev){
+    if(Date.now() - qrModalLastTouchAt < 500){
+      ev.preventDefault();
+      return;
+    }
+    handler(ev);
+  });
+}
+
+function initQRModalInteractions(){
+  var trigger = document.getElementById('live-share-qr');
+  var modal = document.getElementById('qr-modal');
+  var closeBtn = document.getElementById('qr-modal-close');
+  var content = document.getElementById('qr-modal-inner');
+  if(!trigger || !modal || !closeBtn || !content) return;
+
+  bindPress(trigger, function(){ showQRModal(); });
+  bindPress(closeBtn, function(ev){
+    ev.stopPropagation();
+    closeQRModal();
+  });
+  bindPress(modal, function(){ closeQRModal(); });
+
+  ['click','pointerup','touchend'].forEach(function(evt){
+    content.addEventListener(evt, function(ev){ ev.stopPropagation(); });
+  });
+
+  document.addEventListener('keydown', function(ev){
+    if(ev.key === 'Escape') closeQRModal();
+  });
+}
+
 function showQRModal(){
   var modal = document.getElementById('qr-modal');
   var canvas = document.getElementById('qr-modal-canvas');
   if(!modal || !canvas) return;
   var joinLink = RealtimeService.getJoinLinkForCurrent();
   if(!joinLink) return;
+  var qrSize = Math.floor(Math.min(window.innerWidth * 0.78, window.innerHeight * 0.78, 860));
   if(window.QRCode && typeof window.QRCode.toCanvas === 'function'){
-    window.QRCode.toCanvas(canvas, joinLink, {width:260}, function(err){
+    window.QRCode.toCanvas(canvas, joinLink, {width:qrSize, margin:1, color:{dark:'#000000',light:'#ffffff'}}, function(err){
       if(err) console.error('QR modal generation failed:', err);
     });
   }
+  lockBodyScroll();
   modal.classList.add('open');
 }
 
 function closeQRModal(){
   var modal = document.getElementById('qr-modal');
   if(modal) modal.classList.remove('open');
+  unlockBodyScroll();
 }
 
 /* ============================================================
@@ -2900,6 +2974,7 @@ function colGroupHTML(){
    ============================================================ */
 window.addEventListener('DOMContentLoaded', function(){
   state = makeInitialSetupState();
+  initQRModalInteractions();
   playerProfiles = PlayerProfileService.listProfiles();
   selectedPlayerIds = [];
   try{ localStorage.removeItem('playpal.selected_player_ids.v1'); }catch(_){ }
@@ -2940,11 +3015,12 @@ window.addEventListener('DOMContentLoaded', function(){
   );
 });
 </script>
-<div id="qr-modal" onclick="closeQRModal()">
-  <div id="qr-modal-inner">
+<div id="qr-modal">
+  <div id="qr-modal-inner" role="dialog" aria-modal="true" aria-label="Join round QR code">
+    <button id="qr-modal-close" aria-label="Close QR code modal">&#215;</button>
     <div id="qr-modal-label">Scan to Join</div>
     <canvas id="qr-modal-canvas"></canvas>
-    <div id="qr-modal-hint">Tap anywhere to close</div>
+    <div id="qr-modal-hint">Tap outside the code or use × to close</div>
   </div>
 </div>
 </body>
